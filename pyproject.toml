@@ -1,0 +1,29 @@
+[project]
+name = "rogen-aging"
+version = "0.1.0"
+description = "Project scaffold for genomic notebooks and analysis, managed with `uv`."
+authors = [
+    {name = "Mitya Toren", email = "mitya@rogen.ai"},
+]
+dependencies = [
+    "alphagenome",
+    "pandas",
+    "matplotlib",
+    "requests",
+    "polars",
+]
+requires-python = ">=3.12"
+readme = "README.md"
+license = {text = "MIT"}
+
+[project.optional-dependencies]
+genomics = []
+
+[project.group.dev.dependencies]
+ipykernel = "*"
+jupyterlab = "*"
+
+[tool.uv.sources]
+rogen-aging = { path = "." }
+
+
