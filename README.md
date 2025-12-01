@@ -64,12 +64,22 @@ The `notebooks/AlphaGenome.ipynb` notebook performs a comprehensive analysis of 
 
 ### 1. API Keys
 
-The notebook requires API keys for NCBI and AlphaGenome. You should set these as environment variables:
+The notebook requires API keys for NCBI and AlphaGenome. Follow these steps to set them up:
+
+1. Copy the `.env.example` file to `.env`:
 
 ```bash
-export NCBI_API_KEY="your_ncbi_api_key"
-export ALPHA_GENOME_API_KEY="your_alpha_genome_api_key"
+cp .env.example .env
 ```
+
+2. Edit the `.env` file and add your actual API keys:
+
+```bash
+NCBI_API_KEY=your_actual_ncbi_api_key_here
+ALPHA_GENOME_API_KEY=your_actual_alpha_genome_api_key_here
+```
+
+**Important:** The `.env` file is git-ignored and will not be committed to version control, keeping your API keys secure.
 
 ### 2. Data Files
 
