@@ -11,6 +11,9 @@ dependencies = [
     "matplotlib",
     "requests",
     "polars",
+    "python-dotenv>=1.2.1",
+    "networkx>=3.6",
+    "numpy>=2.3.4",
 ]
 requires-python = ">=3.12"
 readme = "README.md"
