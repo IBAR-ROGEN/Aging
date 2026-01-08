@@ -99,3 +99,39 @@ uv run jupyter lab
 ```
 
 Now, you can open `notebooks/AlphaGenome.ipynb` and run the cells. The notebook is configured to read the data files from the `data/` directory and the API keys from your environment.
+
+## Methylation Calling Pipeline (ROGEN Activity 2.1.8.1)
+
+This repository includes a complete methylation calling pipeline for Oxford Nanopore sequencing data.
+
+### Quick Links
+
+- **[METHYLATION_PIPELINE_README.md](METHYLATION_PIPELINE_README.md)** - Comprehensive user guide
+- **[docs/METHYLATION_PIPELINE_USAGE.md](docs/METHYLATION_PIPELINE_USAGE.md)** - Detailed step-by-step usage guide
+- **Pipeline Scripts:**
+  - `pipeline_validation.sh` - Basecalling and methylation extraction
+  - `downstream_analysis.R` - DMR calling and analysis
+  - `notebooks/DownstreamMethylationAnalysis.ipynb` - Interactive R notebook
+
+### Pipeline Overview
+
+The methylation pipeline integrates three main tools:
+1. **Dorado** - Basecalling with methylation-aware models
+2. **Modkit** - BAM to bedMethyl conversion
+3. **DMRcaller** - Differential methylation analysis
+
+### Quick Start
+
+```bash
+# 1. Run basecalling and methylation extraction
+./pipeline_validation.sh
+
+# 2. Run downstream analysis
+Rscript downstream_analysis.R
+
+# Or use the interactive notebook
+uv run jupyter lab
+# Open: notebooks/DownstreamMethylationAnalysis.ipynb
+```
+
+For detailed instructions, see [METHYLATION_PIPELINE_README.md](METHYLATION_PIPELINE_README.md).
