@@ -1,0 +1,24 @@
+digraph "Fig 4: LongevityForest Multi-Agent Architecture" {
+	graph [bgcolor=white fontcolor="#2D3436" fontname="Sans-Serif" fontsize=20 label="Fig 4: LongevityForest Multi-Agent Architecture" nodesep=0.60 pad=0.5 rankdir=LR ranksep=0.75 splines=ortho]
+	node [fixedsize=true fontcolor="#2D3436" fontname="Sans-Serif" fontsize=13 height=1.4 imagescale=true labelloc=b shape=box style=rounded width=1.4]
+	edge [color="#7B8894"]
+	"21726bad5aae4dea9d667dedc02bf09e" [label=Researcher height=1.9 image="/Users/mityatoren/code/rogen_aging/.venv/lib/python3.12/site-packages/resources/onprem/client/user.png" shape=none]
+	"1c7a4c9c28914cd4acc519ec71225d28" [label="Cursor IDE
+(User Interface)" fillcolor="#007ACC" style="rounded,filled"]
+	"1082ec4617864a3eaf7f5add49853cd8" [label="Model Context
+Protocol (MCP)" fillcolor="#4ECDC4" style="rounded,filled"]
+	subgraph "cluster_LongevityForest Agent Swarm" {
+		graph [bgcolor="#E5F5FD" fontname="Sans-Serif" fontsize=12 label="LongevityForest Agent Swarm" labeljust=l pencolor="#AEB6BE" rankdir=LR shape=box style=rounded]
+		cf21c8c2842b48d6b7974aebd51c219f [label="BioMART Agent
+(Annotations)" fillcolor="#FFE66D" style="rounded,filled"]
+		"2792397361ba42268cac2af143f39f3e" [label="AlphaFold Agent
+(Structure)" fillcolor="#95E1D3" style="rounded,filled"]
+		cf3621ce8d994eb1915a254954d130bb [label="STRING Agent
+(Interactions)" fillcolor="#FF6B6B" style="rounded,filled"]
+	}
+	"21726bad5aae4dea9d667dedc02bf09e" -> "1c7a4c9c28914cd4acc519ec71225d28" [label=Input color=black dir=forward fontcolor="#2D3436" fontname="Sans-Serif" fontsize=13]
+	"1c7a4c9c28914cd4acc519ec71225d28" -> "1082ec4617864a3eaf7f5add49853cd8" [label="JSON-RPC" color=darkblue dir=both fontcolor="#2D3436" fontname="Sans-Serif" fontsize=13 style=bold]
+	"1082ec4617864a3eaf7f5add49853cd8" -> cf21c8c2842b48d6b7974aebd51c219f [color=darkgreen dir=both fontcolor="#2D3436" fontname="Sans-Serif" fontsize=13]
+	"1082ec4617864a3eaf7f5add49853cd8" -> "2792397361ba42268cac2af143f39f3e" [color=darkgreen dir=both fontcolor="#2D3436" fontname="Sans-Serif" fontsize=13]
+	"1082ec4617864a3eaf7f5add49853cd8" -> cf3621ce8d994eb1915a254954d130bb [color=darkgreen dir=both fontcolor="#2D3436" fontname="Sans-Serif" fontsize=13]
+}

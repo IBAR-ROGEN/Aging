@@ -424,6 +424,31 @@ uv run jupyter lab
 - **`dmr_summary.csv`** - CSV file with DMR statistics
 - **`dmr_visualization.pdf`** - Visualization plots (if generated)
 
+### Pipeline Visualizations
+
+The repository includes visualization scripts that generate diagrams and example plots:
+
+**Generated Visualizations:**
+- **`analysis/Methylation_Pipeline_Workflow.png`** - Workflow diagram showing data flow through the pipeline
+- **`analysis/Example_DMR_Visualizations.png`** - Example DMR analysis plots (Manhattan plot, distributions)
+- **`analysis/Methylation_Pipeline_Summary.png`** - Component overview diagram
+
+**To Generate Visualizations:**
+
+```bash
+# Option 1: Using the script
+uv run python scripts/generate_methylation_visualizations.py
+
+# Option 2: Direct Python module
+uv run python -m src.rogen_aging.methylation_visualizations
+```
+
+These visualizations are useful for:
+- Understanding the pipeline architecture
+- Demonstrating expected output formats
+- Documentation and presentations
+- Quality control and result interpretation
+
 ### File Formats
 
 **bedMethyl Format (BED9+3):**
