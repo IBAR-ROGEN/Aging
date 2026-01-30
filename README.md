@@ -60,7 +60,7 @@ This project targets Python 3.12 (configured in `pyproject.toml`).
 
 ## Running the AlphaGenome Notebook
 
-The `notebooks/AlphaGenome.ipynb` notebook performs a comprehensive analysis of gene lists for Alzheimer's and Parkinson's diseases. To run it, you'll need to set up your environment with the necessary API keys and data files.
+The `notebooks/01_genomics_analysis/AlphaGenome.ipynb` notebook performs a comprehensive analysis of gene lists for Alzheimer's and Parkinson's diseases. To run it, you'll need to set up your environment with the necessary API keys and data files.
 
 ### 1. API Keys
 
@@ -98,7 +98,7 @@ Once you've set up your API keys and data files, you can launch JupyterLab:
 uv run jupyter lab
 ```
 
-Now, you can open `notebooks/AlphaGenome.ipynb` and run the cells. The notebook is configured to read the data files from the `data/` directory and the API keys from your environment.
+Now, you can open `notebooks/01_genomics_analysis/AlphaGenome.ipynb` and run the cells. The notebook is configured to read the data files from the `data/` directory and the API keys from your environment.
 
 ## Methylation Calling Pipeline (ROGEN Activity 2.1.8.1)
 
@@ -112,8 +112,8 @@ This repository includes a complete methylation calling pipeline for Oxford Nano
 - **Pipeline Scripts:**
   - `pipeline_validation.sh` - Basecalling and methylation extraction
   - `downstream_analysis.R` - DMR calling and analysis
-  - `notebooks/DownstreamMethylationAnalysis.ipynb` - Interactive R notebook
-  - `notebooks/UKB_Compliance_Auditor.ipynb` - Compliance auditing tool
+  - `notebooks/02_methylation_pipeline/DownstreamMethylationAnalysis.ipynb` - Interactive R notebook
+  - `notebooks/03_validation_and_compliance/UKB_Compliance_Auditor.ipynb` - Compliance auditing tool
 
 ### Pipeline Overview
 
@@ -133,7 +133,7 @@ Rscript downstream_analysis.R
 
 # Or use the interactive notebook
 uv run jupyter lab
-# Open: notebooks/DownstreamMethylationAnalysis.ipynb
+# Open: notebooks/02_methylation_pipeline/DownstreamMethylationAnalysis.ipynb
 ```
 
 For detailed instructions, see [METHYLATION_PIPELINE_README.md](METHYLATION_PIPELINE_README.md).

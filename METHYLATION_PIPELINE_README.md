@@ -54,8 +54,8 @@ DMRs (Differentially Methylated Regions)
 
 1. **`pipeline_validation.sh`** - Bash script for basecalling and methylation extraction
 2. **`downstream_analysis.R`** - R script for DMR calling and analysis
-3. **`notebooks/DownstreamMethylationAnalysis.ipynb`** - Interactive R notebook version
-4. **`notebooks/UKB_Compliance_Auditor.ipynb`** - UKB compliance auditing tool
+3. **`notebooks/02_methylation_pipeline/DownstreamMethylationAnalysis.ipynb`** - Interactive R notebook version
+4. **`notebooks/03_validation_and_compliance/UKB_Compliance_Auditor.ipynb`** - UKB compliance auditing tool
 
 ### Data Flow
 
@@ -186,7 +186,7 @@ Rscript downstream_analysis.R
 # Launch JupyterLab
 uv run jupyter lab
 
-# Open notebooks/DownstreamMethylationAnalysis.ipynb
+# Open notebooks/02_methylation_pipeline/DownstreamMethylationAnalysis.ipynb
 # Run cells sequentially
 ```
 
@@ -390,7 +390,7 @@ write.csv(dmr_summary, "dmr_summary.csv", row.names = FALSE)
 # Start JupyterLab
 uv run jupyter lab
 
-# Navigate to notebooks/DownstreamMethylationAnalysis.ipynb
+# Navigate to notebooks/02_methylation_pipeline/DownstreamMethylationAnalysis.ipynb
 ```
 
 #### Notebook Structure
@@ -419,7 +419,7 @@ Before sharing results or pushing code to public repositories, you must run the 
 ### Running the Auditor
 
 ```bash
-uv run jupyter lab notebooks/UKB_Compliance_Auditor.ipynb
+uv run jupyter lab notebooks/03_validation_and_compliance/UKB_Compliance_Auditor.ipynb
 ```
 
 For detailed compliance policies, see [docs/UKB_COMPLIANCE_AUDITOR.md](docs/UKB_COMPLIANCE_AUDITOR.md).

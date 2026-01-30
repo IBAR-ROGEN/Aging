@@ -2,7 +2,7 @@
 
 **Project:** ROGEN Aging Research  
 **Activity:** 2.1.8.1 - UKB Compliance Auditing  
-**Tool:** `notebooks/UKB_Compliance_Auditor.ipynb`
+**Tool:** `notebooks/03_validation_and_compliance/UKB_Compliance_Auditor.ipynb`
 
 ## Overview
 
@@ -33,7 +33,7 @@ uv sync
 The auditor is provided as an interactive Jupyter notebook for easy review of findings.
 
 ```bash
-uv run jupyter lab notebooks/UKB_Compliance_Auditor.ipynb
+uv run jupyter lab notebooks/03_validation_and_compliance/UKB_Compliance_Auditor.ipynb
 ```
 
 ### 3. Running the Audit

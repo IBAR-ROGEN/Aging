@@ -1,26 +1,29 @@
-Notebooks
-=========
+# Analysis Notebooks
 
-Place genomic analysis notebooks here. Suggested naming:
+This directory contains Jupyter notebooks for the ROGEN Aging Research project, organized by functional area.
 
-- 001-qc-and-summary.ipynb
-- 010-variant-calling-exploration.ipynb
-- 020-gwas-prep.ipynb
+## Directory Structure
 
-Keep large data in `data/` (ignored by git).
+### `01_genomics_analysis/`
+Notebooks focused on genomic data analysis, gene list exploration, and network analysis.
+- **AlphaGenome.ipynb**: Comprehensive analysis of AD/PD gene lists using the AlphaGenome API.
+- **AlphaGenome_updated.ipynb**: Updated version with enhanced network visualizations.
 
-## Available Notebooks
+### `02_methylation_pipeline/`
+Notebooks for processing and analyzing DNA methylation data from Oxford Nanopore sequencing.
+- **DownstreamMethylationAnalysis.ipynb**: Interactive R notebook for DMR calling and downstream analysis.
+- **MethylationClocks.ipynb**: Exploration and validation of epigenetic clocks for biological age prediction.
 
-### AlphaGenome.ipynb & AlphaGenome_updated.ipynb
-Longevity gene analysis using AlphaGenome API to explore genes associated with Alzheimer's Disease (AD) and Parkinson's Disease (PD). Includes network analysis and visualization.
+### `03_validation_and_compliance/`
+Tools for ensuring data quality, code correctness, and regulatory compliance.
+- **UKB_Compliance_Auditor.ipynb**: Scanner for identifying restricted UK Biobank identifiers (EIDs) before public sharing.
+- **Validations.ipynb**: General pipeline validation and quality control checks.
 
-### MethylationClocks.ipynb
-**Methylation Clocks Analysis** - Explores epigenetic (DNA methylation) clocks for biological age prediction.
+### `04_exploratory_visualizations/`
+Notebooks dedicated to generating project-wide visualizations and heatmaps.
+- **Visualizations.ipynb**: Centralized notebook for generating publication-ready figures.
 
-Features:
-- Epigenetic clock validation plot comparing chronological vs DNAm age
-- Performance metrics calculation (MAE, RMSE, R², correlation)
-- Overview of notable epigenetic clocks (Horvath, Hannum, PhenoAge, GrimAge, DunedinPACE)
-- Foundation for integration with real methylation array data (450K/EPIC)
-
-
+## Guidelines
+- **Data Locality**: Keep large datasets in the root `data/` directory (git-ignored).
+- **Environment**: Use `uv run jupyter lab` to ensure all dependencies are available.
+- **Compliance**: Always run the `UKB_Compliance_Auditor` before pushing new analysis to public portals.
