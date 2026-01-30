@@ -29,7 +29,7 @@ Created a comprehensive R script (375 lines) that provides a complete workflow s
 - Placeholder code structure ready for uncommenting when experimental data becomes available
 - Export functionality for BED files and CSV summaries
 
-### 2. R Notebook Development (`notebooks/DownstreamMethylationAnalysis.ipynb`)
+### 2. R Notebook Development (`notebooks/02_methylation_pipeline/DownstreamMethylationAnalysis.ipynb`)
 
 Created an interactive R Jupyter notebook version of the analysis pipeline, organized into logical sections:
 
@@ -75,7 +75,7 @@ POD5 files → Dorado (basecalling) → BAM with MM/ML tags → Modkit → bedMe
 ## Deliverables
 
 1. ✅ `downstream_analysis.R` - Standalone R script (375 lines)
-2. ✅ `notebooks/DownstreamMethylationAnalysis.ipynb` - Interactive R notebook
+2. ✅ `notebooks/02_methylation_pipeline/DownstreamMethylationAnalysis.ipynb` - Interactive R notebook
 3. ✅ Both files committed to version control and pushed to GitHub
 4. ✅ Comprehensive documentation and comments throughout
 

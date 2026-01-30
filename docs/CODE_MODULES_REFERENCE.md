@@ -4,7 +4,41 @@ This document describes each code file and module in the IBAR-ROGEN Aging projec
 
 ---
 
-## 1. Project Root (Aging/)
+## Directory structure (overview)
+
+```
+Aging/
+├── downstream_analysis.R          # Root R script
+├── find_r.sh
+├── pipeline_validation.sh
+├── pyproject.toml
+├── src/rogen_aging/               # Python package
+│   ├── __init__.py
+│   ├── methylation_visualizations.py
+│   └── network_visualizer.py
+├── scripts/                       # Entry-point scripts
+│   ├── generate_agent_system_schema.py
+│   ├── generate_agent_system_schema_fallback.py
+│   ├── generate_bimodal_heatmap.py
+│   ├── generate_clock_validation.py
+│   ├── generate_methylation_visualizations.py
+│   ├── generate_pipeline_diagram.py
+│   ├── install_graphviz.sh
+│   └── README_GRAPHVIZ.md
+├── notebooks/                     # Notebooks by functional area
+│   ├── 01_genomics_analysis/
+│   ├── 02_methylation_pipeline/
+│   ├── 03_validation_and_compliance/
+│   ├── 04_exploratory_visualizations/
+│   └── README.md
+├── docs/                          # Documentation
+├── analysis/                      # Generated figures and reports
+└── .vscode/, .env.example, ...
+```
+
+---
+
+## 1. Project root (Aging/)
 
 ### 1.1 downstream_analysis.R
 
@@ -58,7 +92,7 @@ This document describes each code file and module in the IBAR-ROGEN Aging projec
 
 ---
 
-## 2. Python Package: src/rogen_aging/
+## 2. Python package: src/rogen_aging/
 
 ### 2.1 __init__.py
 
@@ -112,7 +146,7 @@ This document describes each code file and module in the IBAR-ROGEN Aging projec
 
 ## 3. Scripts (scripts/)
 
-Scripts are entry points that call into `src/rogen_aging` or external tools. They are run from the `Aging/` directory (e.g. `python scripts/generate_*.py` or `uv run python scripts/...`).
+Scripts are entry points that call into `src/rogen_aging` or external tools. Run them from the `Aging/` directory (e.g. `python scripts/generate_*.py` or `uv run python scripts/...`).
 
 ### 3.1 generate_agent_system_schema.py
 
@@ -202,24 +236,73 @@ Scripts are entry points that call into `src/rogen_aging` or external tools. The
 
 ---
 
-## 4. Jupyter Notebooks (notebooks/)
+## 4. Jupyter notebooks (notebooks/)
 
-Notebooks contain interactive analyses and may generate figures or tables; they are not listed as “modules” in the same way as scripts but are part of the codebase.
+Notebooks are grouped by functional area in numbered subfolders. Run with `uv run jupyter lab` from the project root. Large data should live in the root `data/` directory (git-ignored).
 
-| Notebook | Purpose |
-|----------|--------|
-| **AlphaGenome.ipynb** | Longevity gene analysis using the AlphaGenome API; genes linked to Alzheimer’s and Parkinson’s; network analysis and visualization. |
-| **AlphaGenome_updated.ipynb** | Updated version of the AlphaGenome longevity/AD/PD analysis and network exploration. |
-| **DownstreamMethylationAnalysis.ipynb** | Downstream methylation analysis (complements `downstream_analysis.R` in an interactive, notebook form). |
-| **MethylationClocks.ipynb** | Epigenetic clock analysis: chronological vs DNAm age, MAE/RMSE/R², overview of Horvath, Hannum, PhenoAge, GrimAge, DunedinPACE; basis for array data (450K/EPIC). |
-| **Validations.ipynb** | Validation analyses (e.g. method or result checks). |
-| **Visualizations.ipynb** | Ad-hoc visualizations and plots. |
+### 4.1 notebooks/01_genomics_analysis/
 
-**notebooks/README.md** — Describes suggested naming, data location (`data/`), and the available notebooks (AlphaGenome, MethylationClocks).
+Notebooks for genomic data analysis, gene-list exploration, and network analysis.
+
+| File | Purpose |
+|------|--------|
+| **AlphaGenome.ipynb** | Comprehensive analysis of AD/PD gene lists using the AlphaGenome API; longevity genes, network analysis, and visualization. |
+| **AlphaGenome_updated.ipynb** | Updated version with enhanced network visualizations and AlphaGenome API usage. |
 
 ---
 
-## 5. Configuration and Environment
+### 4.2 notebooks/02_methylation_pipeline/
+
+Notebooks for processing and analyzing DNA methylation data from Oxford Nanopore sequencing.
+
+| File | Purpose |
+|------|--------|
+| **DownstreamMethylationAnalysis.ipynb** | Interactive downstream analysis and DMR calling; complements `downstream_analysis.R`. |
+| **MethylationClocks.ipynb** | Epigenetic clock exploration and validation: chronological vs DNAm age, MAE/RMSE/R²; overview of Horvath, Hannum, PhenoAge, GrimAge, DunedinPACE; foundation for 450K/EPIC array data. |
+
+---
+
+### 4.3 notebooks/03_validation_and_compliance/
+
+Tools for data quality, code correctness, and regulatory compliance.
+
+| File | Purpose |
+|------|--------|
+| **UKB_Compliance_Auditor.ipynb** | Scanner for restricted UK Biobank identifiers (EIDs) before public sharing; run before pushing analysis to public portals. |
+| **Validations.ipynb** | General pipeline validation and quality-control checks. |
+
+**Related doc:** `docs/UKB_COMPLIANCE_AUDITOR.md` — Documentation for the UKB compliance auditor.
+
+---
+
+### 4.4 notebooks/04_exploratory_visualizations/
+
+Notebooks for project-wide visualizations and heatmaps.
+
+| File | Purpose |
+|------|--------|
+| **Visualizations.ipynb** | Centralized notebook for generating publication-ready figures and exploratory plots. |
+
+---
+
+### 4.5 notebooks/README.md
+
+**Purpose:** Describes the notebook directory structure, the role of each subfolder, guidelines (data locality, environment, compliance), and a short summary of each notebook.
+
+---
+
+## 5. Documentation (docs/)
+
+| File | Purpose |
+|------|--------|
+| **CODE_MODULES_REFERENCE.md** | This document — reference for all code files and modules. |
+| **METHYLATION_PIPELINE_QUICK_REFERENCE.md** | Quick reference for the methylation pipeline. |
+| **METHYLATION_PIPELINE_USAGE.md** | Detailed usage and workflow for the methylation pipeline. |
+| **UKB_COMPLIANCE_AUDITOR.md** | Documentation for the UK Biobank compliance auditor (used with `03_validation_and_compliance/UKB_Compliance_Auditor.ipynb`). |
+
+---
+
+## 6. Configuration and environment
 
 | File | Purpose |
 |------|--------|
@@ -229,7 +312,7 @@ Notebooks contain interactive analyses and may generate figures or tables; they 
 
 ---
 
-## 6. Summary: Module vs Responsibility
+## 7. Summary: module vs responsibility
 
 | Module / File | Main responsibility |
 |---------------|---------------------|
@@ -244,6 +327,9 @@ Notebooks contain interactive analyses and may generate figures or tables; they 
 | `scripts/generate_methylation_visualizations.py` | Pipeline workflow + example DMR + summary diagrams. |
 | `scripts/generate_pipeline_diagram.py` | Bioinformatics pipeline (diagrams/Graphviz). |
 | `scripts/install_graphviz.sh` | Install Graphviz on macOS. |
-| **Notebooks** | Interactive analyses (AlphaGenome, methylation clocks, downstream methylation, validations, visualizations). |
+| `notebooks/01_genomics_analysis/` | AlphaGenome AD/PD gene analysis and networks. |
+| `notebooks/02_methylation_pipeline/` | Methylation downstream analysis and epigenetic clocks. |
+| `notebooks/03_validation_and_compliance/` | UKB compliance auditor and pipeline validations. |
+| `notebooks/04_exploratory_visualizations/` | Publication-ready and exploratory figures. |
 
 For pipeline usage and quick commands, see **docs/METHYLATION_PIPELINE_QUICK_REFERENCE.md** and **docs/METHYLATION_PIPELINE_USAGE.md**.
