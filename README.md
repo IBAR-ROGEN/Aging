@@ -108,10 +108,12 @@ This repository includes a complete methylation calling pipeline for Oxford Nano
 
 - **[METHYLATION_PIPELINE_README.md](METHYLATION_PIPELINE_README.md)** - Comprehensive user guide
 - **[docs/METHYLATION_PIPELINE_USAGE.md](docs/METHYLATION_PIPELINE_USAGE.md)** - Detailed step-by-step usage guide
+- **[docs/UKB_COMPLIANCE_AUDITOR.md](docs/UKB_COMPLIANCE_AUDITOR.md)** - Compliance and safety documentation
 - **Pipeline Scripts:**
   - `pipeline_validation.sh` - Basecalling and methylation extraction
   - `downstream_analysis.R` - DMR calling and analysis
   - `notebooks/DownstreamMethylationAnalysis.ipynb` - Interactive R notebook
+  - `notebooks/UKB_Compliance_Auditor.ipynb` - Compliance auditing tool
 
 ### Pipeline Overview
 
