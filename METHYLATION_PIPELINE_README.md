@@ -12,10 +12,11 @@
 4. [Installation](#installation)
 5. [Quick Start](#quick-start)
 6. [Detailed Usage](#detailed-usage)
-7. [Output Files](#output-files)
-8. [Troubleshooting](#troubleshooting)
-9. [Advanced Usage](#advanced-usage)
-10. [References](#references)
+7. [Compliance Auditing](#compliance-auditing)
+8. [Output Files](#output-files)
+9. [Troubleshooting](#troubleshooting)
+10. [Advanced Usage](#advanced-usage)
+11. [References](#references)
 
 ---
 
@@ -53,7 +54,8 @@ DMRs (Differentially Methylated Regions)
 
 1. **`pipeline_validation.sh`** - Bash script for basecalling and methylation extraction
 2. **`downstream_analysis.R`** - R script for DMR calling and analysis
-3. **`notebooks/DownstreamMethylationAnalysis.ipynb`** - Interactive R notebook version
+3. **`notebooks/02_methylation_pipeline/DownstreamMethylationAnalysis.ipynb`** - Interactive R notebook version
+4. **`notebooks/03_validation_and_compliance/UKB_Compliance_Auditor.ipynb`** - UKB compliance auditing tool
 
 ### Data Flow
 
@@ -66,7 +68,7 @@ Step 2: Modkit extraction → bedMethyl files
   ↓
 Step 3: DMRcaller analysis → DMR results
   ↓
-Output: BED files, CSV summaries, visualizations
+Step 4: Compliance Audit → Final Report & Public Push
 ```
 
 ---
@@ -184,7 +186,7 @@ Rscript downstream_analysis.R
 # Launch JupyterLab
 uv run jupyter lab
 
-# Open notebooks/DownstreamMethylationAnalysis.ipynb
+# Open notebooks/02_methylation_pipeline/DownstreamMethylationAnalysis.ipynb
 # Run cells sequentially
 ```
 
@@ -388,7 +390,7 @@ write.csv(dmr_summary, "dmr_summary.csv", row.names = FALSE)
 # Start JupyterLab
 uv run jupyter lab
 
-# Navigate to notebooks/DownstreamMethylationAnalysis.ipynb
+# Navigate to notebooks/02_methylation_pipeline/DownstreamMethylationAnalysis.ipynb
 ```
 
 #### Notebook Structure
@@ -407,6 +409,20 @@ uv run jupyter lab
 2. Uncomment code blocks when you have data available
 3. Modify file paths to match your data structure
 4. Adjust parameters based on your experimental design
+
+---
+
+## Compliance Auditing
+
+Before sharing results or pushing code to public repositories, you must run the UKB Compliance Auditor to ensure no restricted identifiers (EIDs) are present.
+
+### Running the Auditor
+
+```bash
+uv run jupyter lab notebooks/03_validation_and_compliance/UKB_Compliance_Auditor.ipynb
+```
+
+For detailed compliance policies, see [docs/UKB_COMPLIANCE_AUDITOR.md](docs/UKB_COMPLIANCE_AUDITOR.md).
 
 ---
 
