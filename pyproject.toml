@@ -18,6 +18,8 @@ dependencies = [
     "scikit-learn>=1.6.0",
     "seaborn>=0.13.2",
     "diagrams>=0.23.0",
+    "ipykernel",
+    "jupyterlab",
 ]
 requires-python = ">=3.12"
 readme = "README.md"
@@ -25,10 +27,6 @@ license = {text = "MIT"}
 
 [project.optional-dependencies]
 genomics = []
-
-[project.group.dev.dependencies]
-ipykernel = "*"
-jupyterlab = "*"
 
 [tool.uv.sources]
 rogen-aging = { path = "." }
