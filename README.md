@@ -100,6 +100,29 @@ uv run jupyter lab
 
 Now, you can open `notebooks/01_genomics_analysis/AlphaGenome.ipynb` and run the cells. The notebook is configured to read the data files from the `data/` directory and the API keys from your environment.
 
+## AlphaGenome Sequence Comparer (Activity 2.1.7.1)
+
+Automated tool for batch submission to AlphaGenome API to compare regulatory scores of Reference vs. Alternate alleles for longevity-associated SNPs.
+
+### Documentation & Analysis
+- **[docs/ALPHAGENOME_ANALYSIS_EXPLANATION.md](docs/ALPHAGENOME_ANALYSIS_EXPLANATION.md)** - **Detailed methodology and logic explanation**
+- **Results:**
+  - `alphagenome_comparison_results.csv` - Raw API outputs
+  - `alphagenome_impact_analysis.csv` - Processed regulatory impact scores
+  - `alphagenome_impact_bar_plot.png` - Visualization of top impacts
+  - `alphagenome_ref_vs_alt_scatter.png` - Scatter plot of Ref vs Alt scores
+
+### Usage
+```bash
+# 1. Ensure API keys are set in .env
+# 2. Run the sequence comparer
+uv run scripts/alphagenome_sequence_comparer.py
+
+# 3. Analyze and visualize results
+uv run scripts/analyze_alphagenome_results.py
+uv run scripts/visualize_alphagenome_results.py
+```
+
 ## Methylation Calling Pipeline (ROGEN Activity 2.1.8.1)
 
 This repository includes a complete methylation calling pipeline for Oxford Nanopore sequencing data.

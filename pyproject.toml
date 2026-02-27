@@ -20,6 +20,8 @@ dependencies = [
     "diagrams>=0.23.0",
     "ipykernel",
     "jupyterlab",
+    "openpyxl>=3.1.5",
+    "typer>=0.24.1",
 ]
 requires-python = ">=3.12"
 readme = "README.md"
