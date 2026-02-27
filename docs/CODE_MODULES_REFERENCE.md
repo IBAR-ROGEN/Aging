@@ -6,6 +6,8 @@ This document describes each code file and module in the IBAR-ROGEN Aging projec
 
 ## Directory structure (overview)
 
+See **[docs/PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md)** for the full directory layout.
+
 ```
 Aging/
 ├── downstream_analysis.R          # Root R script
@@ -17,12 +19,13 @@ Aging/
 │   ├── methylation_visualizations.py
 │   └── network_visualizer.py
 ├── scripts/                       # Entry-point scripts
-│   ├── generate_agent_system_schema.py
-│   ├── generate_agent_system_schema_fallback.py
-│   ├── generate_bimodal_heatmap.py
-│   ├── generate_clock_validation.py
-│   ├── generate_methylation_visualizations.py
-│   ├── generate_pipeline_diagram.py
+│   ├── mock_ukb_generator.py      # Synthetic UK Biobank data
+│   ├── security_check.sh          # UK Biobank pre-commit hook
+│   ├── install_pre_commit_hook.sh
+│   ├── alphagenome_sequence_comparer.py
+│   ├── analyze_alphagenome_results.py
+│   ├── visualize_alphagenome_results.py
+│   ├── generate_*.py
 │   ├── install_graphviz.sh
 │   └── README_GRAPHVIZ.md
 ├── notebooks/                     # Notebooks by functional area
@@ -32,6 +35,7 @@ Aging/
 │   ├── 04_exploratory_visualizations/
 │   └── README.md
 ├── docs/                          # Documentation
+├── test_data/                     # Synthetic test data (versioned)
 ├── analysis/                      # Generated figures and reports
 └── .vscode/, .env.example, ...
 ```
@@ -236,6 +240,30 @@ Scripts are entry points that call into `src/rogen_aging` or external tools. Run
 
 ---
 
+### 3.9 mock_ukb_generator.py
+
+**Purpose:** Generate synthetic UK Biobank-style tabular data for pipeline development and testing.
+
+**Responsibilities:**
+- Produces fake data with Sample_ID, Age, EAA (Epigenetic Age Acceleration), and 5 dummy SNP columns (0, 1, 2).
+- Uses `MOCK_` prefix for Sample_IDs (whitelisted by UK Biobank pre-commit security hook).
+- Typer CLI: `--n-samples`, `--output`, `--seed`.
+
+**Dependencies:** pandas, numpy, typer.  
+**Output:** `test_data/mock_clinical_data.csv` (default).  
+**Related doc:** [docs/SYNTHETIC_UKB_GENERATOR.md](SYNTHETIC_UKB_GENERATOR.md).
+
+---
+
+### 3.10 security_check.sh & install_pre_commit_hook.sh
+
+**Purpose:** UK Biobank pre-commit security hook — blocks commits containing `patient_id`, `UKB_`, or `.vcf`/`.bed` files.
+
+**Usage:** Run `./scripts/install_pre_commit_hook.sh` to install.  
+**Related doc:** [docs/UKB_PRE_COMMIT_HOOK.md](UKB_PRE_COMMIT_HOOK.md).
+
+---
+
 ## 4. Jupyter notebooks (notebooks/)
 
 Notebooks are grouped by functional area in numbered subfolders. Run with `uv run jupyter lab` from the project root. Large data should live in the root `data/` directory (git-ignored).
@@ -296,9 +324,12 @@ Notebooks for project-wide visualizations and heatmaps.
 | File | Purpose |
 |------|--------|
 | **CODE_MODULES_REFERENCE.md** | This document — reference for all code files and modules. |
+| **PROJECT_STRUCTURE.md** | Bioinformatics project directory layout. |
+| **UKB_PRE_COMMIT_HOOK.md** | Git pre-commit security hook for UK Biobank compliance. |
+| **SYNTHETIC_UKB_GENERATOR.md** | Synthetic UK Biobank data generator (`mock_ukb_generator.py`). |
+| **UKB_COMPLIANCE_AUDITOR.md** | UK Biobank compliance auditor (used with `03_validation_and_compliance/UKB_Compliance_Auditor.ipynb`). |
 | **METHYLATION_PIPELINE_QUICK_REFERENCE.md** | Quick reference for the methylation pipeline. |
 | **METHYLATION_PIPELINE_USAGE.md** | Detailed usage and workflow for the methylation pipeline. |
-| **UKB_COMPLIANCE_AUDITOR.md** | Documentation for the UK Biobank compliance auditor (used with `03_validation_and_compliance/UKB_Compliance_Auditor.ipynb`). |
 
 ---
 
@@ -327,6 +358,8 @@ Notebooks for project-wide visualizations and heatmaps.
 | `scripts/generate_methylation_visualizations.py` | Pipeline workflow + example DMR + summary diagrams. |
 | `scripts/generate_pipeline_diagram.py` | Bioinformatics pipeline (diagrams/Graphviz). |
 | `scripts/install_graphviz.sh` | Install Graphviz on macOS. |
+| `scripts/mock_ukb_generator.py` | Synthetic UK Biobank-style mock data. |
+| `scripts/security_check.sh` | UK Biobank pre-commit security hook. |
 | `notebooks/01_genomics_analysis/` | AlphaGenome AD/PD gene analysis and networks. |
 | `notebooks/02_methylation_pipeline/` | Methylation downstream analysis and epigenetic clocks. |
 | `notebooks/03_validation_and_compliance/` | UKB compliance auditor and pipeline validations. |

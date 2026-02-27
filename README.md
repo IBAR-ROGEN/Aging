@@ -50,9 +50,12 @@ uv add .[genomics]
 
 ## Layout
 
-- `src/rogen_aging/`: Python package for shared code
-- `notebooks/`: genomic analysis notebooks
-- `data/`: put large/local data here (git-ignored)
+- `src/rogen_aging/` — Python package for shared code
+- `scripts/` — CLI scripts (AlphaGenome, mock data generator, security hook)
+- `notebooks/` — Genomic analysis notebooks
+- `docs/` — Project documentation
+- `test_data/` — Synthetic test data (versioned)
+- `data/` — Large/local data (git-ignored)
 
 ## Python version
 
@@ -132,7 +135,7 @@ This repository includes a complete methylation calling pipeline for Oxford Nano
 - **[METHYLATION_PIPELINE_README.md](METHYLATION_PIPELINE_README.md)** - Comprehensive user guide
 - **[docs/METHYLATION_PIPELINE_USAGE.md](docs/METHYLATION_PIPELINE_USAGE.md)** - Detailed step-by-step usage guide
 - **[docs/UKB_COMPLIANCE_AUDITOR.md](docs/UKB_COMPLIANCE_AUDITOR.md)** - Compliance and safety documentation
-- **Git Pre-Commit Hook** - `scripts/security_check.sh` blocks commits containing `patient_id`, `UKB_`, or `.vcf`/`.bed` files. Install: `./scripts/install_pre_commit_hook.sh`
+- **[docs/UKB_PRE_COMMIT_HOOK.md](docs/UKB_PRE_COMMIT_HOOK.md)** — Git pre-commit hook blocks commits containing `patient_id`, `UKB_`, or `.vcf`/`.bed`. Install: `./scripts/install_pre_commit_hook.sh`
 - **Pipeline Scripts:**
   - `pipeline_validation.sh` - Basecalling and methylation extraction
   - `downstream_analysis.R` - DMR calling and analysis
@@ -161,3 +164,24 @@ uv run jupyter lab
 ```
 
 For detailed instructions, see [METHYLATION_PIPELINE_README.md](METHYLATION_PIPELINE_README.md).
+
+## Synthetic UK Biobank Data Generator
+
+Generate fake UK Biobank-style tabular data for pipeline development before real data arrives. Safe for GitHub (no real participant IDs).
+
+```bash
+uv run scripts/mock_ukb_generator.py
+# Output: test_data/mock_clinical_data.csv (1000 samples by default)
+```
+
+See **[docs/SYNTHETIC_UKB_GENERATOR.md](docs/SYNTHETIC_UKB_GENERATOR.md)** for usage and options.
+
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [docs/PROJECT_STRUCTURE.md](docs/PROJECT_STRUCTURE.md) | Bioinformatics project directory layout |
+| [docs/UKB_PRE_COMMIT_HOOK.md](docs/UKB_PRE_COMMIT_HOOK.md) | Git pre-commit security hook |
+| [docs/SYNTHETIC_UKB_GENERATOR.md](docs/SYNTHETIC_UKB_GENERATOR.md) | Mock UK Biobank data generator |
+| [docs/UKB_COMPLIANCE_AUDITOR.md](docs/UKB_COMPLIANCE_AUDITOR.md) | UK Biobank compliance tool |
+| [docs/CODE_MODULES_REFERENCE.md](docs/CODE_MODULES_REFERENCE.md) | Code modules reference |
