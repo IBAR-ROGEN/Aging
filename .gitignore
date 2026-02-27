@@ -271,6 +271,7 @@ outputs/
 *.cram
 *.csv
 !test_data/mock_clinical_data.csv
+!test_data/mock_epigenetic_clinical.csv
 *.tsv
 *.bed
 *.bed.gz
