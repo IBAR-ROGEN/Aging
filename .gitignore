@@ -270,6 +270,7 @@ outputs/
 *.sam
 *.cram
 *.csv
+!test_data/mock_clinical_data.csv
 *.tsv
 *.bed
 *.bed.gz

@@ -45,9 +45,9 @@ while IFS= read -r file; do
     continue
   fi
 
-  # Skip content scan for compliance docs and the security tool itself
+  # Skip content scan for compliance docs, security tool, and synthetic mock data
   case "$file" in
-    docs/UKB_COMPLIANCE*|README*|*security_check*|*install_pre_commit*) continue ;;
+    docs/UKB_COMPLIANCE*|README*|*security_check*|*install_pre_commit*|scripts/mock_ukb_generator.py|test_data/mock_clinical_data.csv) continue ;;
   esac
 
   # Scan file contents for restricted patterns (-a treats binary as text for grep)
