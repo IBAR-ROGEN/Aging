@@ -254,3 +254,26 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# === Bioinformatics: data/code separation (setup_rogen_env.py) ===
+# Block entire data and results folders - never commit large/sensitive data
+data/
+results/
+outputs/
+
+# Block sensitive bioinformatics file types globally (safety net)
+*.vcf
+*.vcf.gz
+*.vcf.bgz
+*.bam
+*.bam.bai
+*.sam
+*.cram
+*.csv
+*.tsv
+*.bed
+*.bed.gz
+*.fastq
+*.fastq.gz
+*.fq
+*.fq.gz
