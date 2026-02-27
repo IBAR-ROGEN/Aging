@@ -176,6 +176,18 @@ uv run scripts/mock_ukb_generator.py
 
 See **[docs/SYNTHETIC_UKB_GENERATOR.md](docs/SYNTHETIC_UKB_GENERATOR.md)** for usage and options.
 
+## EDA Mock Integration
+
+Exploratory analysis for mock epigenetic aging data (chronological vs epigenetic age, EAA residuals).
+
+```bash
+uv run python scripts/eda_mock_integration.py
+# Input: test_data/mock_epigenetic_clinical.csv
+# Output: results/mock_eaa_plot.png
+```
+
+See **[docs/EDA_MOCK_INTEGRATION.md](docs/EDA_MOCK_INTEGRATION.md)** for details.
+
 ## Documentation
 
 | Document | Description |
@@ -183,5 +195,6 @@ See **[docs/SYNTHETIC_UKB_GENERATOR.md](docs/SYNTHETIC_UKB_GENERATOR.md)** for u
 | [docs/PROJECT_STRUCTURE.md](docs/PROJECT_STRUCTURE.md) | Bioinformatics project directory layout |
 | [docs/UKB_PRE_COMMIT_HOOK.md](docs/UKB_PRE_COMMIT_HOOK.md) | Git pre-commit security hook |
 | [docs/SYNTHETIC_UKB_GENERATOR.md](docs/SYNTHETIC_UKB_GENERATOR.md) | Mock UK Biobank data generator |
+| [docs/EDA_MOCK_INTEGRATION.md](docs/EDA_MOCK_INTEGRATION.md) | EDA mock epigenetic aging script |
 | [docs/UKB_COMPLIANCE_AUDITOR.md](docs/UKB_COMPLIANCE_AUDITOR.md) | UK Biobank compliance tool |
 | [docs/CODE_MODULES_REFERENCE.md](docs/CODE_MODULES_REFERENCE.md) | Code modules reference |
