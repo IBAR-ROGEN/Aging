@@ -26,6 +26,7 @@ Aging/
 │   ├── analyze_alphagenome_results.py
 │   ├── visualize_alphagenome_results.py
 │   ├── generate_*.py
+│   ├── train_romanian_epigenetic_clock.py  # Elastic Net mock clock
 │   ├── install_graphviz.sh
 │   └── README_GRAPHVIZ.md
 ├── notebooks/                     # Notebooks by functional area
@@ -255,7 +256,21 @@ Scripts are entry points that call into `src/rogen_aging` or external tools. Run
 
 ---
 
-### 3.10 security_check.sh & install_pre_commit_hook.sh
+### 3.10 train_romanian_epigenetic_clock.py
+
+**Purpose:** Train a custom epigenetic aging clock with Elastic Net (`ElasticNetCV`) on a methylation feature matrix and chronological age metadata; Romanian-style mock cohort IDs when generating synthetic data.
+
+**Responsibilities:**
+- Load `methylation_matrix.csv` and `metadata.csv` (inner join on `sample_id`) with Polars, or write deterministic mock CSVs under `data/mock_romanian_cohort/` when files are missing.
+- Fit `Pipeline(StandardScaler, ElasticNetCV)` with 5-fold CV over `l1_ratio` and `alpha`.
+- Report test-set MAE and Pearson r; save scatter plot (chronological vs predicted age) under `figures/` (git-ignored).
+
+**Dependencies:** polars, numpy, scipy, scikit-learn, matplotlib, typer.  
+**Related doc:** [docs/ROMANIAN_EPIGENETIC_CLOCK.md](ROMANIAN_EPIGENETIC_CLOCK.md).
+
+---
+
+### 3.11 security_check.sh & install_pre_commit_hook.sh
 
 **Purpose:** UK Biobank pre-commit security hook — blocks commits containing `patient_id`, `UKB_`, or `.vcf`/`.bed` files.
 
@@ -327,6 +342,7 @@ Notebooks for project-wide visualizations and heatmaps.
 | **PROJECT_STRUCTURE.md** | Bioinformatics project directory layout. |
 | **UKB_PRE_COMMIT_HOOK.md** | Git pre-commit security hook for UK Biobank compliance. |
 | **SYNTHETIC_UKB_GENERATOR.md** | Synthetic UK Biobank data generator (`mock_ukb_generator.py`). |
+| **ROMANIAN_EPIGENETIC_CLOCK.md** | Romanian cohort Elastic Net epigenetic clock (`train_romanian_epigenetic_clock.py`). |
 | **UKB_COMPLIANCE_AUDITOR.md** | UK Biobank compliance auditor (used with `03_validation_and_compliance/UKB_Compliance_Auditor.ipynb`). |
 | **METHYLATION_PIPELINE_QUICK_REFERENCE.md** | Quick reference for the methylation pipeline. |
 | **METHYLATION_PIPELINE_USAGE.md** | Detailed usage and workflow for the methylation pipeline. |
@@ -359,6 +375,7 @@ Notebooks for project-wide visualizations and heatmaps.
 | `scripts/generate_pipeline_diagram.py` | Bioinformatics pipeline (diagrams/Graphviz). |
 | `scripts/install_graphviz.sh` | Install Graphviz on macOS. |
 | `scripts/mock_ukb_generator.py` | Synthetic UK Biobank-style mock data. |
+| `scripts/train_romanian_epigenetic_clock.py` | Elastic Net epigenetic clock (mock Romanian cohort / custom CSVs). |
 | `scripts/security_check.sh` | UK Biobank pre-commit security hook. |
 | `notebooks/01_genomics_analysis/` | AlphaGenome AD/PD gene analysis and networks. |
 | `notebooks/02_methylation_pipeline/` | Methylation downstream analysis and epigenetic clocks. |
