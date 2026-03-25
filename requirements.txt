@@ -1,0 +1,7 @@
+# Pin versions locally with `uv pip compile` or `uv lock` as your workflow matures.
+numpy>=2.0
+pandas>=2.0
+scikit-learn>=1.5
+networkx>=3.0
+pysam>=0.22
+streamlit>=1.40

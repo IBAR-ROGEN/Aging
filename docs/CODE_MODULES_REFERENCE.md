@@ -14,10 +14,15 @@ Aging/
 ├── find_r.sh
 ├── pipeline_validation.sh
 ├── pyproject.toml
-├── src/rogen_aging/               # Python package
-│   ├── __init__.py
+├── setup.py                       # Setuptools entry (metadata in pyproject.toml)
+├── requirements.txt               # Optional pip-style dependencies
+├── src/rogen_aging/               # Installable Python package
+│   ├── __init__.py                # Public API + submodule exports
+│   ├── pipeline/                  # Shared pipeline code (placeholder)
+│   │   └── __init__.py
 │   ├── methylation_visualizations.py
 │   └── network_visualizer.py
+├── tests/                         # Pytest (e.g. import smoke tests)
 ├── scripts/                       # Entry-point scripts
 │   ├── mock_ukb_generator.py      # Synthetic UK Biobank data
 │   ├── security_check.sh          # UK Biobank pre-commit hook
@@ -101,13 +106,26 @@ Aging/
 
 ### 2.1 __init__.py
 
-**Purpose:** Package initializer for `rogen_aging`.
+**Purpose:** Package root for `rogen_aging`; defines the stable import surface for notebooks and scripts.
 
-**Responsibilities:** Declares the package and its public API (currently `__all__ = []`). Visualization and network code live in the other modules and are run via scripts or notebooks.
+**Responsibilities:**
+- Re-exports visualization entrypoints so callers can use `from rogen_aging import create_pipeline_workflow_diagram`, `create_network_visualization`, `generate_all_visualizations`, etc.
+- Binds submodules for explicit use: `from rogen_aging import methylation_visualizations`, `network_visualizer`, `pipeline`.
+- Declares `__all__` for `from rogen_aging import *` (discouraged in application code, but supported).
+
+**After install:** With `uv sync` or `uv pip install -e .`, use absolute imports only (`from rogen_aging…`), not `sys.path` hacks.
 
 ---
 
-### 2.2 methylation_visualizations.py
+### 2.2 pipeline/ (subpackage)
+
+**Purpose:** Home for shared pipeline logic as it is refactored out of `scripts/` and notebooks.
+
+**Responsibilities:** Currently a placeholder (`__all__ = []`). Add modules here (e.g. QC, I/O, model steps) and export names from `pipeline/__init__.py`.
+
+---
+
+### 2.3 methylation_visualizations.py
 
 **Purpose:** Central module for all methylation-related figures and pipeline diagrams.
 
@@ -132,7 +150,7 @@ Aging/
 
 ---
 
-### 2.3 network_visualizer.py
+### 2.4 network_visualizer.py
 
 **Purpose:** Protein interaction network visualization (“Resilience Core”).
 
@@ -353,7 +371,9 @@ Notebooks for project-wide visualizations and heatmaps.
 
 | File | Purpose |
 |------|--------|
-| **pyproject.toml** | Python project config (uv): package name `rogen-aging`, dependencies (alphagenome, pandas, matplotlib, requests, polars, python-dotenv, networkx, numpy, scipy, scikit-learn, seaborn, diagrams), dev deps (ipykernel, jupyterlab), Python ≥3.12. |
+| **pyproject.toml** | Python project config (uv): package name `rogen-aging`, `[build-system]` (setuptools), dependencies including pysam and streamlit, optional `dev` extra (pytest), test paths / `pythonpath` for pytest, Python ≥3.12. |
+| **setup.py** | Setuptools shim; metadata and dependencies are defined in `pyproject.toml`. |
+| **requirements.txt** | Optional pip-oriented list with loose pins for a subset of scientific stack. |
 | **.env.example** | Example environment variables (e.g. API keys or paths) for local runs. |
 | **.vscode/settings.json** | Editor settings (e.g. R path, Python interpreter) for the workspace. |
 
@@ -366,8 +386,11 @@ Notebooks for project-wide visualizations and heatmaps.
 | `downstream_analysis.R` | DMR calling from bedMethyl (DMRcaller workflow). |
 | `find_r.sh` | Find R on macOS for IDE. |
 | `pipeline_validation.sh` | Validate ONT pipeline (Dorado + Modkit + test data). |
+| `src/rogen_aging/__init__.py` | Public API and submodule exports for `import rogen_aging`. |
+| `src/rogen_aging/pipeline/` | Placeholder subpackage for shared pipeline code. |
 | `src/rogen_aging/methylation_visualizations.py` | All methylation pipeline and clock figures. |
 | `src/rogen_aging/network_visualizer.py` | Protein interaction network figure. |
+| `tests/` | Pytest tests (e.g. package import smoke tests). |
 | `scripts/generate_agent_system_schema*.py` | Figure 4 — agent system architecture. |
 | `scripts/generate_bimodal_heatmap.py` | Figure 2 — bimodal risk heatmap. |
 | `scripts/generate_clock_validation.py` | Figure 3 — clock validation. |
