@@ -40,6 +40,7 @@ htmlcov/
 data/
 results/
 outputs/
+figures/
 
 # macOS
 .DS_Store
@@ -260,6 +261,7 @@ __marimo__/
 data/
 results/
 outputs/
+figures/
 
 # Block sensitive bioinformatics file types globally (safety net)
 *.vcf

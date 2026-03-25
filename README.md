@@ -201,6 +201,18 @@ uv run python scripts/eda_mock_integration.py
 
 See **[docs/EDA_MOCK_INTEGRATION.md](docs/EDA_MOCK_INTEGRATION.md)** for details.
 
+## Romanian cohort mock epigenetic clock (Elastic Net)
+
+Train a **custom epigenetic aging clock** with **`ElasticNetCV`** (5-fold CV over `alpha` and `l1_ratio`), **Polars**-loaded methylation matrix + metadata (`chronological_age`), test-set **MAE** and **Pearson r**, and a **scatter plot** (chronological vs predicted age with best-fit and identity lines).
+
+```bash
+uv run python scripts/train_romanian_epigenetic_clock.py
+# Mock CSVs: data/mock_romanian_cohort/ (created if missing; git-ignored)
+# Plot: figures/romanian_mock_epigenetic_clock_scatter.png (git-ignored)
+```
+
+See **[docs/ROMANIAN_EPIGENETIC_CLOCK.md](docs/ROMANIAN_EPIGENETIC_CLOCK.md)** for file formats, options, and validation notes.
+
 ## Documentation
 
 | Document | Description |
@@ -210,6 +222,7 @@ See **[docs/EDA_MOCK_INTEGRATION.md](docs/EDA_MOCK_INTEGRATION.md)** for details
 | [docs/SYNTHETIC_UKB_GENERATOR.md](docs/SYNTHETIC_UKB_GENERATOR.md) | Mock UK Biobank data generator |
 | [docs/SYNTHETIC_ROMANIAN_VCF_GENERATOR.md](docs/SYNTHETIC_ROMANIAN_VCF_GENERATOR.md) | Synthetic Romanian cohort VCF (VCF 4.2) |
 | [docs/EDA_MOCK_INTEGRATION.md](docs/EDA_MOCK_INTEGRATION.md) | EDA mock epigenetic aging script |
+| [docs/ROMANIAN_EPIGENETIC_CLOCK.md](docs/ROMANIAN_EPIGENETIC_CLOCK.md) | Romanian cohort Elastic Net clock (`train_romanian_epigenetic_clock.py`) |
 | [docs/UKB_COMPLIANCE_AUDITOR.md](docs/UKB_COMPLIANCE_AUDITOR.md) | UK Biobank compliance tool |
 | [docs/UKBB_CI_COMPLIANCE_AUDIT.md](docs/UKBB_CI_COMPLIANCE_AUDIT.md) | CI/CD UKB-oriented repo audit script and usage |
 | [docs/CODE_MODULES_REFERENCE.md](docs/CODE_MODULES_REFERENCE.md) | Code modules reference |
