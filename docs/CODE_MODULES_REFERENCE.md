@@ -21,7 +21,8 @@ Aging/
 │   ├── pipeline/                  # Shared pipeline code (placeholder)
 │   │   └── __init__.py
 │   ├── methylation_visualizations.py
-│   └── network_visualizer.py
+│   ├── network_visualizer.py
+│   └── eda_dashboard/            # Streamlit merged-cohort EDA (see docs/EDA_DASHBOARD.md)
 ├── tests/                         # Pytest (e.g. import smoke tests)
 ├── scripts/                       # Entry-point scripts
 │   ├── mock_ukb_generator.py      # Synthetic UK Biobank data
@@ -164,6 +165,26 @@ Aging/
 
 **Dependencies:** networkx, matplotlib, numpy.  
 **Output:** Single PNG (default `Network_Analysis_Nov.png`).
+
+---
+
+### 2.5 eda_dashboard/ (package subfolder)
+
+**Purpose:** Official **Streamlit** exploratory dashboard for the multi-omics aging **merged Parquet** cohort.
+
+**Responsibilities:**
+- Load merged table with `@st.cache_data` (Polars read, pandas for Plotly/Seaborn).
+- Sidebar **global filters** (age range, sex, disease status) applied across all tabs.
+- **Tab 1** — Stacked age histogram by disease; clinical correlation heatmap.
+- **Tab 2** — Chronological vs epigenetic age scatter (Plotly Express) with OLS line; MAE and Pearson *r* metrics.
+- **Tab 3** — LA-SNP genotype vs continuous trait boxplots; Kruskal–Wallis caption.
+- Synthetic in-memory cohort when Parquet is missing.
+
+**Entry point:** `uv run streamlit run src/rogen_aging/eda_dashboard/app.py`
+
+**Documentation:** [docs/EDA_DASHBOARD.md](EDA_DASHBOARD.md)
+
+**Dependencies:** streamlit, plotly, seaborn, polars, pandas, pyarrow, scipy, numpy.
 
 ---
 
@@ -390,6 +411,7 @@ Notebooks for project-wide visualizations and heatmaps.
 | `src/rogen_aging/pipeline/` | Placeholder subpackage for shared pipeline code. |
 | `src/rogen_aging/methylation_visualizations.py` | All methylation pipeline and clock figures. |
 | `src/rogen_aging/network_visualizer.py` | Protein interaction network figure. |
+| `src/rogen_aging/eda_dashboard/` | Streamlit EDA dashboard for merged multi-omics Parquet. |
 | `tests/` | Pytest tests (e.g. package import smoke tests). |
 | `scripts/generate_agent_system_schema*.py` | Figure 4 — agent system architecture. |
 | `scripts/generate_bimodal_heatmap.py` | Figure 2 — bimodal risk heatmap. |
