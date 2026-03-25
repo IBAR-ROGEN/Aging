@@ -55,6 +55,16 @@ uv add --dev <package>
 uv add .[genomics]
 ```
 
+## Multi-omics EDA dashboard (Streamlit)
+
+Interactive dashboard for the **merged integration Parquet** (clinical, methylation-derived ages, LA-SNP columns). Run from the repo root:
+
+```bash
+uv run streamlit run src/rogen_aging/eda_dashboard/app.py
+```
+
+By default the app expects `data/merged_cohort.parquet`, or set `ROGEN_MERGED_COHORT_PARQUET`. Full schema, tabs, and module map: **[docs/EDA_DASHBOARD.md](docs/EDA_DASHBOARD.md)**.
+
 ## Layout
 
 - `src/rogen_aging/` — Installable Python package (`import rogen_aging`, `from rogen_aging import …`)

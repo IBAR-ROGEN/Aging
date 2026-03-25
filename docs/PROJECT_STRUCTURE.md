@@ -40,6 +40,7 @@ Installable package (`rogen-aging` on the environment path after `uv sync` or `u
 | `pipeline/` | Placeholder subpackage for shared pipeline steps (grow as scripts move here) |
 | `methylation_visualizations.py` | Pipeline diagrams, DMR plots, clock validation figures |
 | `network_visualizer.py` | Protein interaction network visualization |
+| `eda_dashboard/` | Streamlit EDA app for merged multi-omics Parquet ([EDA_DASHBOARD.md](EDA_DASHBOARD.md)) |
 
 ### `tests/`
 
