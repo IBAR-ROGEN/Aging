@@ -135,6 +135,7 @@ This repository includes a complete methylation calling pipeline for Oxford Nano
 - **[METHYLATION_PIPELINE_README.md](METHYLATION_PIPELINE_README.md)** - Comprehensive user guide
 - **[docs/METHYLATION_PIPELINE_USAGE.md](docs/METHYLATION_PIPELINE_USAGE.md)** - Detailed step-by-step usage guide
 - **[docs/UKB_COMPLIANCE_AUDITOR.md](docs/UKB_COMPLIANCE_AUDITOR.md)** - Compliance and safety documentation
+- **[docs/UKBB_CI_COMPLIANCE_AUDIT.md](docs/UKBB_CI_COMPLIANCE_AUDIT.md)** - CI/CD repository audit (`scripts/ukbb_ci_compliance_audit.sh`): genomic files, large tabular data, hardcoded paths
 - **[docs/UKB_PRE_COMMIT_HOOK.md](docs/UKB_PRE_COMMIT_HOOK.md)** — Git pre-commit hook blocks commits containing `patient_id`, `UKB_`, or `.vcf`/`.bed`. Install: `./scripts/install_pre_commit_hook.sh`
 - **Pipeline Scripts:**
   - `pipeline_validation.sh` - Basecalling and methylation extraction
@@ -210,4 +211,5 @@ See **[docs/EDA_MOCK_INTEGRATION.md](docs/EDA_MOCK_INTEGRATION.md)** for details
 | [docs/SYNTHETIC_ROMANIAN_VCF_GENERATOR.md](docs/SYNTHETIC_ROMANIAN_VCF_GENERATOR.md) | Synthetic Romanian cohort VCF (VCF 4.2) |
 | [docs/EDA_MOCK_INTEGRATION.md](docs/EDA_MOCK_INTEGRATION.md) | EDA mock epigenetic aging script |
 | [docs/UKB_COMPLIANCE_AUDITOR.md](docs/UKB_COMPLIANCE_AUDITOR.md) | UK Biobank compliance tool |
+| [docs/UKBB_CI_COMPLIANCE_AUDIT.md](docs/UKBB_CI_COMPLIANCE_AUDIT.md) | CI/CD UKB-oriented repo audit script and usage |
 | [docs/CODE_MODULES_REFERENCE.md](docs/CODE_MODULES_REFERENCE.md) | Code modules reference |
