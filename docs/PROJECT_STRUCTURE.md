@@ -11,7 +11,8 @@ This document describes the directory layout of the rogen_aging bioinformatics p
 
 ```
 rogen_aging/
-├── src/rogen_aging/          # Python package (shared code)
+├── src/rogen_aging/          # Installable Python package (shared code)
+├── tests/                    # Pytest package smoke / unit tests
 ├── scripts/                  # CLI and utility scripts
 ├── notebooks/                # Jupyter notebooks by functional area
 ├── docs/                     # Documentation
@@ -20,7 +21,9 @@ rogen_aging/
 ├── data/                     # Large/local data (git-ignored)
 ├── results/                  # Pipeline outputs (git-ignored)
 ├── outputs/                  # Other outputs (git-ignored)
-├── pyproject.toml            # Project config (uv)
+├── pyproject.toml            # Project metadata, deps, build (uv / setuptools)
+├── setup.py                  # Setuptools shim (reads pyproject.toml)
+├── requirements.txt          # Optional pip-style pin list for non-uv workflows
 ├── .env.example              # Example environment variables
 └── README.md
 ```
@@ -29,12 +32,18 @@ rogen_aging/
 
 ### `src/rogen_aging/`
 
-Core Python package for shared analysis logic and visualizations.
+Installable package (`rogen-aging` on the environment path after `uv sync` or `uv pip install -e .`). Shared analysis logic and visualizations.
 
-| Module | Purpose |
-|--------|---------|
+| Path | Purpose |
+|------|---------|
+| `__init__.py` | Public API: re-exports visualization helpers and submodules (`methylation_visualizations`, `network_visualizer`, `pipeline`) |
+| `pipeline/` | Placeholder subpackage for shared pipeline steps (grow as scripts move here) |
 | `methylation_visualizations.py` | Pipeline diagrams, DMR plots, clock validation figures |
 | `network_visualizer.py` | Protein interaction network visualization |
+
+### `tests/`
+
+Pytest tests. Run with `uv run pytest` (install dev extras first: `uv sync --extra dev`). `pyproject.toml` sets `pythonpath = ["src"]` so imports resolve without a manual install in many setups.
 
 ### `scripts/`
 
@@ -118,10 +127,12 @@ Pipeline outputs and exported results. Kept local only.
 
 | File | Purpose |
 |------|---------|
-| `pyproject.toml` | Dependencies, Python version (≥3.12) |
+| `pyproject.toml` | Dependencies, Python version (≥3.12), `[build-system]` for setuptools, optional `dev` extra (pytest) |
+| `setup.py` | Thin `setuptools.setup()` entry point; metadata lives in `pyproject.toml` |
+| `requirements.txt` | Loose lower bounds for core bioinformatics tools; prefer `uv sync` for the full graph |
 | `.env` | API keys, local paths (git-ignored; copy from `.env.example`) |
 | `.gitignore` | Excludes `data/`, `results/`, `outputs/`, most `.csv`, `.vcf`, `.bed` |
 
 ---
 
-**Last Updated:** February 27, 2026
+**Last Updated:** March 25, 2026

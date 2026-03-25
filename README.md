@@ -10,10 +10,17 @@ Project scaffold for genomic notebooks and analysis, managed with `uv`.
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-2) Create the environment and install deps:
+2) Create the environment, install dependencies, and install this repo as a package (editable):
 
 ```bash
 uv sync
+```
+
+For running tests, include dev dependencies:
+
+```bash
+uv sync --extra dev
+uv run pytest
 ```
 
 3) Register a Jupyter kernel for this project (optional but recommended):
@@ -50,12 +57,14 @@ uv add .[genomics]
 
 ## Layout
 
-- `src/rogen_aging/` — Python package for shared code
+- `src/rogen_aging/` — Installable Python package (`import rogen_aging`, `from rogen_aging import …`)
+- `tests/` — Pytest tests (`uv run pytest` after `uv sync --extra dev`)
 - `scripts/` — CLI scripts (AlphaGenome, mock tabular/VCF generators, security hook)
 - `notebooks/` — Genomic analysis notebooks
 - `docs/` — Project documentation
 - `test_data/` — Synthetic test data (versioned)
 - `data/` — Large/local data (git-ignored)
+- `setup.py` / `pyproject.toml` — Packaging (setuptools + uv); `requirements.txt` is an optional pip-oriented pin list
 
 ## Python version
 
