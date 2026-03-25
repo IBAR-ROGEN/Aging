@@ -51,7 +51,7 @@ uv add .[genomics]
 ## Layout
 
 - `src/rogen_aging/` — Python package for shared code
-- `scripts/` — CLI scripts (AlphaGenome, mock data generator, security hook)
+- `scripts/` — CLI scripts (AlphaGenome, mock tabular/VCF generators, security hook)
 - `notebooks/` — Genomic analysis notebooks
 - `docs/` — Project documentation
 - `test_data/` — Synthetic test data (versioned)
@@ -176,6 +176,18 @@ uv run scripts/mock_ukb_generator.py
 
 See **[docs/SYNTHETIC_UKB_GENERATOR.md](docs/SYNTHETIC_UKB_GENERATOR.md)** for usage and options.
 
+## Synthetic Romanian cohort VCF
+
+Generate a **streaming VCF v4.2** with Hardy–Weinberg diploid genotypes, **EUR-like** allele frequencies, **`GT:AD:DP:GQ`** per sample, and GRCh38 **chr1–chr22** contigs (bcftools-friendly sort order). Output path is your choice; large VCFs should live under **`data/`** (git-ignored).
+
+```bash
+uv run scripts/generate_synthetic_romanian_vcf.py \
+  --samples 100 --variants 5000 --seed 42 \
+  --output data/mock_romanian_eur.vcf
+```
+
+See **[docs/SYNTHETIC_ROMANIAN_VCF_GENERATOR.md](docs/SYNTHETIC_ROMANIAN_VCF_GENERATOR.md)** for options, headers, and compliance notes.
+
 ## EDA Mock Integration
 
 Exploratory analysis for mock epigenetic aging data (chronological vs epigenetic age, EAA residuals).
@@ -195,6 +207,7 @@ See **[docs/EDA_MOCK_INTEGRATION.md](docs/EDA_MOCK_INTEGRATION.md)** for details
 | [docs/PROJECT_STRUCTURE.md](docs/PROJECT_STRUCTURE.md) | Bioinformatics project directory layout |
 | [docs/UKB_PRE_COMMIT_HOOK.md](docs/UKB_PRE_COMMIT_HOOK.md) | Git pre-commit security hook |
 | [docs/SYNTHETIC_UKB_GENERATOR.md](docs/SYNTHETIC_UKB_GENERATOR.md) | Mock UK Biobank data generator |
+| [docs/SYNTHETIC_ROMANIAN_VCF_GENERATOR.md](docs/SYNTHETIC_ROMANIAN_VCF_GENERATOR.md) | Synthetic Romanian cohort VCF (VCF 4.2) |
 | [docs/EDA_MOCK_INTEGRATION.md](docs/EDA_MOCK_INTEGRATION.md) | EDA mock epigenetic aging script |
 | [docs/UKB_COMPLIANCE_AUDITOR.md](docs/UKB_COMPLIANCE_AUDITOR.md) | UK Biobank compliance tool |
 | [docs/CODE_MODULES_REFERENCE.md](docs/CODE_MODULES_REFERENCE.md) | Code modules reference |
