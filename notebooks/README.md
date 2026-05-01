@@ -23,6 +23,10 @@ Tools for ensuring data quality, code correctness, and regulatory compliance.
 Notebooks dedicated to generating project-wide visualizations and heatmaps.
 - **Visualizations.ipynb**: Centralized notebook for generating publication-ready figures.
 
+### `05_ukb_exploration/`
+Exploratory checks on the offline UK Biobank SNP manifest produced by `scripts/ukb_la_snp_lookup.py` (no participant data).
+- **UKB_LA_SNP_FirstContact.ipynb**: Loads `analysis/ukb_snp_manifest_v0.1.csv`, reports GRCh38 resolution failures, chromosome and gene summaries, and per-chromosome position ranges to support chunk-based extraction planning.
+
 ## Guidelines
 - **Data Locality**: Keep large datasets in the root `data/` directory (git-ignored).
 - **Environment**: Use `uv run jupyter lab` to ensure all dependencies are available.

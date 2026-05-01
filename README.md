@@ -107,12 +107,14 @@ uv run python scripts/ukb_la_snp_lookup.py \
 
 The Git pre-commit hook exempts this script from the generic `UKB_` content scan because it intentionally emits manifest column names for extraction metadata; it must never contain real participant IDs. See **[docs/UKB_PRE_COMMIT_HOOK.md](docs/UKB_PRE_COMMIT_HOOK.md)**.
 
+After building the CSV, run the exploratory notebook **`notebooks/05_ukb_exploration/UKB_LA_SNP_FirstContact.ipynb`** (from the repo root with `uv run jupyter lab`) to sanity-check coverage, chromosome distribution, gene-level counts, and per-chromosome GRCh38 spans before spending UK Biobank extraction credits.
+
 ## Layout
 
 - `src/rogen_aging/` — Installable Python package (`import rogen_aging`, `from rogen_aging import …`)
 - `tests/` — Pytest tests (`uv run pytest` after `uv sync --extra dev`), including `test_mock_clinical_csv.py` and `test_synthetic_vcf.py` for the synthetic generators (`pyproject.toml` adds `scripts/` to pytest’s `pythonpath`)
 - `scripts/` — CLI scripts (AlphaGenome, mock tabular/VCF generators, figure renders, LA-SNP per-gene supplementary plot, UKB manifest builder, security hook)
-- `notebooks/` — Genomic analysis notebooks
+- `notebooks/` — Genomic analysis notebooks (including `05_ukb_exploration/` for UKB manifest QA)
 - `docs/` — Project documentation
 - `components/` — React/TypeScript manuscript figure mockups (e.g. dashboard) and a small Vite capture app under `components/dashboard-figure-render/`
 - `frontend/` — Vite + React app for the longevity network diagram (`LongevityNetworkDiagram.tsx`) and headless capture script

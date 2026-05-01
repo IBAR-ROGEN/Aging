@@ -40,13 +40,15 @@ The following are excluded from content scanning:
 
 | Path | Reason |
 |------|--------|
-| `docs/UKB_COMPLIANCE*` | Compliance documentation |
-| `README*` | Project documentation |
+| `docs/*` | Compliance and technical documentation |
+| `README.md` (repo root) | Project documentation |
+| `notebooks/README.md` | Notebook index (may name UKB workflows and manifest columns) |
 | `*security_check*` | The security script itself |
 | `*install_pre_commit*` | Hook installer |
 | `scripts/mock_ukb_generator.py` | Synthetic data generator (no real UKB data) |
 | `test_data/mock_clinical_data.csv` | Synthetic mock output (MOCK_ IDs) |
 | `scripts/ukb_la_snp_lookup.py` | Offline Ensembl → CSV manifest builder only (no participant rows; reviewed path) |
+| `notebooks/05_ukb_exploration/*` | Offline manifest sanity-check notebooks only (no participant rows; cite extraction metadata labels) |
 | `repo_structure.txt` | Generated tree of tracked paths (may list compliance doc filenames) |
 
 ## Manual Run
