@@ -74,6 +74,7 @@ Executable scripts and shell utilities. Run with `uv run scripts/<script>.py` or
 | `analyze_alphagenome_results.py` | Process AlphaGenome outputs |
 | `visualize_alphagenome_results.py` | AlphaGenome visualizations |
 | `generate_*.py` | Figure generation (pipeline, heatmaps, agent schema, etc.) |
+| `train_clock_on_gse40279.py` | Elastic Net clock from wide methylation + age table (GSE40279-style; see GSE40279_CLOCK_TRAINING.md) |
 | `validate_clock.py` | Held-out epigenetic clock validation (see ROMANIAN_EPIGENETIC_CLOCK.md) |
 
 ### `notebooks/`
@@ -100,6 +101,7 @@ Project documentation (Markdown).
 | `UKB_COMPLIANCE_AUDITOR.md` | UKB compliance tool |
 | `SYNTHETIC_UKB_GENERATOR.md` | Mock data generator |
 | `METHYLATION_PIPELINE_*.md` | Methylation pipeline usage |
+| `GSE40279_CLOCK_TRAINING.md` | GSE40279 / Hannum-style wide-table Elastic Net training (`train_clock_on_gse40279.py`) |
 | `ALPHAGENOME_ANALYSIS_EXPLANATION.md` | AlphaGenome methodology |
 
 ### `components/` and `frontend/`

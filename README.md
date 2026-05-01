@@ -113,7 +113,7 @@ After building the CSV, run the exploratory notebook **`notebooks/05_ukb_explora
 
 - `src/rogen_aging/` — Installable Python package (`import rogen_aging`, `from rogen_aging import …`)
 - `tests/` — Pytest tests (`uv run pytest` after `uv sync --extra dev`), including `test_mock_clinical_csv.py` and `test_synthetic_vcf.py` for the synthetic generators (`pyproject.toml` adds `scripts/` to pytest’s `pythonpath`)
-- `scripts/` — CLI scripts (AlphaGenome, mock tabular/VCF generators, figure renders, LA-SNP per-gene supplementary plot, UKB manifest builder, security hook)
+- `scripts/` — CLI scripts (AlphaGenome, mock tabular/VCF generators, figure renders, LA-SNP per-gene supplementary plot, UKB manifest builder, epigenetic clock train/validate, security hook)
 - `notebooks/` — Genomic analysis notebooks (including `05_ukb_exploration/` for UKB manifest QA)
 - `docs/` — Project documentation
 - `components/` — React/TypeScript manuscript figure mockups (e.g. dashboard) and a small Vite capture app under `components/dashboard-figure-render/`
@@ -280,6 +280,19 @@ uv run python scripts/train_romanian_epigenetic_clock.py
 
 See **[docs/ROMANIAN_EPIGENETIC_CLOCK.md](docs/ROMANIAN_EPIGENETIC_CLOCK.md)** for file formats, options, and validation notes.
 
+## GSE40279 (Hannum 2013) wide-table clock training
+
+Train an **`ElasticNetCV`** pipeline (mean imputation + elastic net) from a **single** Parquet or CSV with rows = samples, **`cg*`** probe columns, and **`chronological_age`**. GEO download and IDAT/Series Matrix conversion are **out of scope** for the script; see **[docs/GSE40279_CLOCK_TRAINING.md](docs/GSE40279_CLOCK_TRAINING.md)** for the expected layout, hyperparameters, and outputs.
+
+```bash
+uv run python scripts/train_clock_on_gse40279.py \
+  --input_data path/to/gse40279_beta_age.parquet \
+  --output_model path/to/clock.pkl \
+  --output_metrics path/to/train_metrics.json
+```
+
+The saved **`Pipeline`** is compatible with **`validate_clock.py`** below (probe names via `feature_names_in_`).
+
 ## Epigenetic clock validation (held-out test set)
 
 Evaluate a **pre-trained** scikit-learn model (`.joblib` / `.pkl`) on a single table with **`chronological_age`** and CpG columns whose names start with **`cg`**. Reports overall **MAE** and **Pearson r**, **MAE by age decade** (`pandas.cut`), and saves residual / decade bar figures plus **`validation_metrics.json`**.
@@ -313,6 +326,7 @@ See comments in the script for IDE integration; `.r-env/` is git-ignored.
 | [docs/SYNTHETIC_ROMANIAN_VCF_GENERATOR.md](docs/SYNTHETIC_ROMANIAN_VCF_GENERATOR.md) | Synthetic Romanian cohort VCF (VCF 4.2) |
 | [docs/EDA_MOCK_INTEGRATION.md](docs/EDA_MOCK_INTEGRATION.md) | EDA mock epigenetic aging script |
 | [docs/ROMANIAN_EPIGENETIC_CLOCK.md](docs/ROMANIAN_EPIGENETIC_CLOCK.md) | Romanian cohort Elastic Net clock (`train_romanian_epigenetic_clock.py`) and held-out validation (`validate_clock.py`) |
+| [docs/GSE40279_CLOCK_TRAINING.md](docs/GSE40279_CLOCK_TRAINING.md) | Public GEO GSE40279-style wide-table training (`train_clock_on_gse40279.py`) |
 | [docs/UKB_COMPLIANCE_AUDITOR.md](docs/UKB_COMPLIANCE_AUDITOR.md) | UK Biobank compliance tool |
 | [docs/UKBB_CI_COMPLIANCE_AUDIT.md](docs/UKBB_CI_COMPLIANCE_AUDIT.md) | CI/CD UKB-oriented repo audit script and usage |
 | [docs/CODE_MODULES_REFERENCE.md](docs/CODE_MODULES_REFERENCE.md) | Code modules reference (`ukb_la_snp_lookup.py`, figure render scripts, `components/` / `frontend/`) |
