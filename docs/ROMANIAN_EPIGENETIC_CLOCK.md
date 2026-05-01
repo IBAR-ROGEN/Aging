@@ -1,12 +1,12 @@
 # Romanian cohort mock epigenetic clock (Elastic Net)
 
 **Project:** IBAR-ROGEN Aging  
-**Script:** `scripts/train_romanian_epigenetic_clock.py`  
+**Scripts:** `scripts/train_romanian_epigenetic_clock.py` (train), `scripts/validate_clock.py` (evaluate a saved model on held-out data)  
 **Repository:** [IBAR-ROGEN/Aging](https://github.com/IBAR-ROGEN/Aging)
 
 ## Overview
 
-This script trains a **custom epigenetic aging clock** using **Elastic Net regression** with **`ElasticNetCV`** from scikit-learn. It is wired for a **Romanian-style cohort** naming convention (`ROM0001`, …) and uses **synthetic methylation** when real array data is not yet available.
+`train_romanian_epigenetic_clock.py` trains a **custom epigenetic aging clock** using **Elastic Net regression** with **`ElasticNetCV`** from scikit-learn. It is wired for a **Romanian-style cohort** naming convention (`ROM0001`, …) and uses **synthetic methylation** when real array data is not yet available.
 
 The workflow is suitable for:
 
@@ -87,6 +87,56 @@ uv run python scripts/train_romanian_epigenetic_clock.py \
 ## Dependencies
 
 Declared in `pyproject.toml`: **polars**, **numpy**, **scikit-learn**, **scipy**, **matplotlib**, **typer**.
+
+## Held-out validation (`validate_clock.py`)
+
+**Script:** `scripts/validate_clock.py`  
+Use this after you have a **saved** fitted estimator (for example from a training notebook or a Typer/CLI trainer that writes `joblib.dump` / `pickle`).
+
+### Purpose
+
+- Load a pre-trained clock and score a **held-out** cohort in one table (bedMethyl-style or wide β matrix).
+- Report **MAE** (years) and **Pearson r** (chronological vs predicted age).
+- Stratify **MAE by chronological age decade** (`<20`, `20-29`, …, `90+`) using `pandas.cut`.
+- Save **figures** and a **JSON** summary for manuscripts or QC.
+
+### CLI arguments
+
+| Argument | Description |
+|----------|-------------|
+| `--model_path` | Path to `.joblib` or `.pkl` fitted model (pipeline or estimator). |
+| `--test_data` | `.parquet` or `.csv` (`.tsv` tab-separated supported). |
+| `--output_dir` | Directory created if needed; receives plots and metrics. |
+
+### Test data expectations
+
+- A column **`chronological_age`** (years).
+- Feature columns whose names **start with `cg`** (CpG probe IDs or site labels).
+
+### Outputs (under `--output_dir`)
+
+| File | Content |
+|------|---------|
+| `validation_metrics.json` | Overall MAE, Pearson r and p-value, sample and feature counts, list of **imputed** model CpGs (if any), MAE per decade. |
+| `Fig_Clock_Residuals.png` | Scatter: residual (predicted − chronological) vs chronological age; horizontal line at 0. |
+| `Fig_Clock_MAE_by_decade.png` | Bar chart: MAE by age decade. |
+
+Stdout prints the same metrics (JSON); stderr notes how many CpGs were imputed when applicable.
+
+### Feature alignment and missing CpGs
+
+- If the fitted model exposes **`feature_names_in_`** (typical when `fit` was called on a **pandas `DataFrame`**), the script builds `X` in that column order. Any **expected probe missing** from the test file is filled with the **mean of all present `cg*` values** in the test set (fallback `0.5` if undefined), and a **warning** is emitted.
+- If **no** feature names are stored (for example the model was fit on a **NumPy** array only), the script uses **all `cg*` columns** in file order and imputes **NaNs** via row/column means, then `0.5`. If **`n_features_in_`** is known and does not match the number of `cg*` columns, the script **raises** a clear error (cannot guess probe identity). For that case, refit on a `DataFrame` with named columns or export the training feature list and preprocess test data to match.
+
+### Example
+
+```bash
+uv sync
+uv run python scripts/validate_clock.py \
+  --model_path artifacts/romanian_clock.joblib \
+  --test_data data/romanian_holdout.parquet \
+  --output_dir figures/clock_validation_run1
+```
 
 ## Related material
 

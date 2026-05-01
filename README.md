@@ -73,15 +73,48 @@ uv run python scripts/render_dashboard_figure_mockup.py
 
 Writes `analysis/dashboard_figure_mockup.png`. With Node.js, `components/dashboard-figure-render` can render the TSX via Vite + Playwright (`npm install` then `npm run capture`).
 
+## Manuscript figure renders (matplotlib / networkx)
+
+Static figures aligned with the React/Vite mockups (no participant data):
+
+```bash
+# Longevity conceptual network (default: figures/longevity_network_diagram.png; dir is git-ignored unless you pass --output elsewhere)
+uv run python scripts/render_longevity_network_diagram.py
+
+# Figure 1C — LA-SNP mechanisms hub-and-spoke (PNG + PDF under analysis/)
+uv run python scripts/render_figure1c_mechanisms_network.py
+
+# EDA dashboard mockup (matplotlib twin of DashboardFigureMockup.tsx)
+uv run python scripts/render_dashboard_figure_mockup.py
+```
+
+See **[docs/CODE_MODULES_REFERENCE.md](docs/CODE_MODULES_REFERENCE.md)** (sections 8 and 3.12–3.16) for parameters and dependencies.
+
+## UK Biobank SNP manifest (offline, Ensembl)
+
+Build a CSV manifest from an Excel overlap table (`Gene`, `SNP_rsID`): resolve rs IDs to **GRCh38** coordinates via the Ensembl Variation REST API, add an imputed-bulk chunk label for downstream UKB genotype extraction planning (no DNAnexus or dx-toolkit calls).
+
+```bash
+uv run python scripts/ukb_la_snp_lookup.py \
+  --input overlapping_genes_with_snps.xlsx \
+  --output analysis/ukb_snp_manifest_v0.1.csv
+```
+
+The Git pre-commit hook exempts this script from the generic `UKB_` content scan because it intentionally emits manifest column names for extraction metadata; it must never contain real participant IDs. See **[docs/UKB_PRE_COMMIT_HOOK.md](docs/UKB_PRE_COMMIT_HOOK.md)**.
+
 ## Layout
 
 - `src/rogen_aging/` — Installable Python package (`import rogen_aging`, `from rogen_aging import …`)
 - `tests/` — Pytest tests (`uv run pytest` after `uv sync --extra dev`)
-- `scripts/` — CLI scripts (AlphaGenome, mock tabular/VCF generators, security hook)
+- `scripts/` — CLI scripts (AlphaGenome, mock tabular/VCF generators, figure renders, UKB manifest builder, security hook)
 - `notebooks/` — Genomic analysis notebooks
 - `docs/` — Project documentation
+- `components/` — React/TypeScript manuscript figure mockups (e.g. dashboard) and a small Vite capture app under `components/dashboard-figure-render/`
+- `frontend/` — Vite + React app for the longevity network diagram (`LongevityNetworkDiagram.tsx`) and headless capture script
 - `test_data/` — Synthetic test data (versioned)
+- `analysis/` — Committed or local figure exports (see figure scripts below); large ad hoc outputs may remain git-ignored
 - `data/` — Large/local data (git-ignored)
+- `repo_structure.txt` — Optional snapshot of tracked paths (regenerate with `git ls-files` when refreshing the tree)
 - `setup.py` / `pyproject.toml` — Packaging (setuptools + uv); `requirements.txt` is an optional pip-oriented pin list
 
 ## Python version
@@ -240,6 +273,19 @@ uv run python scripts/train_romanian_epigenetic_clock.py
 
 See **[docs/ROMANIAN_EPIGENETIC_CLOCK.md](docs/ROMANIAN_EPIGENETIC_CLOCK.md)** for file formats, options, and validation notes.
 
+## Epigenetic clock validation (held-out test set)
+
+Evaluate a **pre-trained** scikit-learn model (`.joblib` / `.pkl`) on a single table with **`chronological_age`** and CpG columns whose names start with **`cg`**. Reports overall **MAE** and **Pearson r**, **MAE by age decade** (`pandas.cut`), and saves residual / decade bar figures plus **`validation_metrics.json`**.
+
+```bash
+uv run python scripts/validate_clock.py \
+  --model_path path/to/clock.joblib \
+  --test_data path/to/test.parquet \
+  --output_dir path/to/validation_out
+```
+
+Supported test formats: **`.parquet`**, **`.csv`** (also **`.tsv`**). Missing model CpGs (when the estimator stores `feature_names_in_`) are mean-imputed from available test `cg*` values. Details: **[docs/ROMANIAN_EPIGENETIC_CLOCK.md](docs/ROMANIAN_EPIGENETIC_CLOCK.md#held-out-validation-validate_clockpy)**.
+
 ## Documentation
 
 | Document | Description |
@@ -249,7 +295,7 @@ See **[docs/ROMANIAN_EPIGENETIC_CLOCK.md](docs/ROMANIAN_EPIGENETIC_CLOCK.md)** f
 | [docs/SYNTHETIC_UKB_GENERATOR.md](docs/SYNTHETIC_UKB_GENERATOR.md) | Mock UK Biobank data generator |
 | [docs/SYNTHETIC_ROMANIAN_VCF_GENERATOR.md](docs/SYNTHETIC_ROMANIAN_VCF_GENERATOR.md) | Synthetic Romanian cohort VCF (VCF 4.2) |
 | [docs/EDA_MOCK_INTEGRATION.md](docs/EDA_MOCK_INTEGRATION.md) | EDA mock epigenetic aging script |
-| [docs/ROMANIAN_EPIGENETIC_CLOCK.md](docs/ROMANIAN_EPIGENETIC_CLOCK.md) | Romanian cohort Elastic Net clock (`train_romanian_epigenetic_clock.py`) |
+| [docs/ROMANIAN_EPIGENETIC_CLOCK.md](docs/ROMANIAN_EPIGENETIC_CLOCK.md) | Romanian cohort Elastic Net clock (`train_romanian_epigenetic_clock.py`) and held-out validation (`validate_clock.py`) |
 | [docs/UKB_COMPLIANCE_AUDITOR.md](docs/UKB_COMPLIANCE_AUDITOR.md) | UK Biobank compliance tool |
 | [docs/UKBB_CI_COMPLIANCE_AUDIT.md](docs/UKBB_CI_COMPLIANCE_AUDIT.md) | CI/CD UKB-oriented repo audit script and usage |
 | [docs/CODE_MODULES_REFERENCE.md](docs/CODE_MODULES_REFERENCE.md) | Code modules reference |
