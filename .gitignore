@@ -27,6 +27,10 @@ share/python-wheels/
 venv/
 ENV/
 
+# Local R (micromamba + conda-forge r-base); reinstall with scripts/bootstrap_r_env.sh
+.r-env/
+.tools/
+
 # Unit test / coverage reports
 .coverage*
 .pytest_cache/

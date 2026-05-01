@@ -1,0 +1,116 @@
+# IBAR-ROGEN/Aging — repository structure
+# Generated from: git ls-files (tracked paths only)
+# Remote: https://github.com/IBAR-ROGEN/Aging
+
+├── .env.example
+├── .gitignore
+├── alphagenome_impact_bar_plot.png
+├── alphagenome_ref_vs_alt_scatter.png
+├── downstream_analysis.R
+├── find_r.sh
+├── LICENSE
+├── METHYLATION_PIPELINE_README.md
+├── Network_Analysis_Nov.png
+├── overlapping_genes_with_snps.xlsx
+├── pipeline_validation.sh
+├── pyproject.toml
+├── README.md
+├── requirements.txt
+├── setup.py
+├── .local/
+│   └── graphviz/
+│       └── graphviz.tar.gz
+├── .vscode/
+│   ├── README_R_SETUP.md
+│   └── settings.json
+├── analysis/
+│   ├── Bioinformatics_Pipeline_Diagram
+│   ├── Bioinformatics_Pipeline_Diagram.png
+│   ├── Clock_Validation_Nov.png
+│   ├── Example_DMR_Visualizations.png
+│   ├── Fig2_Risk_Heatmap.png
+│   ├── Fig3_Clock_Validation.png
+│   ├── Fig4_Agent_System_Schema
+│   ├── Fig4_Agent_System_Schema.png
+│   ├── FOXO1_longevity_analysis.md
+│   ├── Longevity_Direction_of_Effect_Analysis.md
+│   ├── Methylation_Pipeline_Summary.png
+│   ├── Methylation_Pipeline_Workflow.png
+│   ├── ROGEN_Methylation_Pipeline_Summary.md
+│   ├── aging_related_datasets/
+│   │   ├── aging_ngs_datasets.csv
+│   │   ├── aging_ngs_datasets_nanopore_only.csv
+│   │   ├── README.md
+│   │   └── search_aging_ngs_datasets.py
+│   └── methylation/
+│       └── methylation-clocks.py
+├── docs/
+│   ├── ALPHAGENOME_ANALYSIS_EXPLANATION.md
+│   ├── CODE_MODULES_REFERENCE.md
+│   ├── EDA_DASHBOARD.md
+│   ├── EDA_MOCK_INTEGRATION.md
+│   ├── METHYLATION_PIPELINE_QUICK_REFERENCE.md
+│   ├── METHYLATION_PIPELINE_USAGE.md
+│   ├── PROJECT_STRUCTURE.md
+│   ├── ROMANIAN_EPIGENETIC_CLOCK.md
+│   ├── SYNTHETIC_ROMANIAN_VCF_GENERATOR.md
+│   ├── SYNTHETIC_UKB_GENERATOR.md
+│   ├── UKB_COMPLIANCE_AUDITOR.md
+│   ├── UKB_PRE_COMMIT_HOOK.md
+│   └── UKBB_CI_COMPLIANCE_AUDIT.md
+├── notebooks/
+│   ├── README.md
+│   ├── 01_genomics_analysis/
+│   │   ├── AlphaGenome.ipynb
+│   │   └── AlphaGenome_updated.ipynb
+│   ├── 02_methylation_pipeline/
+│   │   ├── DownstreamMethylationAnalysis.ipynb
+│   │   └── MethylationClocks.ipynb
+│   ├── 03_validation_and_compliance/
+│   │   ├── UKB_Compliance_Auditor.ipynb
+│   │   └── Validations.ipynb
+│   ├── 04_exploratory_visualizations/
+│   │   └── Visualizations.ipynb
+│   └── analysis/
+│       ├── Clock_Validation_Nov.png
+│       └── Variant_Annotation_Pie.png
+├── scripts/
+│   ├── alphagenome_sequence_comparer.py
+│   ├── analyze_alphagenome_results.py
+│   ├── eda_mock_integration.py
+│   ├── generate_agent_system_schema.py
+│   ├── generate_agent_system_schema_fallback.py
+│   ├── generate_bimodal_heatmap.py
+│   ├── generate_clock_validation.py
+│   ├── generate_methylation_visualizations.py
+│   ├── generate_pipeline_diagram.py
+│   ├── generate_synthetic_romanian_vcf.py
+│   ├── install_graphviz.sh
+│   ├── install_pre_commit_hook.sh
+│   ├── mock_ukb_generator.py
+│   ├── README_GRAPHVIZ.md
+│   ├── security_check.sh
+│   ├── setup_rogen_env.py
+│   ├── train_romanian_epigenetic_clock.py
+│   ├── ukbb_ci_compliance_audit.sh
+│   └── visualize_alphagenome_results.py
+├── src/
+│   └── rogen_aging/
+│       ├── __init__.py
+│       ├── methylation_visualizations.py
+│       ├── network_visualizer.py
+│       ├── eda_dashboard/
+│       │   ├── __init__.py
+│       │   ├── app.py
+│       │   ├── data.py
+│       │   ├── schema.py
+│       │   ├── sidebar.py
+│       │   └── tabs.py
+│       └── pipeline/
+│           └── __init__.py
+├── test_data/
+│   ├── gb-2013-14-10-r115-S3.csv
+│   ├── mock_clinical_data.csv
+│   └── mock_epigenetic_clinical.csv
+└── tests/
+    └── test_package_imports.py
