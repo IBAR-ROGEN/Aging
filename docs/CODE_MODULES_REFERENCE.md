@@ -49,6 +49,7 @@ Aging/
 │   ├── 02_methylation_pipeline/
 │   ├── 03_validation_and_compliance/
 │   ├── 04_exploratory_visualizations/
+│   ├── 05_ukb_exploration/        # UKB manifest first-contact QA
 │   └── README.md
 ├── docs/                          # Documentation
 ├── test_data/                     # Synthetic test data (versioned)
@@ -340,7 +341,7 @@ Scripts are entry points that call into `src/rogen_aging` or external tools. Run
 **Responsibilities:** argparse CLI, rate-limited HTTP with retries on 429/5xx, pandas + openpyxl input, CSV output under `analysis/` by default.
 
 **Dependencies:** pandas, requests, openpyxl.  
-**Related:** [README.md](../README.md), [UKB_PRE_COMMIT_HOOK.md](UKB_PRE_COMMIT_HOOK.md).
+**Related:** [README.md](../README.md), [UKB_PRE_COMMIT_HOOK.md](UKB_PRE_COMMIT_HOOK.md), exploratory QA notebook `notebooks/05_ukb_exploration/UKB_LA_SNP_FirstContact.ipynb` (§4.5).
 
 ---
 
@@ -386,7 +387,7 @@ Scripts are entry points that call into `src/rogen_aging` or external tools. Run
 
 **Purpose:** UK Biobank pre-commit security hook — blocks commits containing `patient_id`, `UKB_`, or `.vcf`/`.bed` files.
 
-**Responsibilities (exemptions):** Content scanning skips `docs/*`, `README*`, the hook scripts themselves, `scripts/mock_ukb_generator.py`, `test_data/mock_clinical_data.csv`, **`scripts/ukb_la_snp_lookup.py`** (offline manifest only; must never hold participant IDs), and **`repo_structure.txt`** (generated tree listing). Reinstall the hook after editing `security_check.sh`.
+**Responsibilities (exemptions):** Content scanning skips `docs/*`, root `README.md`, `notebooks/README.md`, `notebooks/05_ukb_exploration/*`, the hook scripts themselves, `scripts/mock_ukb_generator.py`, `test_data/mock_clinical_data.csv`, **`scripts/ukb_la_snp_lookup.py`** (offline manifest only; must never hold participant IDs), and **`repo_structure.txt`** (generated tree listing). Reinstall the hook after editing `security_check.sh`.
 
 **Usage:** Run `./scripts/install_pre_commit_hook.sh` to install.  
 **Related doc:** [docs/UKB_PRE_COMMIT_HOOK.md](UKB_PRE_COMMIT_HOOK.md).
@@ -454,7 +455,19 @@ Notebooks for project-wide visualizations and heatmaps.
 
 ---
 
-### 4.5 notebooks/README.md
+### 4.5 notebooks/05_ukb_exploration/
+
+Exploratory QA for the offline UK Biobank longevity-associated SNP manifest (`scripts/ukb_la_snp_lookup.py` → `analysis/ukb_snp_manifest_v0.1.csv`). No UKB participant data.
+
+| File | Purpose |
+|------|--------|
+| **UKB_LA_SNP_FirstContact.ipynb** | Manifest shape and sample rows; GRCh38 resolution coverage vs failures; SNPs per chromosome (bar plot); gene-level SNP counts and chromosomes; min–max GRCh38 position per chromosome for extraction planning; short Markdown summary. |
+
+**Related:** `scripts/ukb_la_snp_lookup.py` (§3.12), [README.md](../README.md) (UK Biobank SNP manifest).
+
+---
+
+### 4.6 notebooks/README.md
 
 **Purpose:** Describes the notebook directory structure, the role of each subfolder, guidelines (data locality, environment, compliance), and a short summary of each notebook.
 
@@ -521,6 +534,7 @@ Notebooks for project-wide visualizations and heatmaps.
 | `notebooks/02_methylation_pipeline/` | Methylation downstream analysis and epigenetic clocks. |
 | `notebooks/03_validation_and_compliance/` | UKB compliance auditor and pipeline validations. |
 | `notebooks/04_exploratory_visualizations/` | Publication-ready and exploratory figures. |
+| `notebooks/05_ukb_exploration/` | UKB LA-SNP CSV manifest sanity checks before extraction. |
 
 For pipeline usage and quick commands, see **docs/METHYLATION_PIPELINE_QUICK_REFERENCE.md** and **docs/METHYLATION_PIPELINE_USAGE.md**.
 

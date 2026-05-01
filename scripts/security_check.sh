@@ -47,9 +47,12 @@ while IFS= read -r file; do
 
   # Skip content scan for docs (describe UKB patterns), security tool, and synthetic mock data
   case "$file" in
-    docs/*|README*|*security_check*|*install_pre_commit*|scripts/mock_ukb_generator.py|test_data/mock_clinical_data.csv) continue ;;
+    docs/*|README.md|*security_check*|*install_pre_commit*|scripts/mock_ukb_generator.py|test_data/mock_clinical_data.csv) continue ;;
+    notebooks/README.md) continue ;;
     # Offline manifest builder (no participant data); path and manifest column use ukb/UKB tokens by design.
     scripts/ukb_la_snp_lookup.py) continue ;;
+    # Manifest QA notebooks only (no participant rows); cite UKB_Expected_Chunk and planning labels.
+    notebooks/05_ukb_exploration/*) continue ;;
     # Generated tree of tracked paths; may list compliance doc filenames containing UKB_.
     repo_structure.txt) continue ;;
   esac

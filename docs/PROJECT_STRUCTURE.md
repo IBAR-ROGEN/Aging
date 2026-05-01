@@ -86,6 +86,7 @@ Jupyter notebooks grouped by analysis type. Run with `uv run jupyter lab`.
 | `02_methylation_pipeline/` | Methylation downstream analysis, clocks |
 | `03_validation_and_compliance/` | UKB compliance auditor, validations |
 | `04_exploratory_visualizations/` | Publication figures, exploratory plots |
+| `05_ukb_exploration/` | UKB LA-SNP manifest sanity checks (`UKB_LA_SNP_FirstContact.ipynb`) before extraction |
 
 ### `docs/`
 
