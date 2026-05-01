@@ -26,6 +26,10 @@ Aging/
 ├── tests/                         # Pytest (e.g. import smoke tests)
 ├── scripts/                       # Entry-point scripts
 │   ├── mock_ukb_generator.py      # Synthetic UK Biobank data
+│   ├── ukb_la_snp_lookup.py       # Offline UKB SNP manifest (Ensembl GRCh38)
+│   ├── render_*_network*.py       # Manuscript networks (matplotlib / networkx)
+│   ├── render_dashboard_figure_mockup.py
+│   ├── bootstrap_r_env.sh         # Optional micromamba R under .r-env/
 │   ├── security_check.sh          # UK Biobank pre-commit hook
 │   ├── install_pre_commit_hook.sh
 │   ├── alphagenome_sequence_comparer.py
@@ -36,6 +40,8 @@ Aging/
 │   ├── validate_clock.py          # Held-out validation for saved clock models
 │   ├── install_graphviz.sh
 │   └── README_GRAPHVIZ.md
+├── components/                    # React/Vite dashboard figure mockup + capture
+├── frontend/                      # React/Vite longevity network + capture
 ├── notebooks/                     # Notebooks by functional area
 │   ├── 01_genomics_analysis/
 │   ├── 02_methylation_pipeline/
@@ -324,9 +330,60 @@ Scripts are entry points that call into `src/rogen_aging` or external tools. Run
 
 ---
 
-### 3.12 security_check.sh & install_pre_commit_hook.sh
+### 3.12 ukb_la_snp_lookup.py
+
+**Purpose:** Offline manifest builder for UK Biobank-style genotype extraction planning: read Excel (`Gene`, `SNP_rsID`), query the Ensembl Variation REST API for **GRCh38** coordinates, emit CSV with chromosome, position, and an imputed-bulk chunk label (no DNAnexus / dx-toolkit).
+
+**Responsibilities:** argparse CLI, rate-limited HTTP with retries on 429/5xx, pandas + openpyxl input, CSV output under `analysis/` by default.
+
+**Dependencies:** pandas, requests, openpyxl.  
+**Related:** [README.md](../README.md), [UKB_PRE_COMMIT_HOOK.md](UKB_PRE_COMMIT_HOOK.md).
+
+---
+
+### 3.13 render_longevity_network_diagram.py
+
+**Purpose:** Render the longevity conceptual network diagram with matplotlib to mirror `frontend/src/components/LongevityNetworkDiagram.tsx`.
+
+**Responsibilities:** Typer CLI; default output `figures/longevity_network_diagram.png` (typically git-ignored; override path as needed).
+
+**Dependencies:** matplotlib, typer.
+
+---
+
+### 3.14 render_figure1c_mechanisms_network.py
+
+**Purpose:** Figure 1, panel C — static hub-and-spoke network of LA-SNP mechanisms (networkx + matplotlib + seaborn + adjustText).
+
+**Responsibilities:** Writes `Figure1C_Mechanisms.png` and `.pdf` under `analysis/` (default `--out-dir`).
+
+**Dependencies:** networkx, matplotlib, seaborn, adjustText, typer.
+
+---
+
+### 3.15 render_dashboard_figure_mockup.py
+
+**Purpose:** Matplotlib static export mirroring `components/DashboardFigureMockup.tsx` when Node/Playwright is unavailable.
+
+**Responsibilities:** Typer CLI; default `analysis/dashboard_figure_mockup.png`.
+
+**Dependencies:** matplotlib, numpy, typer.
+
+---
+
+### 3.16 bootstrap_r_env.sh
+
+**Purpose:** Create a local micromamba environment with conda-forge `r-base` under `.r-env/` for reproducible R workflows without modifying system R.
+
+**Usage:** `./scripts/bootstrap_r_env.sh` from repo root. `.r-env/` is git-ignored.
+
+---
+
+### 3.17 security_check.sh & install_pre_commit_hook.sh
 
 **Purpose:** UK Biobank pre-commit security hook — blocks commits containing `patient_id`, `UKB_`, or `.vcf`/`.bed` files.
+
+**Responsibilities (exemptions):** Content scanning skips `docs/*`, `README*`, the hook scripts themselves, `scripts/mock_ukb_generator.py`, `test_data/mock_clinical_data.csv`, **`scripts/ukb_la_snp_lookup.py`** (offline manifest only; must never hold participant IDs), and **`repo_structure.txt`** (generated tree listing). Reinstall the hook after editing `security_check.sh`.
 
 **Usage:** Run `./scripts/install_pre_commit_hook.sh` to install.  
 **Related doc:** [docs/UKB_PRE_COMMIT_HOOK.md](UKB_PRE_COMMIT_HOOK.md).
@@ -437,10 +494,29 @@ Notebooks for project-wide visualizations and heatmaps.
 | `scripts/mock_ukb_generator.py` | Synthetic UK Biobank-style mock data. |
 | `scripts/train_romanian_epigenetic_clock.py` | Elastic Net epigenetic clock (mock Romanian cohort / custom CSVs). |
 | `scripts/validate_clock.py` | Held-out validation for a saved clock model (MAE, r, decade MAE, figures). |
+| `scripts/ukb_la_snp_lookup.py` | Offline UKB SNP manifest via Ensembl GRCh38 (CSV). |
+| `scripts/render_longevity_network_diagram.py` | Matplotlib longevity network (twin of `frontend/` TSX). |
+| `scripts/render_figure1c_mechanisms_network.py` | Figure 1C mechanisms network (PNG/PDF). |
+| `scripts/render_dashboard_figure_mockup.py` | Matplotlib dashboard mockup (twin of `components/` TSX). |
+| `scripts/bootstrap_r_env.sh` | Optional micromamba R under `.r-env/`. |
 | `scripts/security_check.sh` | UK Biobank pre-commit security hook. |
+| `components/`, `frontend/` | Vite + React manuscript figure apps (see §8). |
 | `notebooks/01_genomics_analysis/` | AlphaGenome AD/PD gene analysis and networks. |
 | `notebooks/02_methylation_pipeline/` | Methylation downstream analysis and epigenetic clocks. |
 | `notebooks/03_validation_and_compliance/` | UKB compliance auditor and pipeline validations. |
 | `notebooks/04_exploratory_visualizations/` | Publication-ready and exploratory figures. |
 
 For pipeline usage and quick commands, see **docs/METHYLATION_PIPELINE_QUICK_REFERENCE.md** and **docs/METHYLATION_PIPELINE_USAGE.md**.
+
+---
+
+## 8. TypeScript figure apps (`components/`, `frontend/`)
+
+Small **Vite + React** projects for publication-quality diagrams. Use `npm install`, `npm run dev` for interactive editing, and package-specific capture scripts (often `npm run capture` or `node scripts/capture-diagram.mjs`) where Playwright is configured. Python `scripts/render_*.py` counterparts exist for matplotlib-only pipelines.
+
+| Path | Role |
+|------|------|
+| `components/DashboardFigureMockup.tsx` | Multi-panel dashboard mockup component |
+| `components/dashboard-figure-render/` | Vite app + Playwright capture for the dashboard mockup |
+| `frontend/src/components/LongevityNetworkDiagram.tsx` | Longevity network layout |
+| `frontend/scripts/capture-diagram.mjs` | Headless PNG export for the longevity diagram |

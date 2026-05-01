@@ -88,7 +88,7 @@ uv run python scripts/render_figure1c_mechanisms_network.py
 uv run python scripts/render_dashboard_figure_mockup.py
 ```
 
-See **[docs/CODE_MODULES_REFERENCE.md](docs/CODE_MODULES_REFERENCE.md)** (sections 8 and 3.12–3.16) for parameters and dependencies.
+See **[docs/CODE_MODULES_REFERENCE.md](docs/CODE_MODULES_REFERENCE.md)** (section 8 and §§3.12–3.17) for parameters and dependencies.
 
 ## UK Biobank SNP manifest (offline, Ensembl)
 
@@ -286,6 +286,16 @@ uv run python scripts/validate_clock.py \
 
 Supported test formats: **`.parquet`**, **`.csv`** (also **`.tsv`**). Missing model CpGs (when the estimator stores `feature_names_in_`) are mean-imputed from available test `cg*` values. Details: **[docs/ROMANIAN_EPIGENETIC_CLOCK.md](docs/ROMANIAN_EPIGENETIC_CLOCK.md#held-out-validation-validate_clockpy)**.
 
+## R environment (optional)
+
+Bootstrap a local R toolchain under `.r-env/` (micromamba, conda-forge `r-base`):
+
+```bash
+./scripts/bootstrap_r_env.sh
+```
+
+See comments in the script for IDE integration; `.r-env/` is git-ignored.
+
 ## Documentation
 
 | Document | Description |
@@ -298,4 +308,4 @@ Supported test formats: **`.parquet`**, **`.csv`** (also **`.tsv`**). Missing mo
 | [docs/ROMANIAN_EPIGENETIC_CLOCK.md](docs/ROMANIAN_EPIGENETIC_CLOCK.md) | Romanian cohort Elastic Net clock (`train_romanian_epigenetic_clock.py`) and held-out validation (`validate_clock.py`) |
 | [docs/UKB_COMPLIANCE_AUDITOR.md](docs/UKB_COMPLIANCE_AUDITOR.md) | UK Biobank compliance tool |
 | [docs/UKBB_CI_COMPLIANCE_AUDIT.md](docs/UKBB_CI_COMPLIANCE_AUDIT.md) | CI/CD UKB-oriented repo audit script and usage |
-| [docs/CODE_MODULES_REFERENCE.md](docs/CODE_MODULES_REFERENCE.md) | Code modules reference |
+| [docs/CODE_MODULES_REFERENCE.md](docs/CODE_MODULES_REFERENCE.md) | Code modules reference (`ukb_la_snp_lookup.py`, figure render scripts, `components/` / `frontend/`) |
