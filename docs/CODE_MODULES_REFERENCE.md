@@ -22,6 +22,9 @@ Aging/
 │   │   └── __init__.py
 │   ├── methylation_visualizations.py
 │   ├── network_visualizer.py
+│   ├── clock/                     # Epigenetic clock helpers (GSE87571 loader, etc.)
+│   │   ├── __init__.py
+│   │   └── external_data.py       # GSE87571 → wide table for validate_clock.py
 │   └── eda_dashboard/            # Streamlit merged-cohort EDA (see docs/EDA_DASHBOARD.md)
 ├── tests/                         # Pytest (package smoke + synthetic UKB/VCF generators)
 ├── scripts/                       # Entry-point scripts
@@ -351,6 +354,20 @@ Scripts are entry points that call into `src/rogen_aging` or external tools. Run
 
 ---
 
+### 3.11a `rogen_aging.clock.external_data`
+
+**Purpose:** Download or read **[GSE87571](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE87571)** (Illumina 450K whole blood) and emit a wide **`pandas.DataFrame`** (or Parquet via **`save_as_parquet`**) with **`chronological_age`** and **`cg*`** columns for **`scripts/validate_clock.py`**.
+
+**Responsibilities:**
+- Parse GEO series matrix metadata (including repeated **`!Sample_characteristics_ch1`** lines for age).
+- When the embedded matrix table is empty (as for GSE87571), download and merge supplementary **`matrix1of2`** / **`matrix2of2`** β tables; map **`X*`** column names to GSM IDs using **`!Sample_title`**.
+- Optional **`restrict_to_cpgs`** to subset probes; Typer CLI: **`python -m rogen_aging.clock.external_data`**.
+
+**Dependencies:** pandas, pyarrow, requests, typer; optional **GEOparse** (PyPI package **`geoparse`**) for series-matrix download with HTTPS fallback.  
+**Related doc:** [docs/GSE40279_CLOCK_TRAINING.md](GSE40279_CLOCK_TRAINING.md#external-validation-gse87571).
+
+---
+
 ### 3.12 ukb_la_snp_lookup.py
 
 **Purpose:** Offline manifest builder for UK Biobank-style genotype extraction planning: read Excel (`Gene`, `SNP_rsID`), query the Ensembl Variation REST API for **GRCh38** coordinates, emit CSV with chromosome, position, and an imputed-bulk chunk label (no DNAnexus / dx-toolkit).
@@ -499,7 +516,7 @@ Exploratory QA for the offline UK Biobank longevity-associated SNP manifest (`sc
 | **UKB_PRE_COMMIT_HOOK.md** | Git pre-commit security hook for UK Biobank compliance. |
 | **SYNTHETIC_UKB_GENERATOR.md** | Synthetic UK Biobank data generator (`mock_ukb_generator.py`). |
 | **ROMANIAN_EPIGENETIC_CLOCK.md** | Romanian cohort Elastic Net clock (`train_romanian_epigenetic_clock.py`) and held-out validation (`validate_clock.py`). |
-| **GSE40279_CLOCK_TRAINING.md** | Wide-table training for public GSE40279-style data (`train_clock_on_gse40279.py`). |
+| **GSE40279_CLOCK_TRAINING.md** | Wide-table training for public GSE40279-style data (`train_clock_on_gse40279.py`) and GSE87571 external validation (`rogen_aging.clock.external_data`). |
 | **UKB_COMPLIANCE_AUDITOR.md** | UK Biobank compliance auditor (used with `03_validation_and_compliance/UKB_Compliance_Auditor.ipynb`). |
 | **METHYLATION_PIPELINE_QUICK_REFERENCE.md** | Quick reference for the methylation pipeline. |
 | **METHYLATION_PIPELINE_USAGE.md** | Detailed usage and workflow for the methylation pipeline. |
@@ -530,6 +547,7 @@ Exploratory QA for the offline UK Biobank longevity-associated SNP manifest (`sc
 | `src/rogen_aging/methylation_visualizations.py` | All methylation pipeline and clock figures. |
 | `src/rogen_aging/network_visualizer.py` | Protein interaction network figure. |
 | `src/rogen_aging/eda_dashboard/` | Streamlit EDA dashboard for merged multi-omics Parquet. |
+| `src/rogen_aging/clock/external_data.py` | GSE87571 loader → wide β + age table for `validate_clock.py` (see GSE40279_CLOCK_TRAINING.md). |
 | `tests/` | Pytest tests (e.g. package import smoke tests). |
 | `scripts/generate_agent_system_schema*.py` | Figure 4 — agent system architecture. |
 | `scripts/generate_bimodal_heatmap.py` | Figure 2 — bimodal risk heatmap. |
