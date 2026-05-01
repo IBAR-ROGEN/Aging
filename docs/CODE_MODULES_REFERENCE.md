@@ -23,9 +23,10 @@ Aging/
 │   ├── methylation_visualizations.py
 │   ├── network_visualizer.py
 │   └── eda_dashboard/            # Streamlit merged-cohort EDA (see docs/EDA_DASHBOARD.md)
-├── tests/                         # Pytest (e.g. import smoke tests)
+├── tests/                         # Pytest (package smoke + synthetic UKB/VCF generators)
 ├── scripts/                       # Entry-point scripts
 │   ├── mock_ukb_generator.py      # Synthetic UK Biobank data
+│   ├── generate_synthetic_romanian_vcf.py  # Synthetic EUR-style cohort VCF v4.2
 │   ├── ukb_la_snp_lookup.py       # Offline UKB SNP manifest (Ensembl GRCh38)
 │   ├── render_*_network*.py       # Manuscript networks (matplotlib / networkx)
 │   ├── render_dashboard_figure_mockup.py
@@ -292,12 +293,13 @@ Scripts are entry points that call into `src/rogen_aging` or external tools. Run
 **Purpose:** Generate synthetic UK Biobank-style tabular data for pipeline development and testing.
 
 **Responsibilities:**
-- Produces fake data with Sample_ID, Age, EAA (Epigenetic Age Acceleration), and 5 dummy SNP columns (0, 1, 2).
+- Produces fake data with `Sample_ID`, `Age`, `Sex`, `BMI`, `AD_diagnosis`, `EAA` (Epigenetic Age Acceleration), and 5 dummy SNP columns (0, 1, 2).
 - Uses `MOCK_` prefix for Sample_IDs (whitelisted by UK Biobank pre-commit security hook).
-- Typer CLI: `--n-samples`, `--output`, `--seed`.
+- Typer CLI: `--n-samples`, `--output`, `--seed`. Python API `generate_synthetic_ukb_data()` accepts `min_age` / `max_age` and other sampling parameters.
 
 **Dependencies:** pandas, numpy, typer.  
 **Output:** `test_data/mock_clinical_data.csv` (default).  
+**Tests:** `tests/test_mock_clinical_csv.py`.  
 **Related doc:** [docs/SYNTHETIC_UKB_GENERATOR.md](SYNTHETIC_UKB_GENERATOR.md).
 
 ---
@@ -464,7 +466,7 @@ Notebooks for project-wide visualizations and heatmaps.
 
 | File | Purpose |
 |------|--------|
-| **pyproject.toml** | Python project config (uv): package name `rogen-aging`, `[build-system]` (setuptools), dependencies including pysam and streamlit, optional `dev` extra (pytest), test paths / `pythonpath` for pytest, Python ≥3.12. |
+| **pyproject.toml** | Python project config (uv): package name `rogen-aging`, `[build-system]` (setuptools), dependencies including pysam and streamlit, optional `dev` extra (pytest), test paths / `pythonpath` (`src` and `scripts`) for pytest, Python ≥3.12. |
 | **setup.py** | Setuptools shim; metadata and dependencies are defined in `pyproject.toml`. |
 | **requirements.txt** | Optional pip-oriented list with loose pins for a subset of scientific stack. |
 | **.env.example** | Example environment variables (e.g. API keys or paths) for local runs. |

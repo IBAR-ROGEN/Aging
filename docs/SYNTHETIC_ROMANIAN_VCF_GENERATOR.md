@@ -96,6 +96,14 @@ uv run scripts/generate_synthetic_romanian_vcf.py --help
 - **QUAL** — Fixed `60`; **FILTER** — `PASS`.
 - **INFO** — `AC`, `AN`, and `AF` derived from the **simulated genotypes** for that row (`AF = AC/AN`).
 
+## Automated tests
+
+**`tests/test_synthetic_vcf.py`** exercises `generate_synthetic_romanian_vcf.main()` with a tiny cohort written under pytest’s **`tmp_path`** (no committed VCF). It checks for `##fileformat=VCFv4.2`, the `#CHROM` header line, and that each variant row has the correct number of tab-separated columns for the requested sample count.
+
+```bash
+uv run pytest tests/test_synthetic_vcf.py
+```
+
 ## Security and compliance
 
 - **Synthetic-only** — Safe for public repositories **as code**; generated `.vcf` files can be large and often should stay under **`data/`** (git-ignored) or **`test_data/`** only if small and policy allows.
@@ -116,4 +124,4 @@ uv run scripts/generate_synthetic_romanian_vcf.py --help
 
 ---
 
-**Last updated:** March 25, 2026
+**Last updated:** May 1, 2026
