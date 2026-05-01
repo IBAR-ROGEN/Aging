@@ -111,7 +111,7 @@ After building the CSV, run the exploratory notebook **`notebooks/05_ukb_explora
 
 ## Layout
 
-- `src/rogen_aging/` — Installable Python package (`import rogen_aging`, `from rogen_aging import …`)
+- `src/rogen_aging/` — Installable Python package (`import rogen_aging`, `from rogen_aging import …`); epigenetic clock helpers under **`rogen_aging.clock`** (e.g. **`external_data`** for GSE87571)
 - `tests/` — Pytest tests (`uv run pytest` after `uv sync --extra dev`), including `test_mock_clinical_csv.py` and `test_synthetic_vcf.py` for the synthetic generators (`pyproject.toml` adds `scripts/` to pytest’s `pythonpath`)
 - `scripts/` — CLI scripts (AlphaGenome, mock tabular/VCF generators, figure renders, LA-SNP per-gene supplementary plot, UKB manifest builder, epigenetic clock train/validate, security hook)
 - `notebooks/` — Genomic analysis notebooks (including `05_ukb_exploration/` for UKB manifest QA)
@@ -306,6 +306,21 @@ uv run python scripts/validate_clock.py \
 
 Supported test formats: **`.parquet`**, **`.csv`** (also **`.tsv`**). Missing model CpGs (when the estimator stores `feature_names_in_`) are mean-imputed from available test `cg*` values. Details: **[docs/ROMANIAN_EPIGENETIC_CLOCK.md](docs/ROMANIAN_EPIGENETIC_CLOCK.md#held-out-validation-validate_clockpy)**.
 
+## GSE87571 external validation data (Illumina 450K whole blood)
+
+For **external validation** of a clock trained on GSE40279-style data, this repo includes **`rogen_aging.clock.external_data`**, which loads [GSE87571](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE87571) (450K whole blood, ages in sample characteristics) into the same wide layout as **`validate_clock.py`**: rows = samples (GEO GSM index), columns = **`chronological_age`** + **`cg*`** probe β-values.
+
+- **Python API:** `from rogen_aging.clock.external_data import load_gse87571, save_as_parquet`. Optional `restrict_to_cpgs` limits columns to the intersection with your clock’s probe list (for example from training metrics **`selected_cpgs`**).
+- **CLI:** downloads or reads a local series matrix, merges supplementary probe matrices when the embedded GEO table is empty, caches under `./data/geo` by default, then writes Parquet:
+
+```bash
+uv run python -m rogen_aging.clock.external_data --output ./data/gse87571.parquet
+# Optional: --local-path ./path/to/GSE87571_series_matrix.txt.gz --geo-cache-dir ./data/geo
+# Optional: --restrict-cpgs-file ./path/to/cpgs_one_per_line.txt
+```
+
+Then run **`validate_clock.py`** with **`--test_data ./data/gse87571.parquet`**. GEOparse can be flaky for large series matrices; if automatic download fails, download the series matrix (and supplementary `matrix1of2` / `matrix2of2` if needed) from the GEO accession page and pass **`--local-path`**. Full notes: **[docs/GSE40279_CLOCK_TRAINING.md](docs/GSE40279_CLOCK_TRAINING.md#external-validation-gse87571)**.
+
 ## R environment (optional)
 
 Bootstrap a local R toolchain under `.r-env/` (micromamba, conda-forge `r-base`):
@@ -326,7 +341,7 @@ See comments in the script for IDE integration; `.r-env/` is git-ignored.
 | [docs/SYNTHETIC_ROMANIAN_VCF_GENERATOR.md](docs/SYNTHETIC_ROMANIAN_VCF_GENERATOR.md) | Synthetic Romanian cohort VCF (VCF 4.2) |
 | [docs/EDA_MOCK_INTEGRATION.md](docs/EDA_MOCK_INTEGRATION.md) | EDA mock epigenetic aging script |
 | [docs/ROMANIAN_EPIGENETIC_CLOCK.md](docs/ROMANIAN_EPIGENETIC_CLOCK.md) | Romanian cohort Elastic Net clock (`train_romanian_epigenetic_clock.py`) and held-out validation (`validate_clock.py`) |
-| [docs/GSE40279_CLOCK_TRAINING.md](docs/GSE40279_CLOCK_TRAINING.md) | Public GEO GSE40279-style wide-table training (`train_clock_on_gse40279.py`) |
+| [docs/GSE40279_CLOCK_TRAINING.md](docs/GSE40279_CLOCK_TRAINING.md) | Public GEO GSE40279-style wide-table training (`train_clock_on_gse40279.py`) and GSE87571 external validation (`rogen_aging.clock.external_data`) |
 | [docs/UKB_COMPLIANCE_AUDITOR.md](docs/UKB_COMPLIANCE_AUDITOR.md) | UK Biobank compliance tool |
 | [docs/UKBB_CI_COMPLIANCE_AUDIT.md](docs/UKBB_CI_COMPLIANCE_AUDIT.md) | CI/CD UKB-oriented repo audit script and usage |
 | [docs/CODE_MODULES_REFERENCE.md](docs/CODE_MODULES_REFERENCE.md) | Code modules reference (`ukb_la_snp_lookup.py`, figure render scripts, `components/` / `frontend/`) |

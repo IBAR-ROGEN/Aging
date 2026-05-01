@@ -138,9 +138,13 @@ uv run python scripts/validate_clock.py \
   --output_dir figures/clock_validation_run1
 ```
 
+### External cohort (GSE87571)
+
+To validate a GSE40279-trained clock on a second public 450K whole-blood series, use **`rogen_aging.clock.external_data`** (`load_gse87571` / `python -m rogen_aging.clock.external_data`) to produce a Parquet with **`chronological_age`** and **`cg*`** columns, then point **`validate_clock.py`** at that file. See **[docs/GSE40279_CLOCK_TRAINING.md](GSE40279_CLOCK_TRAINING.md#external-validation-gse87571)**.
+
 ## Related material
 
-- **[docs/GSE40279_CLOCK_TRAINING.md](GSE40279_CLOCK_TRAINING.md)** — Train an Elastic Net clock from a sample × CpG table (+ `chronological_age`) for GEO GSE40279-style data (`train_clock_on_gse40279.py`).  
+- **[docs/GSE40279_CLOCK_TRAINING.md](GSE40279_CLOCK_TRAINING.md)** — Train an Elastic Net clock from a sample × CpG table (+ `chronological_age`) for GEO GSE40279-style data (`train_clock_on_gse40279.py`), and notes on **GSE87571** external validation (`rogen_aging.clock.external_data`).  
 - **[docs/EDA_MOCK_INTEGRATION.md](EDA_MOCK_INTEGRATION.md)** — EDA on mock clinical/epigenetic age tables (`test_data/mock_epigenetic_clinical.csv`).  
 - **Notebook:** `notebooks/02_methylation_pipeline/MethylationClocks.ipynb` — broader epigenetic clock context.  
 - **Synthetic Romanian VCF:** [docs/SYNTHETIC_ROMANIAN_VCF_GENERATOR.md](SYNTHETIC_ROMANIAN_VCF_GENERATOR.md) (genotype mock data; separate from this methylation clock script).

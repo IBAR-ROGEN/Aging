@@ -65,6 +65,34 @@ uv run python scripts/train_clock_on_gse40279.py \
 
 Use **`scripts/validate_clock.py`** with a held-out table in the same wide format. See **[docs/ROMANIAN_EPIGENETIC_CLOCK.md](ROMANIAN_EPIGENETIC_CLOCK.md#held-out-validation-validate_clockpy)** for CLI arguments, figures, and `validation_metrics.json`.
 
+### External validation (GSE87571)
+
+[GSE87571](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE87571) is a public Illumina 450K whole-blood cohort (hundreds of samples, wide age range) suitable for **external** checks on clocks trained on GSE40279-style inputs.
+
+Use the installable module **`rogen_aging.clock.external_data`** to build a **`validate_clock.py`**-compatible Parquet (or call **`load_gse87571`** then **`save_as_parquet`** in Python):
+
+| Item | Detail |
+|------|--------|
+| Module | `src/rogen_aging/clock/external_data.py` |
+| API | `load_gse87571(local_path=None, geo_cache_dir='./data/geo', restrict_to_cpgs=None)` → `pandas.DataFrame` with index = GSM, columns = `chronological_age` + `cg*` |
+| CLI | `uv run python -m rogen_aging.clock.external_data --output path/to/gse87571.parquet` |
+| GEO layout | The series matrix carries metadata only; probe β-values are read from supplementary **`GSE87571_matrix1of2.txt.gz`** and **`GSE87571_matrix2of2.txt.gz`**, merged automatically after download into `geo_cache_dir`. |
+| `restrict_to_cpgs` | Optional sequence of probe IDs; keeps only the intersection with the cohort (for example training JSON **`selected_cpgs`**). |
+| Manual fetch | If **GEOparse** or HTTPS download fails (timeouts, TLS, or corporate proxies), download **`GSE87571_series_matrix.txt.gz`** and the two supplementary matrix files from GEO and pass **`local_path`** to the series matrix; cache the `.gz` files under the same **`geo_cache_dir`** so the loader can find them. |
+
+Example end-to-end (paths illustrative):
+
+```bash
+uv run python -m rogen_aging.clock.external_data \
+  --output data/gse87571.parquet \
+  --restrict-cpgs-file data/my_clock_selected_cpgs.txt
+
+uv run python scripts/validate_clock.py \
+  --model_path analysis/gse40279_elasticnet_clock.pkl \
+  --test_data data/gse87571.parquet \
+  --output_dir analysis/validation_gse87571
+```
+
 ## Related documentation
 
 - **[docs/ROMANIAN_EPIGENETIC_CLOCK.md](ROMANIAN_EPIGENETIC_CLOCK.md)** — Romanian-style mock trainer (`train_romanian_epigenetic_clock.py`) and shared validation notes for `validate_clock.py`.
