@@ -33,6 +33,7 @@ Aging/
 │   ├── visualize_alphagenome_results.py
 │   ├── generate_*.py
 │   ├── train_romanian_epigenetic_clock.py  # Elastic Net mock clock
+│   ├── validate_clock.py          # Held-out validation for saved clock models
 │   ├── install_graphviz.sh
 │   └── README_GRAPHVIZ.md
 ├── notebooks/                     # Notebooks by functional area
@@ -309,7 +310,21 @@ Scripts are entry points that call into `src/rogen_aging` or external tools. Run
 
 ---
 
-### 3.11 security_check.sh & install_pre_commit_hook.sh
+### 3.11 validate_clock.py
+
+**Purpose:** Evaluate a **pre-trained** epigenetic clock (`joblib` / `pickle`) on a held-out table with `chronological_age` and `cg*` feature columns.
+
+**Responsibilities:**
+- Load model and test Parquet/CSV; align features to `feature_names_in_` when present; mean-impute missing expected CpGs from test-set statistics.
+- Compute overall MAE and Pearson r; stratify MAE by age decade (`pandas.cut`).
+- Write `Fig_Clock_Residuals.png`, `Fig_Clock_MAE_by_decade.png`, and `validation_metrics.json` under `--output_dir`.
+
+**Dependencies:** pandas, numpy, scipy, scikit-learn, matplotlib, seaborn, joblib (via sklearn), pyarrow for Parquet.  
+**Related doc:** [docs/ROMANIAN_EPIGENETIC_CLOCK.md](ROMANIAN_EPIGENETIC_CLOCK.md#held-out-validation-validate_clockpy).
+
+---
+
+### 3.12 security_check.sh & install_pre_commit_hook.sh
 
 **Purpose:** UK Biobank pre-commit security hook — blocks commits containing `patient_id`, `UKB_`, or `.vcf`/`.bed` files.
 
@@ -381,7 +396,7 @@ Notebooks for project-wide visualizations and heatmaps.
 | **PROJECT_STRUCTURE.md** | Bioinformatics project directory layout. |
 | **UKB_PRE_COMMIT_HOOK.md** | Git pre-commit security hook for UK Biobank compliance. |
 | **SYNTHETIC_UKB_GENERATOR.md** | Synthetic UK Biobank data generator (`mock_ukb_generator.py`). |
-| **ROMANIAN_EPIGENETIC_CLOCK.md** | Romanian cohort Elastic Net epigenetic clock (`train_romanian_epigenetic_clock.py`). |
+| **ROMANIAN_EPIGENETIC_CLOCK.md** | Romanian cohort Elastic Net clock (`train_romanian_epigenetic_clock.py`) and held-out validation (`validate_clock.py`). |
 | **UKB_COMPLIANCE_AUDITOR.md** | UK Biobank compliance auditor (used with `03_validation_and_compliance/UKB_Compliance_Auditor.ipynb`). |
 | **METHYLATION_PIPELINE_QUICK_REFERENCE.md** | Quick reference for the methylation pipeline. |
 | **METHYLATION_PIPELINE_USAGE.md** | Detailed usage and workflow for the methylation pipeline. |
@@ -421,6 +436,7 @@ Notebooks for project-wide visualizations and heatmaps.
 | `scripts/install_graphviz.sh` | Install Graphviz on macOS. |
 | `scripts/mock_ukb_generator.py` | Synthetic UK Biobank-style mock data. |
 | `scripts/train_romanian_epigenetic_clock.py` | Elastic Net epigenetic clock (mock Romanian cohort / custom CSVs). |
+| `scripts/validate_clock.py` | Held-out validation for a saved clock model (MAE, r, decade MAE, figures). |
 | `scripts/security_check.sh` | UK Biobank pre-commit security hook. |
 | `notebooks/01_genomics_analysis/` | AlphaGenome AD/PD gene analysis and networks. |
 | `notebooks/02_methylation_pipeline/` | Methylation downstream analysis and epigenetic clocks. |
