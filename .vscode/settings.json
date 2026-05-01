@@ -1,3 +1,4 @@
 {
-  "r.rpath.mac": ""
+  "r.rterm.mac": "${workspaceFolder}/.r-env/bin/R",
+  "r.rpath.mac": "${workspaceFolder}/.r-env/bin/R"
 }

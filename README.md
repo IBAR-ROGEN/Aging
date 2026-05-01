@@ -65,6 +65,14 @@ uv run streamlit run src/rogen_aging/eda_dashboard/app.py
 
 By default the app expects `data/merged_cohort.parquet`, or set `ROGEN_MERGED_COHORT_PARQUET`. Full schema, tabs, and module map: **[docs/EDA_DASHBOARD.md](docs/EDA_DASHBOARD.md)**.
 
+Static **manuscript figure** (matplotlib mockup of the React component in `components/DashboardFigureMockup.tsx`):
+
+```bash
+uv run python scripts/render_dashboard_figure_mockup.py
+```
+
+Writes `analysis/dashboard_figure_mockup.png`. With Node.js, `components/dashboard-figure-render` can render the TSX via Vite + Playwright (`npm install` then `npm run capture`).
+
 ## Layout
 
 - `src/rogen_aging/` — Installable Python package (`import rogen_aging`, `from rogen_aging import …`)

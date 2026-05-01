@@ -30,6 +30,7 @@ dependencies = [
     "streamlit>=1.40",
     "plotly>=6.6.0",
     "pyarrow>=22.0.0",
+    "adjusttext>=1.3.0",
 ]
 requires-python = ">=3.12"
 readme = "README.md"
