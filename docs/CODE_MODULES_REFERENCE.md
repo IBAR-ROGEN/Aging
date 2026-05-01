@@ -39,6 +39,7 @@ Aging/
 │   ├── generate_*.py
 │   ├── generate_la_snp_per_gene_plot.py  # LA-SNPs per gene (supplementary bar chart)
 │   ├── train_romanian_epigenetic_clock.py  # Elastic Net mock clock
+│   ├── train_clock_on_gse40279.py # GSE40279-style wide table + ElasticNetCV
 │   ├── validate_clock.py          # Held-out validation for saved clock models
 │   ├── install_graphviz.sh
 │   └── README_GRAPHVIZ.md
@@ -320,6 +321,22 @@ Scripts are entry points that call into `src/rogen_aging` or external tools. Run
 
 ---
 
+### 3.10a train_clock_on_gse40279.py
+
+**Purpose:** Train an epigenetic aging clock from a **wide** public-style methylation table (rows = samples, columns = `cg*` probes + `chronological_age`), intended for GEO **GSE40279** (Hannum 2013, 450K whole blood) after you convert GEO/β data offline.
+
+**Responsibilities:**
+- argparse CLI: `--input_data`, `--output_model`, `--output_metrics`, `--test_size`, `--random_state`.
+- Load Parquet or CSV/TSV with pandas; split `cg*` features from `chronological_age`.
+- `train_test_split` → fit `Pipeline(SimpleImputer(mean), ElasticNetCV(cv=10, …))` on the training split; score test MAE, RMSE, Pearson r.
+- `joblib.dump` the pipeline; write metrics JSON including non-zero coefficient probe IDs (`selected_cpgs`).
+
+**Dependencies:** pandas, numpy, scipy, scikit-learn, joblib (via sklearn), pyarrow for Parquet.  
+**Related doc:** [docs/GSE40279_CLOCK_TRAINING.md](GSE40279_CLOCK_TRAINING.md).  
+**Validation:** [docs/ROMANIAN_EPIGENETIC_CLOCK.md](ROMANIAN_EPIGENETIC_CLOCK.md#held-out-validation-validate_clockpy) (`validate_clock.py`).
+
+---
+
 ### 3.11 validate_clock.py
 
 **Purpose:** Evaluate a **pre-trained** epigenetic clock (`joblib` / `pickle`) on a held-out table with `chronological_age` and `cg*` feature columns.
@@ -482,6 +499,7 @@ Exploratory QA for the offline UK Biobank longevity-associated SNP manifest (`sc
 | **UKB_PRE_COMMIT_HOOK.md** | Git pre-commit security hook for UK Biobank compliance. |
 | **SYNTHETIC_UKB_GENERATOR.md** | Synthetic UK Biobank data generator (`mock_ukb_generator.py`). |
 | **ROMANIAN_EPIGENETIC_CLOCK.md** | Romanian cohort Elastic Net clock (`train_romanian_epigenetic_clock.py`) and held-out validation (`validate_clock.py`). |
+| **GSE40279_CLOCK_TRAINING.md** | Wide-table training for public GSE40279-style data (`train_clock_on_gse40279.py`). |
 | **UKB_COMPLIANCE_AUDITOR.md** | UK Biobank compliance auditor (used with `03_validation_and_compliance/UKB_Compliance_Auditor.ipynb`). |
 | **METHYLATION_PIPELINE_QUICK_REFERENCE.md** | Quick reference for the methylation pipeline. |
 | **METHYLATION_PIPELINE_USAGE.md** | Detailed usage and workflow for the methylation pipeline. |
@@ -521,6 +539,7 @@ Exploratory QA for the offline UK Biobank longevity-associated SNP manifest (`sc
 | `scripts/install_graphviz.sh` | Install Graphviz on macOS. |
 | `scripts/mock_ukb_generator.py` | Synthetic UK Biobank-style mock data. |
 | `scripts/train_romanian_epigenetic_clock.py` | Elastic Net epigenetic clock (mock Romanian cohort / custom CSVs). |
+| `scripts/train_clock_on_gse40279.py` | GSE40279-style wide β + age table → imputer + ElasticNetCV pipeline (see GSE40279_CLOCK_TRAINING.md). |
 | `scripts/validate_clock.py` | Held-out validation for a saved clock model (MAE, r, decade MAE, figures). |
 | `scripts/ukb_la_snp_lookup.py` | Offline UKB SNP manifest via Ensembl GRCh38 (CSV). |
 | `scripts/generate_la_snp_per_gene_plot.py` | Supplementary LA-SNPs-per-gene bar chart (Excel → PNG). |

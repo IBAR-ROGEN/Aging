@@ -1,7 +1,7 @@
 # Romanian cohort mock epigenetic clock (Elastic Net)
 
 **Project:** IBAR-ROGEN Aging  
-**Scripts:** `scripts/train_romanian_epigenetic_clock.py` (train), `scripts/validate_clock.py` (evaluate a saved model on held-out data)  
+**Scripts:** `scripts/train_romanian_epigenetic_clock.py` (train), `scripts/validate_clock.py` (evaluate a saved model on held-out data). For a **wide-table** trainer aimed at public **GSE40279** (Hannum 2013) style inputs, see **`scripts/train_clock_on_gse40279.py`** and **[docs/GSE40279_CLOCK_TRAINING.md](GSE40279_CLOCK_TRAINING.md)**.  
 **Repository:** [IBAR-ROGEN/Aging](https://github.com/IBAR-ROGEN/Aging)
 
 ## Overview
@@ -140,6 +140,7 @@ uv run python scripts/validate_clock.py \
 
 ## Related material
 
+- **[docs/GSE40279_CLOCK_TRAINING.md](GSE40279_CLOCK_TRAINING.md)** — Train an Elastic Net clock from a sample × CpG table (+ `chronological_age`) for GEO GSE40279-style data (`train_clock_on_gse40279.py`).  
 - **[docs/EDA_MOCK_INTEGRATION.md](EDA_MOCK_INTEGRATION.md)** — EDA on mock clinical/epigenetic age tables (`test_data/mock_epigenetic_clinical.csv`).  
 - **Notebook:** `notebooks/02_methylation_pipeline/MethylationClocks.ipynb` — broader epigenetic clock context.  
 - **Synthetic Romanian VCF:** [docs/SYNTHETIC_ROMANIAN_VCF_GENERATOR.md](SYNTHETIC_ROMANIAN_VCF_GENERATOR.md) (genotype mock data; separate from this methylation clock script).
