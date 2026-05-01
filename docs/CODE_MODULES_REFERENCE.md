@@ -37,6 +37,7 @@ Aging/
 │   ├── analyze_alphagenome_results.py
 │   ├── visualize_alphagenome_results.py
 │   ├── generate_*.py
+│   ├── generate_la_snp_per_gene_plot.py  # LA-SNPs per gene (supplementary bar chart)
 │   ├── train_romanian_epigenetic_clock.py  # Elastic Net mock clock
 │   ├── validate_clock.py          # Held-out validation for saved clock models
 │   ├── install_graphviz.sh
@@ -392,6 +393,18 @@ Scripts are entry points that call into `src/rogen_aging` or external tools. Run
 
 ---
 
+### 3.18 generate_la_snp_per_gene_plot.py
+
+**Purpose:** Supplementary manuscript figure — horizontal bar chart of **unique LA-SNPs per gene** from an Excel overlap table.
+
+**Responsibilities:** Read `.xlsx` with pandas; group by gene column and count unique SNP identifiers; sort by count (descending); highlight genes with at least three SNPs; annotate bar ends; journal-style matplotlib (sans-serif, no top/right spines); write `analysis/Fig_LA_SNPs_per_gene.png` at 300 DPI.
+
+**CLI:** `argparse` defaults: `--input` repo-root `overlapping_genes_with_snps.xlsx`, `--output` `analysis/Fig_LA_SNPs_per_gene.png`, `--gene-column` `Gene`, `--snp-column` `SNP_rsID` (override when the spreadsheet uses other headers, for example `Gene Symbol` / `SNP Identifier`).
+
+**Dependencies:** pandas, openpyxl, matplotlib.
+
+---
+
 ## 4. Jupyter notebooks (notebooks/)
 
 Notebooks are grouped by functional area in numbered subfolders. Run with `uv run jupyter lab` from the project root. Large data should live in the root `data/` directory (git-ignored).
@@ -497,6 +510,7 @@ Notebooks for project-wide visualizations and heatmaps.
 | `scripts/train_romanian_epigenetic_clock.py` | Elastic Net epigenetic clock (mock Romanian cohort / custom CSVs). |
 | `scripts/validate_clock.py` | Held-out validation for a saved clock model (MAE, r, decade MAE, figures). |
 | `scripts/ukb_la_snp_lookup.py` | Offline UKB SNP manifest via Ensembl GRCh38 (CSV). |
+| `scripts/generate_la_snp_per_gene_plot.py` | Supplementary LA-SNPs-per-gene bar chart (Excel → PNG). |
 | `scripts/render_longevity_network_diagram.py` | Matplotlib longevity network (twin of `frontend/` TSX). |
 | `scripts/render_figure1c_mechanisms_network.py` | Figure 1C mechanisms network (PNG/PDF). |
 | `scripts/render_dashboard_figure_mockup.py` | Matplotlib dashboard mockup (twin of `components/` TSX). |

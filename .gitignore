@@ -31,6 +31,9 @@ ENV/
 .r-env/
 .tools/
 
+# Matplotlib config/cache when ~/.matplotlib is not writable (e.g. MPLCONFIGDIR)
+.mplconfig/
+
 # Unit test / coverage reports
 .coverage*
 .pytest_cache/

@@ -86,9 +86,14 @@ uv run python scripts/render_figure1c_mechanisms_network.py
 
 # EDA dashboard mockup (matplotlib twin of DashboardFigureMockup.tsx)
 uv run python scripts/render_dashboard_figure_mockup.py
+
+# Supplementary figure — LA-SNPs per gene (defaults: Gene / SNP_rsID columns)
+uv run python scripts/generate_la_snp_per_gene_plot.py
 ```
 
-See **[docs/CODE_MODULES_REFERENCE.md](docs/CODE_MODULES_REFERENCE.md)** (section 8 and §§3.12–3.17) for parameters and dependencies.
+Writes `analysis/Fig_LA_SNPs_per_gene.png`. If your Excel uses different headers (for example `Gene Symbol` / `SNP Identifier`), pass `--gene-column` and `--snp-column`.
+
+See **[docs/CODE_MODULES_REFERENCE.md](docs/CODE_MODULES_REFERENCE.md)** (section 8 and manuscript figure script sections, including 3.12–3.18) for parameters and dependencies.
 
 ## UK Biobank SNP manifest (offline, Ensembl)
 
@@ -106,7 +111,7 @@ The Git pre-commit hook exempts this script from the generic `UKB_` content scan
 
 - `src/rogen_aging/` — Installable Python package (`import rogen_aging`, `from rogen_aging import …`)
 - `tests/` — Pytest tests (`uv run pytest` after `uv sync --extra dev`), including `test_mock_clinical_csv.py` and `test_synthetic_vcf.py` for the synthetic generators (`pyproject.toml` adds `scripts/` to pytest’s `pythonpath`)
-- `scripts/` — CLI scripts (AlphaGenome, mock tabular/VCF generators, figure renders, UKB manifest builder, security hook)
+- `scripts/` — CLI scripts (AlphaGenome, mock tabular/VCF generators, figure renders, LA-SNP per-gene supplementary plot, UKB manifest builder, security hook)
 - `notebooks/` — Genomic analysis notebooks
 - `docs/` — Project documentation
 - `components/` — React/TypeScript manuscript figure mockups (e.g. dashboard) and a small Vite capture app under `components/dashboard-figure-render/`
