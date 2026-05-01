@@ -17,6 +17,8 @@ Install the hook from the project root:
 
 This copies `scripts/security_check.sh` to `.git/hooks/pre-commit` and makes it executable. The hook runs automatically on every `git commit`.
 
+**After `git pull`:** if `scripts/security_check.sh` changed on the branch you merged, run the installer again so `.git/hooks/pre-commit` matches the repository (the hook file in `.git/hooks` is not updated automatically).
+
 To reinstall (e.g. after updating the security script):
 
 ```bash
@@ -44,6 +46,8 @@ The following are excluded from content scanning:
 | `*install_pre_commit*` | Hook installer |
 | `scripts/mock_ukb_generator.py` | Synthetic data generator (no real UKB data) |
 | `test_data/mock_clinical_data.csv` | Synthetic mock output (MOCK_ IDs) |
+| `scripts/ukb_la_snp_lookup.py` | Offline Ensembl → CSV manifest builder only (no participant rows; reviewed path) |
+| `repo_structure.txt` | Generated tree of tracked paths (may list compliance doc filenames) |
 
 ## Manual Run
 
@@ -96,4 +100,4 @@ Your commit was BLOCKED to prevent accidental exposure of restricted data.
 
 ---
 
-**Last Updated:** February 27, 2026
+**Last Updated:** May 1, 2026

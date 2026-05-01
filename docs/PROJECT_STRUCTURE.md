@@ -5,7 +5,7 @@
 
 ## Overview
 
-This document describes the directory layout of the rogen_aging bioinformatics project. The structure separates source code, analysis, data, and documentation to support reproducible workflows while keeping sensitive data out of version control.
+This document describes the directory layout of the rogen_aging bioinformatics project. The structure separates source code, analysis, data, and documentation to support reproducible workflows while keeping sensitive data out of version control. Small **Vite + React** apps under `components/` and `frontend/` support manuscript figures alongside Python render scripts.
 
 ## Top-Level Structure
 
@@ -16,11 +16,14 @@ rogen_aging/
 ├── scripts/                  # CLI and utility scripts
 ├── notebooks/                # Jupyter notebooks by functional area
 ├── docs/                     # Documentation
-├── analysis/                 # Generated figures and reports
+├── components/               # React/TSX manuscript mockups + Vite capture app
+├── frontend/                 # Vite + React longevity network diagram + capture
+├── analysis/                 # Generated figures and reports (some committed)
 ├── test_data/                # Small synthetic/test datasets (versioned)
 ├── data/                     # Large/local data (git-ignored)
 ├── results/                  # Pipeline outputs (git-ignored)
 ├── outputs/                  # Other outputs (git-ignored)
+├── repo_structure.txt        # Optional snapshot of tracked paths (git ls-files)
 ├── pyproject.toml            # Project metadata, deps, build (uv / setuptools)
 ├── setup.py                  # Setuptools shim (reads pyproject.toml)
 ├── requirements.txt          # Optional pip-style pin list for non-uv workflows
@@ -53,12 +56,18 @@ Executable scripts and shell utilities. Run with `uv run scripts/<script>.py` or
 | Script | Purpose |
 |--------|---------|
 | `mock_ukb_generator.py` | Synthetic UK Biobank-style tabular data |
+| `ukb_la_snp_lookup.py` | Offline UKB genotype manifest: Excel overlap → Ensembl GRCh38 → CSV (no dx-toolkit) |
+| `render_longevity_network_diagram.py` | Matplotlib twin of `frontend` longevity network TSX |
+| `render_figure1c_mechanisms_network.py` | Figure 1C mechanisms network (networkx + matplotlib; PNG/PDF) |
+| `render_dashboard_figure_mockup.py` | Matplotlib twin of `components/DashboardFigureMockup.tsx` |
+| `bootstrap_r_env.sh` | Optional micromamba R base under `.r-env/` |
 | `security_check.sh` | UK Biobank pre-commit security scan |
 | `install_pre_commit_hook.sh` | Install Git pre-commit hook |
 | `alphagenome_sequence_comparer.py` | AlphaGenome API batch submission |
 | `analyze_alphagenome_results.py` | Process AlphaGenome outputs |
 | `visualize_alphagenome_results.py` | AlphaGenome visualizations |
-| `generate_*.py` | Figure generation (pipeline, heatmaps, etc.) |
+| `generate_*.py` | Figure generation (pipeline, heatmaps, agent schema, etc.) |
+| `validate_clock.py` | Held-out epigenetic clock validation (see ROMANIAN_EPIGENETIC_CLOCK.md) |
 
 ### `notebooks/`
 
@@ -85,12 +94,25 @@ Project documentation (Markdown).
 | `METHYLATION_PIPELINE_*.md` | Methylation pipeline usage |
 | `ALPHAGENOME_ANALYSIS_EXPLANATION.md` | AlphaGenome methodology |
 
+### `components/` and `frontend/`
+
+TypeScript/React **manuscript figure** utilities (not the Streamlit EDA app). Each folder is a small **Vite** project: install with `npm install`, develop with `npm run dev`, and (where provided) export PNG via Playwright (`npm run capture` or `node scripts/capture*.mjs`). Python scripts under `scripts/render_*.py` produce matplotlib equivalents for CI and paper workflows without Node.
+
+| Path | Purpose |
+|------|---------|
+| `components/DashboardFigureMockup.tsx` | Wide multi-panel dashboard mockup for figures |
+| `components/dashboard-figure-render/` | Vite wrapper + capture script for the dashboard mockup |
+| `frontend/src/components/LongevityNetworkDiagram.tsx` | Longevity conceptual network diagram |
+| `frontend/scripts/capture-diagram.mjs` | Headless PNG export for the longevity diagram |
+
 ### `analysis/`
 
-Generated figures, reports, and downstream outputs. May be git-ignored for large artifacts.
+Generated figures, reports, and downstream outputs. Some publication-ready PNG/PDF assets are versioned; large or sensitive outputs should stay git-ignored.
 
-| Subfolder | Purpose |
-|-----------|---------|
+| Subfolder / file (examples) | Purpose |
+|-----------------------------|---------|
+| `Figure1C_Mechanisms.*` | LA-SNP mechanisms panel from `render_figure1c_mechanisms_network.py` |
+| `dashboard_figure_mockup.png` | Dashboard mockup from `render_dashboard_figure_mockup.py` |
 | `methylation/` | Methylation pipeline outputs |
 | `aging_related_datasets/` | Aging dataset search results |
 
@@ -136,4 +158,4 @@ Pipeline outputs and exported results. Kept local only.
 
 ---
 
-**Last Updated:** March 25, 2026
+**Last Updated:** May 1, 2026
