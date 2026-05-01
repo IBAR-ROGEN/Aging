@@ -47,7 +47,13 @@ Installable package (`rogen-aging` on the environment path after `uv sync` or `u
 
 ### `tests/`
 
-Pytest tests. Run with `uv run pytest` (install dev extras first: `uv sync --extra dev`). `pyproject.toml` sets `pythonpath = ["src"]` so imports resolve without a manual install in many setups.
+Pytest tests. Run with `uv run pytest` (install dev extras first: `uv sync --extra dev`). `pyproject.toml` sets `pythonpath = ["src", "scripts"]` so the installable package and repo **`scripts/`** modules (for example `mock_ukb_generator`, `generate_synthetic_romanian_vcf`) import cleanly during tests.
+
+| File | Purpose |
+|------|---------|
+| `test_package_imports.py` | Smoke import of `rogen_aging` |
+| `test_mock_clinical_csv.py` | Synthetic UKB-style tabular generator |
+| `test_synthetic_vcf.py` | Synthetic Romanian cohort VCF generator |
 
 ### `scripts/`
 
@@ -122,7 +128,7 @@ Small synthetic datasets suitable for version control and CI.
 
 | File | Purpose |
 |------|---------|
-| `mock_clinical_data.csv` | Synthetic UK Biobank-style clinical data (Sample_ID, Age, EAA, SNPs) |
+| `mock_clinical_data.csv` | Synthetic UK Biobank-style clinical data (Sample_ID, Age, Sex, BMI, AD_diagnosis, EAA, dummy SNPs); regenerate with `mock_ukb_generator.py` if the schema changes |
 | `gb-2013-14-10-r115-S3.csv` | Example/public dataset |
 
 ### `data/` (git-ignored)

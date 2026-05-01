@@ -44,7 +44,7 @@ def generate_synthetic_ukb_data(
         seed: Random seed for reproducibility.
 
     Returns:
-        DataFrame with Sample_ID, Age, EAA, and 5 dummy SNP columns.
+        DataFrame with Sample_ID, Age, Sex, BMI, AD_diagnosis, EAA, and 5 dummy SNP columns.
     """
     rng = np.random.default_rng(seed)
 
@@ -53,6 +53,15 @@ def generate_synthetic_ukb_data(
 
     # Age: uniform over [min_age, max_age]
     age = rng.integers(min_age, max_age + 1, size=n_samples)
+
+    # Sex: binary (0/1), balanced cohort
+    sex = rng.integers(0, 2, size=n_samples)
+
+    # BMI (kg/m^2): uniform in a biologically common range for adults
+    bmi = rng.uniform(15.0, 50.0, size=n_samples)
+
+    # AD diagnosis: rare binary outcome (~2% prevalence in synthetic cohort)
+    ad_diagnosis = rng.binomial(1, 0.02, size=n_samples)
 
     # Epigenetic Age Acceleration: normal distribution
     eaa = rng.normal(loc=eaa_mean, scale=eaa_std, size=n_samples)
@@ -72,6 +81,9 @@ def generate_synthetic_ukb_data(
         {
             "Sample_ID": sample_ids,
             "Age": age,
+            "Sex": sex,
+            "BMI": bmi,
+            "AD_diagnosis": ad_diagnosis,
             "EAA": eaa,
             **snp_cols,
         }

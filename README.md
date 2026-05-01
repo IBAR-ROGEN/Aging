@@ -105,7 +105,7 @@ The Git pre-commit hook exempts this script from the generic `UKB_` content scan
 ## Layout
 
 - `src/rogen_aging/` — Installable Python package (`import rogen_aging`, `from rogen_aging import …`)
-- `tests/` — Pytest tests (`uv run pytest` after `uv sync --extra dev`)
+- `tests/` — Pytest tests (`uv run pytest` after `uv sync --extra dev`), including `test_mock_clinical_csv.py` and `test_synthetic_vcf.py` for the synthetic generators (`pyproject.toml` adds `scripts/` to pytest’s `pythonpath`)
 - `scripts/` — CLI scripts (AlphaGenome, mock tabular/VCF generators, figure renders, UKB manifest builder, security hook)
 - `notebooks/` — Genomic analysis notebooks
 - `docs/` — Project documentation
@@ -235,7 +235,7 @@ uv run scripts/mock_ukb_generator.py
 # Output: test_data/mock_clinical_data.csv (1000 samples by default)
 ```
 
-See **[docs/SYNTHETIC_UKB_GENERATOR.md](docs/SYNTHETIC_UKB_GENERATOR.md)** for usage and options.
+See **[docs/SYNTHETIC_UKB_GENERATOR.md](docs/SYNTHETIC_UKB_GENERATOR.md)** for columns, CLI options, and pytest coverage in **`tests/test_mock_clinical_csv.py`**.
 
 ## Synthetic Romanian cohort VCF
 
@@ -247,7 +247,7 @@ uv run scripts/generate_synthetic_romanian_vcf.py \
   --output data/mock_romanian_eur.vcf
 ```
 
-See **[docs/SYNTHETIC_ROMANIAN_VCF_GENERATOR.md](docs/SYNTHETIC_ROMANIAN_VCF_GENERATOR.md)** for options, headers, and compliance notes.
+See **[docs/SYNTHETIC_ROMANIAN_VCF_GENERATOR.md](docs/SYNTHETIC_ROMANIAN_VCF_GENERATOR.md)** for options, headers, compliance notes, and **`tests/test_synthetic_vcf.py`** for lightweight pytest checks.
 
 ## EDA Mock Integration
 
