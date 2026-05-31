@@ -9,7 +9,7 @@ Maps IBAR-ROGEN activity IDs to code, scripts, and documentation.
 | **2.1.8.1** | Methylation calling pipeline | `rogen_aging.methylation_visualizations` | `pipeline_validation.sh`, `downstream_analysis.R` | [METHYLATION_PIPELINE_README.md](METHYLATION_PIPELINE_README.md) |
 | **2.1.8.1** | LA-SNP manifest + public AF validation | `rogen_aging.ukb` | `rogen-ukb-manifest`, `rogen-compare-af-gnomad` | [LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md](LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md) |
 | **2.1.8.1** | Synthetic UKB-RAP mock folder | `rogen_aging.vcf`, `scripts/ukb/mock_rap_folder.py` | `scripts/ukb/mock_rap_folder.py` | [SYNTHETIC_UKB_RAP_GENERATOR.md](SYNTHETIC_UKB_RAP_GENERATOR.md) |
-| **2.1.11.1** | Synthetic UKB integrative validation | `rogen_aging.integration` | `scripts/ukb/run_integration.py` | [UKB_INTEGRATION_PIPELINE.md](UKB_INTEGRATION_PIPELINE.md) |
+| **2.1.11.1** | Synthetic UKB integrative validation | `rogen_aging.integration` | `rogen-ukb-integrate` | [UKB_INTEGRATION_PIPELINE.md](UKB_INTEGRATION_PIPELINE.md) |
 | — | Epigenetic clock library | `rogen_aging.clock` | `rogen-clock` | [CLOCK_LIBRARY.md](CLOCK_LIBRARY.md) |
 | — | Multi-omics EDA dashboard | `rogen_aging.eda_dashboard` | Streamlit app | [EDA_DASHBOARD.md](EDA_DASHBOARD.md) |
 

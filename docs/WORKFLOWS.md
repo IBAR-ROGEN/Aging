@@ -26,6 +26,8 @@ Install the Git pre-commit hook (UKB data protection):
 | `rogen-ukb-manifest build …` / `… extract …` | LA-SNP manifest + 1KG AF ([LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md](LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md)) |
 | `rogen-compare-af-gnomad …` | 1KG vs gnomAD v4 NFE ([LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md](LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md)) |
 | `rogen-ukb-mock-clinical …` | Synthetic clinical CSV ([SYNTHETIC_UKB_GENERATOR.md](SYNTHETIC_UKB_GENERATOR.md)) |
+| `rogen-ukb-mock-rap …` | Synthetic UKB-RAP folder (phenotypes + LA-SNP VCF) ([SYNTHETIC_UKB_RAP_GENERATOR.md](SYNTHETIC_UKB_RAP_GENERATOR.md)) |
+| `rogen-ukb-integrate …` | Mock phenotype–genotype join + LA-SNP associations ([UKB_INTEGRATION_PIPELINE.md](UKB_INTEGRATION_PIPELINE.md)) |
 | `rogen-vcf-synthetic …` | Streaming synthetic VCF ([SYNTHETIC_ROMANIAN_VCF_GENERATOR.md](SYNTHETIC_ROMANIAN_VCF_GENERATOR.md)) |
 
 Legacy script paths under `scripts/*.py` remain as **deprecation shims** forwarding to `scripts/<workflow>/`.
@@ -43,7 +45,7 @@ Legacy script paths under `scripts/*.py` remain as **deprecation shims** forward
 
 - **Packages:** `src/rogen_aging/ukb/`, `src/rogen_aging/integration/`
 - **Mock clinical CSV:** `scripts/ukb/mock_clinical_csv.py` · **Mock RAP folder:** `scripts/ukb/mock_rap_folder.py`
-- **Integration scan:** `scripts/ukb/run_integration.py`
+- **Integration scan:** `uv run rogen-ukb-integrate` or `scripts/ukb/run_integration.py`
 - **Docs:** [SYNTHETIC_UKB_GENERATOR.md](SYNTHETIC_UKB_GENERATOR.md), [SYNTHETIC_UKB_RAP_GENERATOR.md](SYNTHETIC_UKB_RAP_GENERATOR.md), [UKB_INTEGRATION_PIPELINE.md](UKB_INTEGRATION_PIPELINE.md), [LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md](LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md)
 
 ### Methylation (Oxford Nanopore)

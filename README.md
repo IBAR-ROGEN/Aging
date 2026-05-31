@@ -33,6 +33,7 @@ Install the UK Biobank pre-commit security hook:
 | **Directory layout** | [docs/PROJECT_STRUCTURE.md](docs/PROJECT_STRUCTURE.md) |
 | **Manuscript figures** | [docs/FIGURES.md](docs/FIGURES.md) |
 | **Epigenetic clock** | [docs/CLOCK_LIBRARY.md](docs/CLOCK_LIBRARY.md) |
+| **Synthetic UKB integration** | [docs/UKB_INTEGRATION_PIPELINE.md](docs/UKB_INTEGRATION_PIPELINE.md) |
 | **Methylation pipeline** | [docs/METHYLATION_PIPELINE_README.md](docs/METHYLATION_PIPELINE_README.md) |
 
 ## Layout (summary)
@@ -52,6 +53,8 @@ Install the UK Biobank pre-commit security hook:
 uv run rogen-clock train --input_data … --output_model … --output_metrics …
 uv run rogen-clock evaluate --model_path … --test_data … --output_dir …
 uv run rogen-ukb-manifest build --input overlap.xlsx --output analysis/ukb_snp_manifest_v0.1.csv
+uv run rogen-ukb-mock-rap --n-samples 1000 --output-dir test_data/mock_ukb_rap/
+uv run rogen-ukb-integrate --output-dir analysis/
 uv run streamlit run src/rogen_aging/eda_dashboard/app.py
 ```
 

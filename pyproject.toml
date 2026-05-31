@@ -48,6 +48,7 @@ rogen-ukb-manifest = "rogen_aging.cli.ukb_manifest:entry"
 rogen-compare-af-gnomad = "rogen_aging.cli.compare_af_gnomad:entry"
 rogen-ukb-mock-clinical = "rogen_aging.cli.ukb_mock_clinical:entry"
 rogen-ukb-mock-rap = "rogen_aging.cli.ukb_mock_rap:entry"
+rogen-ukb-integrate = "rogen_aging.cli.ukb_integrate:entry"
 rogen-vcf-synthetic = "rogen_aging.cli.vcf_synthetic:entry"
 
 [tool.setuptools.packages.find]

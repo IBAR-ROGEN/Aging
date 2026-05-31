@@ -35,7 +35,7 @@ rogen_aging/
 | `vcf/` | Synthetic VCF utilities ([SYNTHETIC_ROMANIAN_VCF_GENERATOR.md](SYNTHETIC_ROMANIAN_VCF_GENERATOR.md)) |
 | `integration/` | Synthetic UKB join + associations ([UKB_INTEGRATION_PIPELINE.md](UKB_INTEGRATION_PIPELINE.md)) |
 | `eda_dashboard/` | Streamlit merged-cohort EDA ([EDA_DASHBOARD.md](EDA_DASHBOARD.md)) |
-| `cli/` | Console entry points (`rogen-clock`, `rogen-ukb-manifest`, …) |
+| `cli/` | Console entry points (`rogen-clock`, `rogen-ukb-manifest`, `rogen-ukb-integrate`, …) |
 | `methylation_visualizations.py`, `network_visualizer.py` | Shared visualization helpers |
 | `pipeline/` | Placeholder for shared pipeline steps |
 
@@ -74,7 +74,7 @@ Run with `uv run pytest` after `uv sync --extra dev`. Imports use `rogen_aging.*
 1. **Sensitive data** → `data/` (git-ignored)
 2. **Synthetic fixtures** → `test_data/` (versioned)
 3. **Figure exports** → `analysis/` (selected PNG/PDF committed)
-4. **No real UKB data** — use `rogen-ukb-mock-clinical` / `scripts/ukb/mock_rap_folder.py`
+4. **No real UKB data** — use `rogen-ukb-mock-clinical`, `rogen-ukb-mock-rap`, `rogen-ukb-integrate` ([UKB_INTEGRATION_PIPELINE.md](UKB_INTEGRATION_PIPELINE.md))
 
 ## Configuration
 

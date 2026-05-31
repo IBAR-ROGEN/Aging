@@ -27,6 +27,8 @@ This document summarizes installable modules and CLI entry points. Per-file inve
 | `rogen-ukb-manifest` | `rogen_aging.cli.ukb_manifest` → `ukb.manifest` |
 | `rogen-compare-af-gnomad` | `rogen_aging.cli.compare_af_gnomad` → `ukb.gnomad` |
 | `rogen-ukb-mock-clinical` | `rogen_aging.cli.ukb_mock_clinical` |
+| `rogen-ukb-mock-rap` | `rogen_aging.cli.ukb_mock_rap` |
+| `rogen-ukb-integrate` | `rogen_aging.cli.ukb_integrate` → `integration.run_cli` |
 | `rogen-vcf-synthetic` | `rogen_aging.cli.vcf_synthetic` |
 
 **Canonical clock CLI:** `uv run rogen-clock train|evaluate` or `scripts/clock/run_clock.py`.  

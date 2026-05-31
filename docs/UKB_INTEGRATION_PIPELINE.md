@@ -2,7 +2,8 @@
 
 **Project:** IBAR-ROGEN Aging  
 **Activity:** 2.1.11.1  
-**Script:** `scripts/ukb/run_integration.py`  
+**Console:** `rogen-ukb-integrate`  
+**Script:** `scripts/ukb/run_integration.py` (same CLI as console)  
 **Library:** `src/rogen_aging/integration/ukb_joiner.py`  
 **Input:** Mock UKB-RAP output from `scripts/ukb/mock_rap_folder.py` (`rogen-ukb-mock-rap`)
 
@@ -36,10 +37,16 @@ See [Synthetic UKB-RAP Generator](SYNTHETIC_UKB_RAP_GENERATOR.md) and [LA-SNP Pu
 ## Usage
 
 ```bash
-uv run python scripts/ukb/run_integration.py \
+uv run rogen-ukb-integrate \
   --pheno test_data/mock_ukb_rap/phenotypes/ukb_phenotypes.csv \
   --vcf test_data/mock_ukb_rap/genotypes/ukb_la_snps.vcf \
   --output-dir analysis/
+```
+
+Equivalent script path:
+
+```bash
+uv run python scripts/ukb/run_integration.py --output-dir analysis/
 ```
 
 Defaults point at `test_data/mock_ukb_rap/` paths. Use `-v` for debug logging.
