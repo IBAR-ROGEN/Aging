@@ -10,7 +10,7 @@ from typing import Optional
 def create_agent_system_schema_matplotlib(output_path: Optional[str] = None) -> None:
     """Create Figure 4 using matplotlib as fallback."""
     if output_path is None:
-        output_dir = Path(__file__).parent.parent / "analysis"
+        output_dir = Path(__file__).parent.parent.parent / "analysis"
         output_dir.mkdir(exist_ok=True)
         output_path = output_dir / "Fig4_Agent_System_Schema.png"
     else:

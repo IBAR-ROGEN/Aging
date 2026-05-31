@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import pandas as pd
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
+REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 DEFAULT_INPUT = REPO_ROOT / "overlapping_genes_with_snps.xlsx"
 DEFAULT_OUTPUT = REPO_ROOT / "analysis" / "Fig_LA_SNP_network.png"
 

@@ -1,8 +1,10 @@
 # Epigenetic clock library (`rogen_aging.clock`)
 
 **Project:** IBAR-ROGEN Aging  
+**Activity:** 2.1.10.1 — methylation aging clock (GSE40279 training, GSE87571 external validation)  
 **Package:** `src/rogen_aging/clock/`  
-**Canonical CLI:** `uv run rogen-clock` or `scripts/clock/run_clock.py`
+**Canonical CLI:** `uv run rogen-clock` or `scripts/clock/run_clock.py`  
+**Activity map:** [ACTIVITIES.md](ACTIVITIES.md#21101--methylation-aging-clock)
 
 ## Overview
 

@@ -35,12 +35,13 @@ Legacy script paths under `scripts/*.py` remain as **deprecation shims** forward
 
 ## Workflows
 
-### Epigenetic clock
+### Epigenetic clock (Activity 2.1.10.1)
 
-- **Package:** `src/rogen_aging/clock/`
+- **Package:** `src/rogen_aging/clock/` (`data.py`, `model.py`, `train.py`, `evaluate.py`, `external_data.py`)
 - **Canonical CLI:** `uv run rogen-clock train|evaluate` or `scripts/clock/run_clock.py`
+- **GSE87571 external cohort:** `uv run python -m rogen_aging.clock.external_data --output data/gse87571.parquet`
 - **Romanian mock demo** (separate StandardScaler path): `scripts/clock/train_romanian_epigenetic_clock.py`
-- **Docs:** [CLOCK_LIBRARY.md](CLOCK_LIBRARY.md), [GSE40279_CLOCK_TRAINING.md](GSE40279_CLOCK_TRAINING.md), [ROMANIAN_EPIGENETIC_CLOCK.md](ROMANIAN_EPIGENETIC_CLOCK.md)
+- **Docs:** [CLOCK_LIBRARY.md](CLOCK_LIBRARY.md), [GSE40279_CLOCK_TRAINING.md](GSE40279_CLOCK_TRAINING.md), [ROMANIAN_EPIGENETIC_CLOCK.md](ROMANIAN_EPIGENETIC_CLOCK.md), [ACTIVITIES.md](ACTIVITIES.md#21101--methylation-aging-clock)
 
 ### UK Biobank (synthetic + LA-SNP)
 
@@ -74,7 +75,22 @@ See [ALPHAGENOME_ANALYSIS_EXPLANATION.md](ALPHAGENOME_ANALYSIS_EXPLANATION.md).
 
 ### Manuscript figures
 
-See [FIGURES.md](FIGURES.md) for React vs matplotlib assets and render commands.
+Canonical renders live under **`scripts/figures/`** (flat `scripts/render_*.py` / `scripts/generate_*.py` are deprecation shims).
+
+```bash
+uv run python scripts/figures/generate_network_fig.py          # Activity 2.1.7.1 → analysis/Fig_LA_SNP_network.*
+uv run python scripts/figures/render_figure1c_mechanisms_network.py
+uv run python scripts/figures/generate_la_snp_per_gene_plot.py
+uv run python scripts/figures/render_dashboard_figure_mockup.py
+uv run python scripts/figures/render_longevity_network_diagram.py
+uv run python scripts/figures/generate_methylation_visualizations.py
+uv run python scripts/figures/generate_bimodal_heatmap.py
+uv run python scripts/figures/generate_clock_validation.py
+uv run python scripts/figures/generate_agent_system_schema.py
+uv run python scripts/figures/generate_pipeline_diagram.py   # requires Graphviz `dot` on PATH
+```
+
+See [FIGURES.md](FIGURES.md) for React vs matplotlib assets and output paths.
 
 ### Compliance & CI
 

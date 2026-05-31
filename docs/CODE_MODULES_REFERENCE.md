@@ -8,7 +8,7 @@ This document summarizes installable modules and CLI entry points. Per-file inve
 
 | Module | Responsibility |
 |--------|----------------|
-| `clock/` | `train_clock`, `evaluate_clock`, `load_wide_table`, GSE87571 loader — [CLOCK_LIBRARY.md](CLOCK_LIBRARY.md) |
+| `clock/` | `train_clock`, `evaluate_clock`, `load_wide_table`, `external_data.load_gse87571` (Activity **2.1.10.1**) — [CLOCK_LIBRARY.md](CLOCK_LIBRARY.md) |
 | `ukb/manifest.py` | Ensembl manifest build + 1KG VCF extract |
 | `ukb/gnomad.py` | 1KG vs gnomAD v4 NFE comparison |
 | `ukb/mock_clinical.py` | Synthetic clinical CSV generator |
@@ -39,7 +39,7 @@ This document summarizes installable modules and CLI entry points. Per-file inve
 See [ACTIVITIES.md](ACTIVITIES.md) for the full tree. Highlights:
 
 - **`scripts/ukb/`** — manifest, gnomAD, mock generators, integration
-- **`scripts/figures/`** — matplotlib/networkx renders ([FIGURES.md](FIGURES.md))
+- **`scripts/figures/`** — eleven matplotlib/networkx render scripts ([FIGURES.md](FIGURES.md)); flat `scripts/generate_*.py` shims forward here
 - **`scripts/alphagenome/`** — AlphaGenome batch + analysis
 - **`scripts/dev/`** — `security_check.sh`, CI audit, R bootstrap
 

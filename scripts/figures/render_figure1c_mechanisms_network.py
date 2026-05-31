@@ -19,7 +19,7 @@ import typer
 from adjustText import adjust_text
 from matplotlib.colors import to_hex
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
+REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 DEFAULT_OUT_DIR = REPO_ROOT / "analysis"
 
 # --- Hardcoded biological structure (LA-SNPs in neurodegeneration context) ---

@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 import typer
 from matplotlib.patches import FancyArrowPatch, FancyBboxPatch
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
+REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 DEFAULT_OUT = REPO_ROOT / "figures" / "longevity_network_diagram.png"
 
 COLORS = {

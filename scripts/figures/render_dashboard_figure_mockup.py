@@ -22,7 +22,7 @@ from matplotlib.patches import FancyBboxPatch
 
 app = typer.Typer(add_completion=False)
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
+REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 
 
 def _mock_scatter_points() -> tuple[np.ndarray, np.ndarray]:
