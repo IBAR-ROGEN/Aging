@@ -53,8 +53,6 @@ Aging/
 │   ├── generate_*.py
 │   ├── generate_la_snp_per_gene_plot.py  # LA-SNPs per gene (supplementary bar chart)
 │   ├── generate_network_fig.py           # LA-SNP hub-and-spoke network by pathway (Activity 2.1.7.1)
-│   ├── run_clock.py               # Unified train / evaluate CLI (rogen_aging.clock)
-│   ├── run_integration.py         # Synthetic UKB integrative validation CLI
 │   ├── train_romanian_epigenetic_clock.py  # Elastic Net mock clock (Romanian demo)
 │   ├── train_clock_on_gse40279.py # GSE40279-style training wrapper
 │   ├── validate_clock.py          # Held-out validation wrapper
@@ -481,16 +479,6 @@ Scripts are entry points that call into `src/rogen_aging` or external tools. Run
 
 **Dependencies:** polars, cyvcf2, scipy (via `ukb_joiner`).  
 **Related:** [UKB_INTEGRATION_PIPELINE.md](UKB_INTEGRATION_PIPELINE.md), `scripts/ukb_mock_gen.py` (§3.9).
-
----
-
-### 3.22 run_clock.py
-
-**Purpose:** Unified epigenetic clock CLI with **`train`** and **`evaluate`** subcommands.
-
-**Responsibilities:** Dispatches to `rogen_aging.clock.train` and `rogen_aging.clock.evaluate`; same arguments as legacy train/validate scripts.
-
-**Related:** [CLOCK_LIBRARY.md](CLOCK_LIBRARY.md), §3.10–3.11 legacy wrappers.
 
 ---
 
