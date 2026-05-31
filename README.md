@@ -140,8 +140,8 @@ Full pipeline details: **[docs/LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md](docs/LA_SNP_
 
 ## Layout
 
-- `src/rogen_aging/` — Installable Python package (`import rogen_aging`, `from rogen_aging import …`); epigenetic clock helpers under **`rogen_aging.clock`** (e.g. **`external_data`** for GSE87571)
-- `tests/` — Pytest tests (`uv run pytest` after `uv sync --extra dev`), including `test_mock_clinical_csv.py` and `test_synthetic_vcf.py` for the synthetic generators (`pyproject.toml` adds `scripts/` to pytest’s `pythonpath`)
+- `src/rogen_aging/` — Installable Python package (`import rogen_aging`, `from rogen_aging import …`); epigenetic clock library **`rogen_aging.clock`** ([docs/CLOCK_LIBRARY.md](docs/CLOCK_LIBRARY.md)); synthetic UKB join under **`rogen_aging.integration`**
+- `tests/` — Pytest tests (`uv run pytest` after `uv sync --extra dev`), including clock regression (`test_clock_regression.py`), synthetic generators, and UKB integration (`pyproject.toml` adds `scripts/` to pytest’s `pythonpath`)
 - `scripts/` — CLI scripts (AlphaGenome, mock tabular/VCF generators, figure renders, LA-SNP per-gene and pathway network figures, UKB manifest builder and public AF validation, epigenetic clock train/validate, security hook)
 - `notebooks/` — Genomic analysis notebooks (including `05_ukb_exploration/` for UKB manifest QA)
 - `docs/` — Project documentation

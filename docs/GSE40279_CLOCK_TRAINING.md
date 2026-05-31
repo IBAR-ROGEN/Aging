@@ -62,6 +62,15 @@ uv run python scripts/train_clock_on_gse40279.py \
   --output_metrics analysis/gse40279_train_metrics.json
 ```
 
+Equivalent unified CLI:
+
+```bash
+uv run python scripts/run_clock.py train \
+  --input_data data/gse40279_beta_age.parquet \
+  --output_model analysis/gse40279_elasticnet_clock.pkl \
+  --output_metrics analysis/gse40279_train_metrics.json
+```
+
 ## Validating the saved model
 
 Use **`scripts/validate_clock.py`** with a held-out table in the same wide format. See **[docs/ROMANIAN_EPIGENETIC_CLOCK.md](ROMANIAN_EPIGENETIC_CLOCK.md#held-out-validation-validate_clockpy)** for CLI arguments, figures, and `validation_metrics.json`.
