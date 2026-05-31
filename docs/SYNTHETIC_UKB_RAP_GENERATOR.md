@@ -121,6 +121,7 @@ uv run pytest tests/test_ukb_mock_gen.py
 ## Related documentation
 
 - [LA-SNP Public Frequency Pipeline](LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md) — manifest, 1KG extract, gnomAD comparison
+- [UKB Integration Pipeline](UKB_INTEGRATION_PIPELINE.md) — synthetic join + association scan (Activity 2.1.11.1)
 - [Synthetic UK Biobank Data Generator](SYNTHETIC_UKB_GENERATOR.md) — tabular mock clinical CSV (`mock_ukb_generator.py`)
 - [Synthetic Romanian Cohort VCF Generator](SYNTHETIC_ROMANIAN_VCF_GENERATOR.md) — general-purpose streaming VCF generator
 - [UK Biobank Pre-Commit Hook](UKB_PRE_COMMIT_HOOK.md) — security checks and whitelisting

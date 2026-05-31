@@ -22,9 +22,16 @@ Aging/
 │   │   └── __init__.py
 │   ├── methylation_visualizations.py
 │   ├── network_visualizer.py
-│   ├── clock/                     # Epigenetic clock helpers (GSE87571 loader, etc.)
+│   ├── clock/                     # Epigenetic clock train/eval/data (see docs/CLOCK_LIBRARY.md)
 │   │   ├── __init__.py
+│   │   ├── data.py                # Wide-table + Romanian mock cohort loaders
+│   │   ├── model.py               # make_clock_pipeline()
+│   │   ├── train.py               # train_clock()
+│   │   ├── evaluate.py            # evaluate_clock()
 │   │   └── external_data.py       # GSE87571 → wide table for validate_clock.py
+│   ├── integration/               # Synthetic UKB join + association (Activity 2.1.11.1)
+│   │   ├── __init__.py
+│   │   └── ukb_joiner.py
 │   └── eda_dashboard/            # Streamlit merged-cohort EDA (see docs/EDA_DASHBOARD.md)
 ├── tests/                         # Pytest (package smoke + synthetic UKB/VCF generators)
 ├── scripts/                       # Entry-point scripts
@@ -33,6 +40,8 @@ Aging/
 │   ├── generate_synthetic_romanian_vcf.py  # Synthetic EUR-style cohort VCF v4.2
 │   ├── ukb_la_snp_lookup.py       # Offline UKB SNP manifest + 1KG extract (Ensembl / cyvcf2)
 │   ├── compare_af_gnomad.py       # 1KG vs gnomAD v4 NFE AF comparison (Activity 2.1.8.1)
+│   ├── run_integration.py         # Synthetic UKB join + LA-SNP associations (Activity 2.1.11.1)
+│   ├── run_clock.py               # Unified clock train/evaluate CLI
 │   ├── render_*_network*.py       # Manuscript networks (matplotlib / networkx)
 │   ├── render_dashboard_figure_mockup.py
 │   ├── bootstrap_r_env.sh         # Optional micromamba R under .r-env/
@@ -44,9 +53,11 @@ Aging/
 │   ├── generate_*.py
 │   ├── generate_la_snp_per_gene_plot.py  # LA-SNPs per gene (supplementary bar chart)
 │   ├── generate_network_fig.py           # LA-SNP hub-and-spoke network by pathway (Activity 2.1.7.1)
-│   ├── train_romanian_epigenetic_clock.py  # Elastic Net mock clock
-│   ├── train_clock_on_gse40279.py # GSE40279-style wide table + ElasticNetCV
-│   ├── validate_clock.py          # Held-out validation for saved clock models
+│   ├── run_clock.py               # Unified train / evaluate CLI (rogen_aging.clock)
+│   ├── run_integration.py         # Synthetic UKB integrative validation CLI
+│   ├── train_romanian_epigenetic_clock.py  # Elastic Net mock clock (Romanian demo)
+│   ├── train_clock_on_gse40279.py # GSE40279-style training wrapper
+│   ├── validate_clock.py          # Held-out validation wrapper
 │   ├── install_graphviz.sh
 │   └── README_GRAPHVIZ.md
 ├── components/                    # React/Vite dashboard figure mockup + capture
@@ -205,7 +216,32 @@ Aging/
 
 ---
 
-## 3. Scripts (scripts/)
+### 2.6 clock/ (package subfolder)
+
+**Purpose:** Shared epigenetic clock training, evaluation, and data loaders. See **[docs/CLOCK_LIBRARY.md](CLOCK_LIBRARY.md)**.
+
+| Module | Exports / role |
+|--------|----------------|
+| `data.py` | `load_wide_table`, `split_features_target`, Romanian mock cohort I/O; re-exports GSE87571 loader |
+| `model.py` | `make_clock_pipeline()` — `SimpleImputer` + `ElasticNetCV` |
+| `train.py` | `train_clock()` — fit, metrics JSON, joblib dump |
+| `evaluate.py` | `evaluate_clock()` — MAE, r, decade MAE, figures |
+| `external_data.py` | GSE87571 GEO download / merge → Parquet |
+
+**Tests:** `tests/test_clock_regression.py`, `tests/test_package_imports.py`.
+
+---
+
+### 2.7 integration/ (package subfolder)
+
+**Purpose:** Activity **2.1.11.1** — synthetic UKB phenotype–genotype join and LA-SNP association scans on mock RAP output.
+
+**Responsibilities (`ukb_joiner.py`):** Load phenotype CSV and LA-SNP VCF; inner join on `eid`; dominant-model Fisher OR scan per SNP; write `assoc_la_snp_parental_longevity.csv` and `assoc_la_snp_ad.csv`.
+
+**CLI:** `scripts/run_integration.py`. **Tests:** `tests/test_ukb_integration.py`.  
+**Related:** [UKB_INTEGRATION_PIPELINE.md](UKB_INTEGRATION_PIPELINE.md).
+
+---
 
 Scripts are entry points that call into `src/rogen_aging` or external tools. Run them from the `Aging/` directory (e.g. `python scripts/generate_*.py` or `uv run python scripts/...`).
 
@@ -345,7 +381,7 @@ Scripts are entry points that call into `src/rogen_aging` or external tools. Run
 
 ### 3.10a train_clock_on_gse40279.py
 
-**Purpose:** Train an epigenetic aging clock from a **wide** public-style methylation table (rows = samples, columns = `cg*` probes + `chronological_age`), intended for GEO **GSE40279** (Hannum 2013, 450K whole blood) after you convert GEO/β data offline.
+**Purpose:** Backward-compatible CLI wrapper around **`rogen_aging.clock.train.train_clock`** for GSE40279-style wide methylation tables.
 
 **Responsibilities:**
 - argparse CLI: `--input_data`, `--output_model`, `--output_metrics`, `--test_size`, `--random_state`.
@@ -361,7 +397,7 @@ Scripts are entry points that call into `src/rogen_aging` or external tools. Run
 
 ### 3.11 validate_clock.py
 
-**Purpose:** Evaluate a **pre-trained** epigenetic clock (`joblib` / `pickle`) on a held-out table with `chronological_age` and `cg*` feature columns.
+**Purpose:** Backward-compatible CLI wrapper around **`rogen_aging.clock.evaluate.evaluate_clock`** for held-out validation.
 
 **Responsibilities:**
 - Load model and test Parquet/CSV; align features to `feature_names_in_` when present; mean-impute missing expected CpGs from test-set statistics.
@@ -412,6 +448,27 @@ Scripts are entry points that call into `src/rogen_aging` or external tools. Run
 
 ---
 
+### 3.21 run_integration.py
+
+**Purpose:** Activity **2.1.11.1** — thin CLI for synthetic UKB integrative validation (phenotype CSV + LA-SNP VCF → association CSVs).
+
+**Responsibilities:** argparse defaults to `test_data/mock_ukb_rap/`; delegates to `rogen_aging.integration.ukb_joiner.run_integration_pipeline`.
+
+**Dependencies:** polars, cyvcf2, scipy (via `ukb_joiner`).  
+**Related:** [UKB_INTEGRATION_PIPELINE.md](UKB_INTEGRATION_PIPELINE.md), `scripts/ukb_mock_gen.py` (§3.9).
+
+---
+
+### 3.22 run_clock.py
+
+**Purpose:** Unified epigenetic clock CLI with **`train`** and **`evaluate`** subcommands.
+
+**Responsibilities:** Dispatches to `rogen_aging.clock.train` and `rogen_aging.clock.evaluate`; same arguments as legacy train/validate scripts.
+
+**Related:** [CLOCK_LIBRARY.md](CLOCK_LIBRARY.md), §3.10–3.11 legacy wrappers.
+
+---
+
 ### 3.13 render_longevity_network_diagram.py
 
 **Purpose:** Render the longevity conceptual network diagram with matplotlib to mirror `frontend/src/components/LongevityNetworkDiagram.tsx`.
@@ -454,7 +511,7 @@ Scripts are entry points that call into `src/rogen_aging` or external tools. Run
 
 **Purpose:** UK Biobank pre-commit security hook — blocks commits containing `patient_id`, `UKB_`, or `.vcf`/`.bed` files.
 
-**Responsibilities (exemptions):** Content scanning skips `docs/*`, root `README.md`, `notebooks/README.md`, `notebooks/05_ukb_exploration/*`, the hook scripts themselves, `scripts/mock_ukb_generator.py`, `scripts/ukb_mock_gen.py`, `test_data/mock_clinical_data.csv`, **`scripts/ukb_la_snp_lookup.py`** (offline manifest + 1KG extract only; must never hold participant IDs), **`scripts/compare_af_gnomad.py`** (public AF comparison only), and **`repo_structure.txt`** (generated tree listing). Reinstall the hook after editing `security_check.sh`.
+**Responsibilities (exemptions):** Content scanning skips `docs/*`, root `README.md`, `notebooks/README.md`, `notebooks/05_ukb_exploration/*`, the hook scripts themselves, `scripts/mock_ukb_generator.py`, `scripts/ukb_mock_gen.py`, `test_data/mock_clinical_data.csv`, **`scripts/ukb_la_snp_lookup.py`** (offline manifest + 1KG extract only; must never hold participant IDs), **`scripts/compare_af_gnomad.py`** (public AF comparison only), **`scripts/run_integration.py`** and **`src/rogen_aging/integration/*`** (synthetic join only), **`tests/test_ukb_integration.py`**, and **`repo_structure.txt`** (generated tree listing). Reinstall the hook after editing `security_check.sh`.
 
 **Usage:** Run `./scripts/install_pre_commit_hook.sh` to install.  
 **Related doc:** [docs/UKB_PRE_COMMIT_HOOK.md](UKB_PRE_COMMIT_HOOK.md).
@@ -562,7 +619,10 @@ Exploratory QA for the offline UK Biobank longevity-associated SNP manifest (`sc
 | **SYNTHETIC_UKB_GENERATOR.md** | Synthetic UK Biobank tabular data generator (`mock_ukb_generator.py`). |
 | **SYNTHETIC_UKB_RAP_GENERATOR.md** | Synthetic UKB-RAP folder generator (`ukb_mock_gen.py`). |
 | **ROMANIAN_EPIGENETIC_CLOCK.md** | Romanian cohort Elastic Net clock (`train_romanian_epigenetic_clock.py`) and held-out validation (`validate_clock.py`). |
-| **GSE40279_CLOCK_TRAINING.md** | Wide-table training for public GSE40279-style data (`train_clock_on_gse40279.py`) and GSE87571 external validation (`rogen_aging.clock.external_data`). |
+| **GSE40279_CLOCK_TRAINING.md** | Wide-table training for public GSE40279-style data and GSE87571 external validation. |
+| **CLOCK_LIBRARY.md** | `rogen_aging.clock` package and `run_clock.py` unified CLI. |
+| **UKB_INTEGRATION_PIPELINE.md** | Synthetic UKB join + LA-SNP associations (Activity 2.1.11.1). |
+| **LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md** | LA-SNP manifest, 1KG extract, gnomAD comparison (Activity 2.1.8.1). |
 | **UKB_COMPLIANCE_AUDITOR.md** | UK Biobank compliance auditor (used with `03_validation_and_compliance/UKB_Compliance_Auditor.ipynb`). |
 | **METHYLATION_PIPELINE_QUICK_REFERENCE.md** | Quick reference for the methylation pipeline. |
 | **METHYLATION_PIPELINE_USAGE.md** | Detailed usage and workflow for the methylation pipeline. |
@@ -593,8 +653,10 @@ Exploratory QA for the offline UK Biobank longevity-associated SNP manifest (`sc
 | `src/rogen_aging/methylation_visualizations.py` | All methylation pipeline and clock figures. |
 | `src/rogen_aging/network_visualizer.py` | Protein interaction network figure. |
 | `src/rogen_aging/eda_dashboard/` | Streamlit EDA dashboard for merged multi-omics Parquet. |
-| `src/rogen_aging/clock/external_data.py` | GSE87571 loader → wide β + age table for `validate_clock.py` (see GSE40279_CLOCK_TRAINING.md). |
-| `tests/` | Pytest tests (e.g. package import smoke tests). |
+| `src/rogen_aging/clock/` | Epigenetic clock train/eval/data (`train_clock`, `evaluate_clock`, GSE87571 loader). |
+| `src/rogen_aging/integration/ukb_joiner.py` | Synthetic UKB join + LA-SNP association scan (Activity 2.1.11.1). |
+| `tests/test_clock_regression.py` | Regression: refactored clock matches legacy GSE40279 metrics. |
+| `tests/test_ukb_integration.py` | Synthetic UKB join + 70-SNP association outputs. |
 | `scripts/generate_agent_system_schema*.py` | Figure 4 — agent system architecture. |
 | `scripts/generate_bimodal_heatmap.py` | Figure 2 — bimodal risk heatmap. |
 | `scripts/generate_clock_validation.py` | Figure 3 — clock validation. |
@@ -609,6 +671,8 @@ Exploratory QA for the offline UK Biobank longevity-associated SNP manifest (`sc
 | `scripts/validate_clock.py` | Held-out validation for a saved clock model (MAE, r, decade MAE, figures). |
 | `scripts/ukb_la_snp_lookup.py` | Offline UKB SNP manifest (Ensembl) + 1KG frequency extract (cyvcf2). |
 | `scripts/compare_af_gnomad.py` | 1KG vs gnomAD v4 NFE AF comparison + scatter (Activity 2.1.8.1). |
+| `scripts/run_integration.py` | Synthetic UKB integrative validation CLI (Activity 2.1.11.1). |
+| `scripts/run_clock.py` | Unified clock train/evaluate CLI. |
 | `scripts/generate_la_snp_per_gene_plot.py` | Supplementary LA-SNPs-per-gene bar chart (Excel → PNG). |
 | `scripts/generate_network_fig.py` | Activity 2.1.7.1 LA-SNP pathway hub-and-spoke network (Excel → PNG/PDF). |
 | `scripts/render_longevity_network_diagram.py` | Matplotlib longevity network (twin of `frontend/` TSX). |

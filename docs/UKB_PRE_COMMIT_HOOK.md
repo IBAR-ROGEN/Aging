@@ -51,6 +51,9 @@ The following are excluded from content scanning:
 | `test_data/mock_clinical_data.csv` | Synthetic mock output (MOCK_ IDs) |
 | `scripts/ukb_la_snp_lookup.py` | Offline Ensembl → CSV manifest builder + 1KG extract only (no participant rows; reviewed path) |
 | `scripts/compare_af_gnomad.py` | Public 1KG vs gnomAD AF comparison only (no participant rows; reviewed path) |
+| `scripts/run_integration.py` | Synthetic UKB join + association scan only (no participant rows; reviewed path) |
+| `src/rogen_aging/integration/*` | Synthetic UKB join library (mock paths only; reviewed path) |
+| `tests/test_ukb_integration.py` | Integration tests referencing mock `ukb_*` artefacts |
 | `notebooks/05_ukb_exploration/*` | Offline manifest sanity-check notebooks only (no participant rows; cite extraction metadata labels) |
 | `repo_structure.txt` | Generated tree of tracked paths (may list compliance doc filenames) |
 

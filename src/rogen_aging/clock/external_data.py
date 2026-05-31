@@ -374,7 +374,7 @@ def load_gse87571(
 
     Returns a DataFrame with rows = samples (GEO GSM accessions as the index),
     columns = CpG probe IDs (``cg*``) plus ``chronological_age``, suitable for
-    ``scripts/validate_clock.py``.
+    :func:`rogen_aging.clock.evaluate.evaluate_clock`.
 
     If ``local_path`` points to an existing series matrix (``.txt`` or
     ``.txt.gz``), it is used for metadata. When the embedded matrix table has

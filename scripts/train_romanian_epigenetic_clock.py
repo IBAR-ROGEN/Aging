@@ -4,6 +4,9 @@
 Loads a synthetic methylation matrix and sample metadata (chronological age),
 fits ElasticNetCV with 5-fold cross-validation over alpha and l1_ratio,
 reports MAE and Pearson r on a held-out test set, and writes a scatter plot.
+
+Romanian mock cohort I/O lives in :mod:`rogen_aging.clock.data`; this script keeps the
+StandardScaler + ElasticNetCV training path used for the mock Romanian demo.
 """
 
 from __future__ import annotations
@@ -12,7 +15,6 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
-import polars as pl
 from typer import Option, Typer
 from scipy.stats import pearsonr
 from sklearn.linear_model import ElasticNetCV
@@ -21,57 +23,12 @@ from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
+from rogen_aging.clock.data import load_romanian_cohort
+
 app = Typer(add_completion=False, no_args_is_help=True)
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_DATA_DIR = REPO_ROOT / "data" / "mock_romanian_cohort"
-
-
-def write_mock_romanian_cohort(data_dir: Path, n_samples: int = 120, n_cpgs: int = 80) -> None:
-    """Create deterministic mock methylation + metadata for development."""
-    data_dir.mkdir(parents=True, exist_ok=True)
-    rng = np.random.default_rng(42)
-    sample_ids = [f"ROM{i:04d}" for i in range(1, n_samples + 1)]
-    ages = rng.normal(52.0, 14.0, size=n_samples).clip(25.0, 92.0)
-
-    # A subset of CpGs carry a synthetic age signal; the rest is noise (realistic sparsity).
-    beta = rng.uniform(0.15, 0.85, size=(n_samples, n_cpgs)).astype(np.float64)
-    signal_idx = rng.choice(n_cpgs, size=max(12, n_cpgs // 5), replace=False)
-    for j in signal_idx:
-        beta[:, j] += 0.018 * (ages - ages.mean())
-    beta = np.clip(beta, 0.02, 0.98)
-
-    cpg_names = [f"cg_mock_{k:05d}" for k in range(1, n_cpgs + 1)]
-    meth = pl.DataFrame(beta, schema=cpg_names).with_columns(pl.Series("sample_id", sample_ids))
-    meta = pl.DataFrame({"sample_id": sample_ids, "chronological_age": ages.astype(np.float64)})
-    meth.write_csv(data_dir / "methylation_matrix.csv")
-    meta.write_csv(data_dir / "metadata.csv")
-
-
-def load_cohort(data_dir: Path, *, regenerate_mock: bool = False) -> tuple[np.ndarray, np.ndarray, list[str]]:
-    """Return feature matrix X, target y (chronological age), and ordered sample IDs."""
-    meth_path = data_dir / "methylation_matrix.csv"
-    meta_path = data_dir / "metadata.csv"
-    if regenerate_mock or not meth_path.is_file() or not meta_path.is_file():
-        write_mock_romanian_cohort(data_dir)
-
-    meth = pl.read_csv(meth_path)
-    meta = pl.read_csv(meta_path)
-    if "sample_id" not in meth.columns or "sample_id" not in meta.columns:
-        raise ValueError("Both tables must include a 'sample_id' column.")
-    if "chronological_age" not in meta.columns:
-        raise ValueError("Metadata must include 'chronological_age'.")
-
-    joined = meta.join(meth, on="sample_id", how="inner").sort("sample_id")
-    feature_cols = [c for c in joined.columns if c not in ("sample_id", "chronological_age")]
-    if not feature_cols:
-        raise ValueError("No CpG / feature columns found after join.")
-
-    x_df = joined.select(feature_cols)
-    x = x_df.to_numpy()
-    y = joined["chronological_age"].to_numpy()
-    sample_ids = joined["sample_id"].to_list()
-    return x, y, sample_ids
 
 
 @app.command()
@@ -92,7 +49,7 @@ def main(
         help="Overwrite mock CSVs in data_dir with freshly simulated values.",
     ),
 ) -> None:
-    x, y, _sample_ids = load_cohort(data_dir, regenerate_mock=regenerate_mock)
+    x, y, _sample_ids = load_romanian_cohort(data_dir, regenerate_mock=regenerate_mock, random_state=random_state)
     x_train, x_test, y_train, y_test = train_test_split(
         x,
         y,

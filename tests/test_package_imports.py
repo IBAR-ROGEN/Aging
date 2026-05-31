@@ -10,8 +10,10 @@ def test_import_package() -> None:
 
 
 def test_import_submodules() -> None:
+    import rogen_aging.clock  # noqa: PLC0415
     import rogen_aging.methylation_visualizations  # noqa: PLC0415
     import rogen_aging.network_visualizer  # noqa: PLC0415
     import rogen_aging.pipeline  # noqa: PLC0415
 
+    assert "train_clock" in rogen_aging.clock.__all__
     assert rogen_aging.pipeline.__all__ == []

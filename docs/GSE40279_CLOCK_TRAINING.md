@@ -1,7 +1,8 @@
 # GSE40279 (Hannum 2013) Elastic Net clock training
 
 **Project:** IBAR-ROGEN Aging  
-**Script:** `scripts/train_clock_on_gse40279.py`  
+**Script:** `scripts/train_clock_on_gse40279.py` (wrapper), **`scripts/run_clock.py`** (unified CLI)  
+**Library:** `src/rogen_aging/clock/` — see **[docs/CLOCK_LIBRARY.md](CLOCK_LIBRARY.md)**  
 **Validation:** `scripts/validate_clock.py` (same `cg*` + `chronological_age` convention as test data)
 
 ## Overview

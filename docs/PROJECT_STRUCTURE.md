@@ -44,6 +44,8 @@ Installable package (`rogen-aging` on the environment path after `uv sync` or `u
 | `methylation_visualizations.py` | Pipeline diagrams, DMR plots, clock validation figures |
 | `network_visualizer.py` | Protein interaction network visualization |
 | `eda_dashboard/` | Streamlit EDA app for merged multi-omics Parquet ([EDA_DASHBOARD.md](EDA_DASHBOARD.md)) |
+| `clock/` | Epigenetic clock train/eval/data ([CLOCK_LIBRARY.md](CLOCK_LIBRARY.md)) |
+| `integration/` | Synthetic UKB join + LA-SNP associations ([UKB_INTEGRATION_PIPELINE.md](UKB_INTEGRATION_PIPELINE.md)) |
 
 ### `tests/`
 
@@ -55,6 +57,8 @@ Pytest tests. Run with `uv run pytest` (install dev extras first: `uv sync --ext
 | `test_mock_clinical_csv.py` | Synthetic UKB-style tabular generator |
 | `test_synthetic_vcf.py` | Synthetic Romanian cohort VCF generator |
 | `test_ukb_mock_gen.py` | Synthetic UKB-RAP folder (phenotypes + LA-SNP VCF) |
+| `test_clock_regression.py` | Clock refactor regression vs legacy GSE40279 metrics |
+| `test_ukb_integration.py` | Synthetic UKB join + 70-SNP association scan |
 
 ### `scripts/`
 
@@ -67,6 +71,8 @@ Executable scripts and shell utilities. Run with `uv run scripts/<script>.py` or
 | `generate_synthetic_romanian_vcf.py` | Streaming synthetic EUR-style cohort VCF v4.2 |
 | `ukb_la_snp_lookup.py` | Offline UKB genotype manifest (Ensembl GRCh38) + 1KG AF extract (cyvcf2; no dx-toolkit) |
 | `compare_af_gnomad.py` | 1KG vs gnomAD v4 NFE allele-frequency comparison (Activity 2.1.8.1) |
+| `run_integration.py` | Synthetic UKB phenotype–genotype join + LA-SNP associations (Activity 2.1.11.1) |
+| `run_clock.py` | Unified epigenetic clock train/evaluate CLI |
 | `render_longevity_network_diagram.py` | Matplotlib twin of `frontend` longevity network TSX |
 | `render_figure1c_mechanisms_network.py` | Figure 1C mechanisms network (networkx + matplotlib; PNG/PDF) |
 | `generate_la_snp_per_gene_plot.py` | Supplementary horizontal bar chart: unique LA-SNPs per gene from Excel (`Gene` / `SNP_rsID`; optional column flags) |
@@ -108,6 +114,9 @@ Project documentation (Markdown).
 | `SYNTHETIC_UKB_RAP_GENERATOR.md` | Mock UKB-RAP folder generator (`ukb_mock_gen.py`) |
 | `METHYLATION_PIPELINE_*.md` | Methylation pipeline usage |
 | `GSE40279_CLOCK_TRAINING.md` | GSE40279 / Hannum-style wide-table Elastic Net training (`train_clock_on_gse40279.py`) |
+| `CLOCK_LIBRARY.md` | `rogen_aging.clock` package and `run_clock.py` |
+| `UKB_INTEGRATION_PIPELINE.md` | Synthetic UKB join + associations (Activity 2.1.11.1) |
+| `LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md` | LA-SNP manifest, 1KG extract, gnomAD comparison |
 | `ALPHAGENOME_ANALYSIS_EXPLANATION.md` | AlphaGenome methodology |
 
 ### `components/` and `frontend/`

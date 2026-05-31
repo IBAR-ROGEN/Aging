@@ -1,7 +1,8 @@
 # Romanian cohort mock epigenetic clock (Elastic Net)
 
 **Project:** IBAR-ROGEN Aging  
-**Scripts:** `scripts/train_romanian_epigenetic_clock.py` (train), `scripts/validate_clock.py` (evaluate a saved model on held-out data). For a **wide-table** trainer aimed at public **GSE40279** (Hannum 2013) style inputs, see **`scripts/train_clock_on_gse40279.py`** and **[docs/GSE40279_CLOCK_TRAINING.md](GSE40279_CLOCK_TRAINING.md)**.  
+**Scripts:** `scripts/train_romanian_epigenetic_clock.py` (train), `scripts/validate_clock.py` (evaluate a saved model on held-out data), **`scripts/run_clock.py`** (unified train/evaluate CLI). For a **wide-table** trainer aimed at public **GSE40279** (Hannum 2013) style inputs, see **`scripts/train_clock_on_gse40279.py`** and **[docs/GSE40279_CLOCK_TRAINING.md](GSE40279_CLOCK_TRAINING.md)**.  
+**Library:** `src/rogen_aging/clock/` — see **[docs/CLOCK_LIBRARY.md](CLOCK_LIBRARY.md)**.  
 **Repository:** [IBAR-ROGEN/Aging](https://github.com/IBAR-ROGEN/Aging)
 
 ## Overview

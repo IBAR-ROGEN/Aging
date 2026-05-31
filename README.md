@@ -288,6 +288,17 @@ uv run scripts/ukb_mock_gen.py \
 
 See **[docs/SYNTHETIC_UKB_RAP_GENERATOR.md](docs/SYNTHETIC_UKB_RAP_GENERATOR.md)** for layout, phenotype columns, and **`tests/test_ukb_mock_gen.py`**.
 
+Run integrative association validation on the mock folder (Activity 2.1.11.1):
+
+```bash
+uv run python scripts/run_integration.py \
+  --pheno test_data/mock_ukb_rap/phenotypes/ukb_phenotypes.csv \
+  --vcf test_data/mock_ukb_rap/genotypes/ukb_la_snps.vcf \
+  --output-dir analysis/
+```
+
+See **[docs/UKB_INTEGRATION_PIPELINE.md](docs/UKB_INTEGRATION_PIPELINE.md)** for association outputs and **`tests/test_ukb_integration.py`**.
+
 ## Synthetic Romanian cohort VCF
 
 Generate a **streaming VCF v4.2** with Hardy–Weinberg diploid genotypes, **EUR-like** allele frequencies, **`GT:AD:DP:GQ`** per sample, and GRCh38 **chr1–chr22** contigs (bcftools-friendly sort order). Output path is your choice; large VCFs should live under **`data/`** (git-ignored).
@@ -322,7 +333,7 @@ uv run python scripts/train_romanian_epigenetic_clock.py
 # Plot: figures/romanian_mock_epigenetic_clock_scatter.png (git-ignored)
 ```
 
-See **[docs/ROMANIAN_EPIGENETIC_CLOCK.md](docs/ROMANIAN_EPIGENETIC_CLOCK.md)** for file formats, options, and validation notes.
+See **[docs/ROMANIAN_EPIGENETIC_CLOCK.md](docs/ROMANIAN_EPIGENETIC_CLOCK.md)** for file formats, options, and validation notes. Core training/evaluation logic lives in **`rogen_aging.clock`** — see **[docs/CLOCK_LIBRARY.md](docs/CLOCK_LIBRARY.md)** and **`scripts/run_clock.py`**.
 
 ## GSE40279 (Hannum 2013) wide-table clock training
 
@@ -349,6 +360,15 @@ uv run python scripts/validate_clock.py \
 ```
 
 Supported test formats: **`.parquet`**, **`.csv`** (also **`.tsv`**). Missing model CpGs (when the estimator stores `feature_names_in_`) are mean-imputed from available test `cg*` values. Details: **[docs/ROMANIAN_EPIGENETIC_CLOCK.md](docs/ROMANIAN_EPIGENETIC_CLOCK.md#held-out-validation-validate_clockpy)**.
+
+Unified **`train`** / **`evaluate`** subcommands (same underlying library):
+
+```bash
+uv run python scripts/run_clock.py train --input_data ... --output_model ... --output_metrics ...
+uv run python scripts/run_clock.py evaluate --model_path ... --test_data ... --output_dir ...
+```
+
+See **[docs/CLOCK_LIBRARY.md](docs/CLOCK_LIBRARY.md)**.
 
 ## GSE87571 external validation data (Illumina 450K whole blood)
 
@@ -382,6 +402,8 @@ See comments in the script for IDE integration; `.r-env/` is git-ignored.
 | [docs/PROJECT_STRUCTURE.md](docs/PROJECT_STRUCTURE.md) | Bioinformatics project directory layout |
 | [docs/UKB_PRE_COMMIT_HOOK.md](docs/UKB_PRE_COMMIT_HOOK.md) | Git pre-commit security hook |
 | [docs/SYNTHETIC_UKB_GENERATOR.md](docs/SYNTHETIC_UKB_GENERATOR.md) | Mock UK Biobank tabular data generator |
+| [docs/CLOCK_LIBRARY.md](docs/CLOCK_LIBRARY.md) | `rogen_aging.clock` package and `run_clock.py` unified CLI |
+| [docs/UKB_INTEGRATION_PIPELINE.md](docs/UKB_INTEGRATION_PIPELINE.md) | Synthetic UKB phenotype–genotype join + LA-SNP associations (Activity 2.1.11.1) |
 | [docs/LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md](docs/LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md) | LA-SNP manifest, 1KG extract, and gnomAD comparison (Activity 2.1.8.1) |
 | [docs/SYNTHETIC_UKB_RAP_GENERATOR.md](docs/SYNTHETIC_UKB_RAP_GENERATOR.md) | Mock UKB-RAP folder (phenotypes + LA-SNP VCF) |
 | [docs/SYNTHETIC_ROMANIAN_VCF_GENERATOR.md](docs/SYNTHETIC_ROMANIAN_VCF_GENERATOR.md) | Synthetic Romanian cohort VCF (VCF 4.2) |

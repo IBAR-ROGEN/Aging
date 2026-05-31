@@ -53,6 +53,10 @@ while IFS= read -r file; do
     scripts/ukb_la_snp_lookup.py) continue ;;
     # Public 1KG vs gnomAD comparison only (no participant data); references ukb_la_snp_lookup by filename.
     scripts/compare_af_gnomad.py) continue ;;
+    # Synthetic UKB integrative validation (mock data only); references ukb_* paths by design.
+    scripts/run_integration.py) continue ;;
+    src/rogen_aging/integration/*) continue ;;
+    tests/test_ukb_integration.py) continue ;;
     # Manifest QA notebooks only (no participant rows); cite UKB_Expected_Chunk and planning labels.
     notebooks/05_ukb_exploration/*) continue ;;
     # Generated tree of tracked paths; may list compliance doc filenames containing UKB_.
