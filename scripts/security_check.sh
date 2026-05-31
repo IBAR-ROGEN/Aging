@@ -51,6 +51,8 @@ while IFS= read -r file; do
     notebooks/README.md) continue ;;
     # Offline manifest builder (no participant data); path and manifest column use ukb/UKB tokens by design.
     scripts/ukb_la_snp_lookup.py) continue ;;
+    # Public 1KG vs gnomAD comparison only (no participant data); references ukb_la_snp_lookup by filename.
+    scripts/compare_af_gnomad.py) continue ;;
     # Manifest QA notebooks only (no participant rows); cite UKB_Expected_Chunk and planning labels.
     notebooks/05_ukb_exploration/*) continue ;;
     # Generated tree of tracked paths; may list compliance doc filenames containing UKB_.

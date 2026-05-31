@@ -98,25 +98,51 @@ Writes `analysis/Fig_LA_SNPs_per_gene.png` and `analysis/Fig_LA_SNP_network.png`
 
 See **[docs/CODE_MODULES_REFERENCE.md](docs/CODE_MODULES_REFERENCE.md)** (section 8 and manuscript figure script sections, including 3.12–3.19) for parameters and dependencies.
 
-## UK Biobank SNP manifest (offline, Ensembl)
+## UK Biobank SNP manifest and public frequency validation (Activity 2.1.8.1)
 
-Build a CSV manifest from an Excel overlap table (`Gene`, `SNP_rsID`): resolve rs IDs to **GRCh38** coordinates via the Ensembl Variation REST API, add an imputed-bulk chunk label for downstream UKB genotype extraction planning (no DNAnexus or dx-toolkit calls).
+Build a CSV manifest from an Excel overlap table (`Gene`, `SNP_rsID`), then validate allele frequencies against **public** 1000 Genomes and **gnomAD v4** data before UKB extraction. No DNAnexus or dx-toolkit calls; no participant genotypes.
+
+### 1. Build manifest (Ensembl GRCh38)
 
 ```bash
-uv run python scripts/ukb_la_snp_lookup.py \
+uv run python scripts/ukb_la_snp_lookup.py build \
   --input overlapping_genes_with_snps.xlsx \
   --output analysis/ukb_snp_manifest_v0.1.csv
 ```
 
-The Git pre-commit hook exempts this script from the generic `UKB_` content scan because it intentionally emits manifest column names for extraction metadata; it must never contain real participant IDs. See **[docs/UKB_PRE_COMMIT_HOOK.md](docs/UKB_PRE_COMMIT_HOOK.md)**.
+The Git pre-commit hook exempts `scripts/ukb_la_snp_lookup.py` from the generic `UKB_` content scan because it intentionally emits manifest column names for extraction metadata; it must never contain real participant IDs. See **[docs/UKB_PRE_COMMIT_HOOK.md](docs/UKB_PRE_COMMIT_HOOK.md)**.
 
-After building the CSV, run the exploratory notebook **`notebooks/05_ukb_exploration/UKB_LA_SNP_FirstContact.ipynb`** (from the repo root with `uv run jupyter lab`) to sanity-check coverage, chromosome distribution, gene-level counts, and per-chromosome GRCh38 spans before spending UK Biobank extraction credits.
+Sanity-check the CSV in **`notebooks/05_ukb_exploration/UKB_LA_SNP_FirstContact.ipynb`**.
+
+### 2. Extract 1KG allele frequencies (public proxy)
+
+Requires local indexed 1000 Genomes GRCh38 VCFs under `data/` (git-ignored):
+
+```bash
+uv run python scripts/ukb_la_snp_lookup.py extract \
+  --manifest analysis/ukb_snp_manifest_v0.1.csv \
+  --vcf-glob '/path/to/1kg/ALL.chr*.vcf.gz' \
+  --output analysis/la_snp_1kg_frequencies.csv
+```
+
+### 3. Compare to gnomAD v4 (NFE)
+
+```bash
+uv run python scripts/compare_af_gnomad.py \
+  --input analysis/la_snp_1kg_frequencies.csv \
+  --output analysis/la_snp_af_1kg_vs_gnomad.csv \
+  --scatter analysis/af_1kg_vs_gnomad_scatter.png
+```
+
+gnomAD responses are cached under `data/geo/gnomad_r4_nfe_cache.json` for offline reruns.
+
+Full pipeline details: **[docs/LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md](docs/LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md)**.
 
 ## Layout
 
 - `src/rogen_aging/` — Installable Python package (`import rogen_aging`, `from rogen_aging import …`); epigenetic clock helpers under **`rogen_aging.clock`** (e.g. **`external_data`** for GSE87571)
 - `tests/` — Pytest tests (`uv run pytest` after `uv sync --extra dev`), including `test_mock_clinical_csv.py` and `test_synthetic_vcf.py` for the synthetic generators (`pyproject.toml` adds `scripts/` to pytest’s `pythonpath`)
-- `scripts/` — CLI scripts (AlphaGenome, mock tabular/VCF generators, figure renders, LA-SNP per-gene and pathway network figures, UKB manifest builder, epigenetic clock train/validate, security hook)
+- `scripts/` — CLI scripts (AlphaGenome, mock tabular/VCF generators, figure renders, LA-SNP per-gene and pathway network figures, UKB manifest builder and public AF validation, epigenetic clock train/validate, security hook)
 - `notebooks/` — Genomic analysis notebooks (including `05_ukb_exploration/` for UKB manifest QA)
 - `docs/` — Project documentation
 - `components/` — React/TypeScript manuscript figure mockups (e.g. dashboard) and a small Vite capture app under `components/dashboard-figure-render/`
@@ -356,6 +382,7 @@ See comments in the script for IDE integration; `.r-env/` is git-ignored.
 | [docs/PROJECT_STRUCTURE.md](docs/PROJECT_STRUCTURE.md) | Bioinformatics project directory layout |
 | [docs/UKB_PRE_COMMIT_HOOK.md](docs/UKB_PRE_COMMIT_HOOK.md) | Git pre-commit security hook |
 | [docs/SYNTHETIC_UKB_GENERATOR.md](docs/SYNTHETIC_UKB_GENERATOR.md) | Mock UK Biobank tabular data generator |
+| [docs/LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md](docs/LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md) | LA-SNP manifest, 1KG extract, and gnomAD comparison (Activity 2.1.8.1) |
 | [docs/SYNTHETIC_UKB_RAP_GENERATOR.md](docs/SYNTHETIC_UKB_RAP_GENERATOR.md) | Mock UKB-RAP folder (phenotypes + LA-SNP VCF) |
 | [docs/SYNTHETIC_ROMANIAN_VCF_GENERATOR.md](docs/SYNTHETIC_ROMANIAN_VCF_GENERATOR.md) | Synthetic Romanian cohort VCF (VCF 4.2) |
 | [docs/EDA_MOCK_INTEGRATION.md](docs/EDA_MOCK_INTEGRATION.md) | EDA mock epigenetic aging script |

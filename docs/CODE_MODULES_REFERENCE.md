@@ -31,7 +31,8 @@ Aging/
 │   ├── mock_ukb_generator.py      # Synthetic UK Biobank data
 │   ├── ukb_mock_gen.py            # Synthetic UKB-RAP folder (phenotypes + LA-SNP VCF)
 │   ├── generate_synthetic_romanian_vcf.py  # Synthetic EUR-style cohort VCF v4.2
-│   ├── ukb_la_snp_lookup.py       # Offline UKB SNP manifest (Ensembl GRCh38)
+│   ├── ukb_la_snp_lookup.py       # Offline UKB SNP manifest + 1KG extract (Ensembl / cyvcf2)
+│   ├── compare_af_gnomad.py       # 1KG vs gnomAD v4 NFE AF comparison (Activity 2.1.8.1)
 │   ├── render_*_network*.py       # Manuscript networks (matplotlib / networkx)
 │   ├── render_dashboard_figure_mockup.py
 │   ├── bootstrap_r_env.sh         # Optional micromamba R under .r-env/
@@ -388,12 +389,26 @@ Scripts are entry points that call into `src/rogen_aging` or external tools. Run
 
 ### 3.12 ukb_la_snp_lookup.py
 
-**Purpose:** Offline manifest builder for UK Biobank-style genotype extraction planning: read Excel (`Gene`, `SNP_rsID`), query the Ensembl Variation REST API for **GRCh38** coordinates, emit CSV with chromosome, position, and an imputed-bulk chunk label (no DNAnexus / dx-toolkit).
+**Purpose:** Offline LA-SNP tooling for UK Biobank-style genotype extraction planning (Activity 2.1.8.1): **build** a GRCh38 manifest from Excel (`Gene`, `SNP_rsID`) via Ensembl; **extract** allele frequencies from indexed 1000 Genomes GRCh38 VCFs as a public proxy for expected UKB AFs.
 
-**Responsibilities:** argparse CLI, rate-limited HTTP with retries on 429/5xx, pandas + openpyxl input, CSV output under `analysis/` by default.
+**Responsibilities:**
+- **`build`** subcommand (default when no subcommand): rate-limited Ensembl Variation REST queries with retries on 429/5xx; CSV with chromosome, position, and imputed-bulk chunk label.
+- **`extract`** subcommand: cyvcf2 tabix region queries by manifest coordinates; per-SNP `AF` and `N_called`; graceful handling of SNPs missing from 1KG.
+- argparse subparsers; legacy top-level flags still invoke `build`.
 
-**Dependencies:** pandas, requests, openpyxl.  
-**Related:** [README.md](../README.md), [UKB_PRE_COMMIT_HOOK.md](UKB_PRE_COMMIT_HOOK.md), exploratory QA notebook `notebooks/05_ukb_exploration/UKB_LA_SNP_FirstContact.ipynb` (§4.5).
+**Dependencies:** pandas, requests, openpyxl, cyvcf2.  
+**Related:** [LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md](LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md), [README.md](../README.md), [UKB_PRE_COMMIT_HOOK.md](UKB_PRE_COMMIT_HOOK.md), `notebooks/05_ukb_exploration/UKB_LA_SNP_FirstContact.ipynb` (§4.5).
+
+---
+
+### 3.20 compare_af_gnomad.py
+
+**Purpose:** Activity 2.1.8.1 — join 1KG LA-SNP allele frequencies to **gnomAD v4** (`gnomad_r4`) **NFE** population AFs via the public GraphQL API; flag large discrepancies and plot a scatter with identity line.
+
+**Responsibilities:** Read `analysis/la_snp_1kg_frequencies.csv`; batched variant lookups (and region/rsID fallback); cache JSON under `data/geo/gnomad_r4_nfe_cache.json`; write comparison CSV (`rsID`, `AF_1kg`, `AF_gnomad_nfe`, `abs_diff`, `large_diff`) and scatter PNG; log rsIDs missing from gnomAD.
+
+**Dependencies:** pandas, requests, matplotlib.  
+**Related:** [LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md](LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md), `scripts/ukb_la_snp_lookup.py` (§3.12).
 
 ---
 
@@ -439,7 +454,7 @@ Scripts are entry points that call into `src/rogen_aging` or external tools. Run
 
 **Purpose:** UK Biobank pre-commit security hook — blocks commits containing `patient_id`, `UKB_`, or `.vcf`/`.bed` files.
 
-**Responsibilities (exemptions):** Content scanning skips `docs/*`, root `README.md`, `notebooks/README.md`, `notebooks/05_ukb_exploration/*`, the hook scripts themselves, `scripts/mock_ukb_generator.py`, `scripts/ukb_mock_gen.py`, `test_data/mock_clinical_data.csv`, **`scripts/ukb_la_snp_lookup.py`** (offline manifest only; must never hold participant IDs), and **`repo_structure.txt`** (generated tree listing). Reinstall the hook after editing `security_check.sh`.
+**Responsibilities (exemptions):** Content scanning skips `docs/*`, root `README.md`, `notebooks/README.md`, `notebooks/05_ukb_exploration/*`, the hook scripts themselves, `scripts/mock_ukb_generator.py`, `scripts/ukb_mock_gen.py`, `test_data/mock_clinical_data.csv`, **`scripts/ukb_la_snp_lookup.py`** (offline manifest + 1KG extract only; must never hold participant IDs), **`scripts/compare_af_gnomad.py`** (public AF comparison only), and **`repo_structure.txt`** (generated tree listing). Reinstall the hook after editing `security_check.sh`.
 
 **Usage:** Run `./scripts/install_pre_commit_hook.sh` to install.  
 **Related doc:** [docs/UKB_PRE_COMMIT_HOOK.md](UKB_PRE_COMMIT_HOOK.md).
@@ -592,7 +607,8 @@ Exploratory QA for the offline UK Biobank longevity-associated SNP manifest (`sc
 | `scripts/train_romanian_epigenetic_clock.py` | Elastic Net epigenetic clock (mock Romanian cohort / custom CSVs). |
 | `scripts/train_clock_on_gse40279.py` | GSE40279-style wide β + age table → imputer + ElasticNetCV pipeline (see GSE40279_CLOCK_TRAINING.md). |
 | `scripts/validate_clock.py` | Held-out validation for a saved clock model (MAE, r, decade MAE, figures). |
-| `scripts/ukb_la_snp_lookup.py` | Offline UKB SNP manifest via Ensembl GRCh38 (CSV). |
+| `scripts/ukb_la_snp_lookup.py` | Offline UKB SNP manifest (Ensembl) + 1KG frequency extract (cyvcf2). |
+| `scripts/compare_af_gnomad.py` | 1KG vs gnomAD v4 NFE AF comparison + scatter (Activity 2.1.8.1). |
 | `scripts/generate_la_snp_per_gene_plot.py` | Supplementary LA-SNPs-per-gene bar chart (Excel → PNG). |
 | `scripts/generate_network_fig.py` | Activity 2.1.7.1 LA-SNP pathway hub-and-spoke network (Excel → PNG/PDF). |
 | `scripts/render_longevity_network_diagram.py` | Matplotlib longevity network (twin of `frontend/` TSX). |

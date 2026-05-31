@@ -24,8 +24,9 @@ Notebooks dedicated to generating project-wide visualizations and heatmaps.
 - **Visualizations.ipynb**: Centralized notebook for generating publication-ready figures.
 
 ### `05_ukb_exploration/`
-Exploratory checks on the offline UK Biobank SNP manifest produced by `scripts/ukb_la_snp_lookup.py` (no participant data).
+Exploratory checks on the offline UK Biobank SNP manifest and public frequency validation produced by `scripts/ukb_la_snp_lookup.py` and `scripts/compare_af_gnomad.py` (no participant data).
 - **UKB_LA_SNP_FirstContact.ipynb**: Loads `analysis/ukb_snp_manifest_v0.1.csv`, reports GRCh38 resolution failures, chromosome and gene summaries, and per-chromosome position ranges to support chunk-based extraction planning.
+- After running the public AF pipeline (see **[docs/LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md](../docs/LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md)**), inspect `analysis/la_snp_af_1kg_vs_gnomad.csv` and `analysis/af_1kg_vs_gnomad_scatter.png` for 1KG vs gnomAD concordance.
 
 ## Guidelines
 - **Data Locality**: Keep large datasets in the root `data/` directory (git-ignored).

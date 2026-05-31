@@ -49,7 +49,8 @@ The following are excluded from content scanning:
 | `scripts/ukb_mock_gen.py` | Synthetic UKB-RAP folder generator (no real UKB data) |
 | `tests/test_ukb_mock_gen.py` | Pytest for synthetic UKB-RAP generator (no participant data) |
 | `test_data/mock_clinical_data.csv` | Synthetic mock output (MOCK_ IDs) |
-| `scripts/ukb_la_snp_lookup.py` | Offline Ensembl → CSV manifest builder only (no participant rows; reviewed path) |
+| `scripts/ukb_la_snp_lookup.py` | Offline Ensembl → CSV manifest builder + 1KG extract only (no participant rows; reviewed path) |
+| `scripts/compare_af_gnomad.py` | Public 1KG vs gnomAD AF comparison only (no participant rows; reviewed path) |
 | `notebooks/05_ukb_exploration/*` | Offline manifest sanity-check notebooks only (no participant rows; cite extraction metadata labels) |
 | `repo_structure.txt` | Generated tree of tracked paths (may list compliance doc filenames) |
 

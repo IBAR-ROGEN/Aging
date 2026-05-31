@@ -1,36 +1,51 @@
 #!/usr/bin/env python3
-"""Offline UK Biobank (UKB) genotype extraction manifest builder for ROGEN.
+"""Offline UK Biobank (UKB) LA-SNP manifest builder and public-frequency proxy for ROGEN.
 
-This module reads a gene–SNP overlap table from Excel, resolves each dbSNP
-rs identifier to a GRCh38 chromosomal locus via the Ensembl Variation REST
-API, and writes a CSV manifest suitable for downstream bulk genotype
-extraction (for example, imputed genotype resources often discussed in
-conjunction with UK Biobank showcase field **22418** — genotype/imputed
-bulk files; this script does **not** call DNAnexus, dx-toolkit, or dxFUSE).
+v0.1 — **build** subcommand (default when no subcommand is given): reads a
+gene–SNP overlap table from Excel, resolves each dbSNP rs identifier to a
+GRCh38 chromosomal locus via the Ensembl Variation REST API, and writes a CSV
+manifest suitable for downstream bulk genotype extraction (for example,
+imputed genotype resources often discussed in conjunction with UK Biobank
+showcase field **22418** — genotype/imputed bulk files).
+
+v0.2 — **extract** subcommand: uses that manifest to pull the same SNP loci
+from publicly available 1000 Genomes Project GRCh38 VCFs (bgzipped and
+tabix-indexed) and reports per-variant allele frequency and call count. This
+is a **public-data proxy** for expected UKB allele frequencies during
+development; it does **not** access UK Biobank participant genotypes and
+makes **no** DNAnexus, dx-toolkit, or dxFUSE calls.
 
 The manifest encodes chromosome and GRCh38 position for harmonisation with
 contemporary reference-based workflows. Native UKB imputed BGEN products
 are historically GRCh37-aligned; confirm liftover requirements before
 matching coordinates to released UKB variant sets.
 
-Example:
-    uv run python scripts/ukb_la_snp_lookup.py \\
+Examples:
+    uv run python scripts/ukb_la_snp_lookup.py build \\
         --input overlapping_genes_with_snps.xlsx \\
         --output analysis/ukb_snp_manifest_v0.1.csv
+
+    uv run python scripts/ukb_la_snp_lookup.py extract \\
+        --manifest analysis/ukb_snp_manifest_v0.1.csv \\
+        --vcf-glob '/path/to/1kg/ALL.chr*.vcf.gz' \\
+        --output analysis/la_snp_1kg_frequencies.csv
 """
 
 from __future__ import annotations
 
 import argparse
+import glob
 import json
 import logging
+import re
 import sys
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any, Iterable, Sequence
 from urllib.parse import quote
 
+import cyvcf2
 import pandas as pd
 import requests
 
@@ -40,6 +55,13 @@ DEFAULT_ASSEMBLY = "GRCh38"
 DEFAULT_MIN_INTERVAL_SEC = 0.34
 DEFAULT_TIMEOUT_SEC = 30.0
 DEFAULT_MAX_RETRIES = 4
+DEFAULT_MANIFEST_CSV = Path("analysis/ukb_snp_manifest_v0.1.csv")
+DEFAULT_1KG_FREQ_CSV = Path("analysis/la_snp_1kg_frequencies.csv")
+_VCF_GLOB_SUFFIXES = ("*.vcf.gz", "*.vcf.bgz", "*.bcf")
+_CHROM_IN_FILENAME_RE = re.compile(
+    r"(?:^|[_.-])((?:chr)?(?:[1-9]|1[0-9]|2[0-2]|X|Y|MT|M))(?:[_.-]|\.|$)",
+    re.IGNORECASE,
+)
 
 LOG = logging.getLogger(__name__)
 
@@ -148,7 +170,7 @@ def query_ensembl_rsids_grch38(
     )
     sess.headers.setdefault(
         "User-Agent",
-        "rogen-aging-ukb-manifest/0.1 (ROGEN; academic research; Ensembl REST)",
+        "rogen-aging-ukb-manifest/0.2 (ROGEN; academic research; Ensembl REST)",
     )
 
     results: dict[str, Grch38Locus | None] = {}
@@ -371,15 +393,259 @@ def build_manifest(
     return out
 
 
-def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
-    """Parse command-line arguments."""
-    parser = argparse.ArgumentParser(
-        description=(
-            "Build an offline CSV manifest of GRCh38 loci for UKB genotype "
-            "extraction planning from a gene–SNP overlap Excel file."
-        ),
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-    )
+def normalize_chromosome_label(chromosome: str) -> str:
+    """Normalise a chromosome label to a compact form (no ``chr`` prefix)."""
+    label = str(chromosome).strip()
+    if label.upper().startswith("CHR"):
+        label = label[3:]
+    numeric = pd.to_numeric(label, errors="coerce")
+    if pd.notna(numeric) and float(numeric).is_integer():
+        label = str(int(numeric))
+    upper = label.upper()
+    if upper in {"M", "MT"}:
+        return "MT"
+    return upper if upper in {"X", "Y", "MT"} else label
+
+
+def chromosome_query_aliases(chromosome: str) -> list[str]:
+    """Return plausible contig names for tabix region queries."""
+    base = normalize_chromosome_label(chromosome)
+    aliases = [base, f"chr{base}"]
+    if base == "MT":
+        aliases.extend(["M", "chrM"])
+    seen: set[str] = set()
+    ordered: list[str] = []
+    for alias in aliases:
+        if alias not in seen:
+            seen.add(alias)
+            ordered.append(alias)
+    return ordered
+
+
+def expand_vcf_paths(vcf_glob: str) -> list[Path]:
+    """Expand a filesystem path or glob to indexed 1KG-style VCF paths."""
+    matches = sorted(Path(p) for p in glob.glob(vcf_glob))
+    if matches:
+        return matches
+
+    candidate = Path(vcf_glob)
+    if candidate.is_dir():
+        paths: list[Path] = []
+        for pattern in _VCF_GLOB_SUFFIXES:
+            paths.extend(sorted(candidate.glob(pattern)))
+        return paths
+
+    if candidate.is_file():
+        return [candidate]
+
+    raise FileNotFoundError(f"No VCF files matched: {vcf_glob}")
+
+
+def infer_vcf_chromosomes(path: Path) -> set[str]:
+    """Infer chromosome labels encoded in a VCF filename, if any."""
+    labels: set[str] = set()
+    for match in _CHROM_IN_FILENAME_RE.findall(path.name):
+        labels.add(normalize_chromosome_label(match))
+    return labels
+
+
+def build_chromosome_vcf_index(vcf_paths: Sequence[Path]) -> tuple[dict[str, Path], Path | None]:
+    """Map normalised chromosome labels to per-chromosome VCF paths."""
+    index: dict[str, Path] = {}
+    undesignated: list[Path] = []
+
+    for path in vcf_paths:
+        chromosomes = infer_vcf_chromosomes(path)
+        if not chromosomes:
+            undesignated.append(path)
+            continue
+        for chrom in chromosomes:
+            index[chrom] = path
+
+    fallback: Path | None = None
+    if len(undesignated) == 1:
+        fallback = undesignated[0]
+    elif len(undesignated) > 1:
+        LOG.warning(
+            "Multiple VCFs without chromosome hints in filename; using first as fallback: %s",
+            undesignated[0],
+        )
+        fallback = undesignated[0]
+
+    return index, fallback
+
+
+def read_manifest_csv(path: Path) -> pd.DataFrame:
+    """Load the SNP manifest CSV produced by :func:`build_manifest`."""
+    df = pd.read_csv(path)
+    required = {"SNP_rsID", "Chromosome", "Position_GRCh38"}
+    missing = required - set(df.columns)
+    if missing:
+        raise ValueError(f"Manifest CSV is missing required columns: {sorted(missing)}")
+    return df
+
+
+class VcfHandleCache:
+    """Lazy cache of open :class:`cyvcf2.VCF` readers."""
+
+    def __init__(self) -> None:
+        self._open: dict[str, cyvcf2.VCF] = {}
+
+    def get(self, path: Path) -> cyvcf2.VCF:
+        key = str(path.resolve())
+        if key not in self._open:
+            self._open[key] = cyvcf2.VCF(key)
+        return self._open[key]
+
+    def close(self) -> None:
+        for handle in self._open.values():
+            handle.close()
+        self._open.clear()
+
+
+def fetch_variant_at_locus(vcf: cyvcf2.VCF, chromosome: str, position: int) -> cyvcf2.Variant | None:
+    """Return the variant record at ``chromosome:position`` using tabix, if present."""
+    for alias in chromosome_query_aliases(chromosome):
+        region = f"{alias}:{position}-{position}"
+        try:
+            for record in vcf(region):
+                if int(record.POS) == position:
+                    return record
+        except (OSError, RuntimeError, ValueError) as exc:
+            LOG.debug("Region query failed for %s: %s", region, exc)
+    return None
+
+
+def compute_cohort_allele_frequency(record: cyvcf2.Variant) -> tuple[float | None, int]:
+    """Compute alternate-allele frequency and number of called samples."""
+    n_called = 0
+    n_alt_alleles = 0
+    for genotype in record.genotypes:
+        allele1, allele2 = genotype[0], genotype[1]
+        if allele1 < 0 or allele2 < 0:
+            continue
+        n_called += 1
+        if allele1 > 0:
+            n_alt_alleles += 1
+        if allele2 > 0:
+            n_alt_alleles += 1
+
+    n_alleles = n_called * 2
+    if n_alleles == 0:
+        return None, 0
+    return n_alt_alleles / n_alleles, n_called
+
+
+def resolve_vcf_for_chromosome(
+    chromosome: str,
+    *,
+    chromosome_index: dict[str, Path],
+    fallback_vcf: Path | None,
+) -> Path | None:
+    """Pick the VCF path that should contain variants on ``chromosome``."""
+    normalised = normalize_chromosome_label(chromosome)
+    if normalised in chromosome_index:
+        return chromosome_index[normalised]
+    return fallback_vcf
+
+
+def extract_1kg_frequencies(manifest: pd.DataFrame, vcf_paths: Sequence[Path]) -> pd.DataFrame:
+    """Extract 1KG allele frequencies for manifest SNPs via indexed region queries."""
+    chromosome_index, fallback_vcf = build_chromosome_vcf_index(vcf_paths)
+    cache = VcfHandleCache()
+
+    rows: list[dict[str, Any]] = []
+    try:
+        for _, entry in manifest.iterrows():
+            rs_id = str(entry["SNP_rsID"]).strip() if pd.notna(entry["SNP_rsID"]) else ""
+            chrom_raw = entry["Chromosome"]
+            pos_raw = entry["Position_GRCh38"]
+
+            if not rs_id:
+                LOG.warning("Skipping manifest row with empty rsID.")
+                continue
+
+            if pd.isna(chrom_raw) or pd.isna(pos_raw) or str(chrom_raw).strip() == "":
+                LOG.warning("Manifest row %s lacks GRCh38 coordinates; skipping VCF lookup.", rs_id)
+                rows.append(
+                    {
+                        "rsID": rs_id,
+                        "chrom": "",
+                        "pos": None,
+                        "ref": "",
+                        "alt": "",
+                        "AF": None,
+                        "N_called": 0,
+                    }
+                )
+                continue
+
+            chrom = normalize_chromosome_label(str(chrom_raw))
+            position = int(float(pos_raw))
+            vcf_path = resolve_vcf_for_chromosome(
+                chrom,
+                chromosome_index=chromosome_index,
+                fallback_vcf=fallback_vcf,
+            )
+            if vcf_path is None:
+                LOG.warning("No 1KG VCF found for chromosome %s (rsID %s).", chrom, rs_id)
+                rows.append(
+                    {
+                        "rsID": rs_id,
+                        "chrom": chrom,
+                        "pos": int(position),
+                        "ref": "",
+                        "alt": "",
+                        "AF": None,
+                        "N_called": 0,
+                    }
+                )
+                continue
+
+            vcf = cache.get(vcf_path)
+            record = fetch_variant_at_locus(vcf, chrom, position)
+            if record is None:
+                LOG.warning(
+                    "SNP %s not found at %s:%s in %s.",
+                    rs_id,
+                    chrom,
+                    position,
+                    vcf_path.name,
+                )
+                rows.append(
+                    {
+                        "rsID": rs_id,
+                        "chrom": chrom,
+                        "pos": int(position),
+                        "ref": "",
+                        "alt": "",
+                        "AF": None,
+                        "N_called": 0,
+                    }
+                )
+                continue
+
+            ref = str(record.REF)
+            alt = str(record.ALT[0]) if record.ALT else ""
+            af, n_called = compute_cohort_allele_frequency(record)
+            rows.append(
+                {
+                    "rsID": rs_id,
+                    "chrom": chrom,
+                    "pos": int(position),
+                    "ref": ref,
+                    "alt": alt,
+                    "AF": af,
+                    "N_called": n_called,
+                }
+            )
+    finally:
+        cache.close()
+
+    return pd.DataFrame(rows)
+
+
+def _add_build_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--input",
         type=Path,
@@ -389,7 +655,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--output",
         type=Path,
-        default=Path("analysis/ukb_snp_manifest_v0.1.csv"),
+        default=DEFAULT_MANIFEST_CSV,
         help="Output CSV manifest path",
     )
     parser.add_argument(
@@ -410,24 +676,80 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         default=DEFAULT_MAX_RETRIES,
         help="Maximum retries per rs ID for transient HTTP failures",
     )
+
+
+def _add_extract_arguments(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--manifest",
+        type=Path,
+        default=DEFAULT_MANIFEST_CSV,
+        help="Manifest CSV from the build subcommand",
+    )
+    parser.add_argument(
+        "--vcf-glob",
+        required=True,
+        help="Path or glob to 1000 Genomes GRCh38 VCFs (bgzipped + tabix-indexed)",
+    )
+    parser.add_argument(
+        "--output",
+        type=Path,
+        default=DEFAULT_1KG_FREQ_CSV,
+        help="Output per-SNP allele-frequency table",
+    )
+
+
+def _add_log_level_argument(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--log-level",
         default="INFO",
         choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
         help="Logging verbosity",
     )
-    return parser.parse_args(argv)
 
 
-def main(argv: list[str] | None = None) -> int:
-    """CLI entry point: read overlap table, query Ensembl, write manifest CSV."""
-    args = parse_args(argv)
-    logging.basicConfig(
-        level=getattr(logging, str(args.log_level)),
-        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
-        datefmt="%Y-%m-%dT%H:%M:%S",
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    """Parse command-line arguments."""
+    argv = list(sys.argv[1:] if argv is None else argv)
+
+    root = argparse.ArgumentParser(
+        description=(
+            "Build a GRCh38 SNP manifest from Ensembl (build) or extract 1000 "
+            "Genomes allele frequencies for manifest SNPs (extract)."
+        ),
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
+    subparsers = root.add_subparsers(dest="command")
 
+    build_parser = subparsers.add_parser(
+        "build",
+        help="Resolve rsIDs via Ensembl and write a GRCh38 manifest CSV",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+    _add_build_arguments(build_parser)
+    _add_log_level_argument(build_parser)
+
+    extract_parser = subparsers.add_parser(
+        "extract",
+        help="Extract 1KG allele frequencies for manifest SNPs from indexed VCFs",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+    _add_extract_arguments(extract_parser)
+    _add_log_level_argument(extract_parser)
+
+    if argv and argv[0] in {"build", "extract"}:
+        return root.parse_args(argv)
+
+    if not argv or argv[0] in {"-h", "--help"}:
+        root.print_help()
+        raise SystemExit(0)
+
+    args = build_parser.parse_args(argv)
+    args.command = "build"
+    return args
+
+
+def run_build(args: argparse.Namespace) -> int:
+    """Execute the manifest build workflow."""
     input_path: Path = args.input
     output_path: Path = args.output
 
@@ -450,6 +772,61 @@ def main(argv: list[str] | None = None) -> int:
     manifest.to_csv(output_path, index=False)
     LOG.info("Wrote manifest (%s rows) to %s", len(manifest), output_path.resolve())
     return 0
+
+
+def run_extract(args: argparse.Namespace) -> int:
+    """Execute the 1KG allele-frequency extraction workflow."""
+    manifest_path: Path = args.manifest
+    output_path: Path = args.output
+
+    if not manifest_path.is_file():
+        LOG.error("Manifest CSV does not exist: %s", manifest_path.resolve())
+        return 1
+
+    try:
+        vcf_paths = expand_vcf_paths(str(args.vcf_glob))
+    except FileNotFoundError as exc:
+        LOG.error("%s", exc)
+        return 1
+
+    if not vcf_paths:
+        LOG.error("No VCF files matched: %s", args.vcf_glob)
+        return 1
+
+    LOG.info("Reading manifest from %s", manifest_path.resolve())
+    manifest = read_manifest_csv(manifest_path)
+    LOG.info(
+        "Loaded %s manifest rows; querying %s VCF file(s)",
+        len(manifest),
+        len(vcf_paths),
+    )
+
+    frequencies = extract_1kg_frequencies(manifest, vcf_paths)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    frequencies.to_csv(output_path, index=False)
+
+    n_found = int(frequencies["AF"].notna().sum()) if not frequencies.empty else 0
+    LOG.info(
+        "Wrote %s SNP rows (%s with AF) to %s",
+        len(frequencies),
+        n_found,
+        output_path.resolve(),
+    )
+    return 0
+
+
+def main(argv: list[str] | None = None) -> int:
+    """CLI entry point: build manifest CSV or extract 1KG allele frequencies."""
+    args = parse_args(argv)
+    logging.basicConfig(
+        level=getattr(logging, str(args.log_level)),
+        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+        datefmt="%Y-%m-%dT%H:%M:%S",
+    )
+
+    if args.command == "extract":
+        return run_extract(args)
+    return run_build(args)
 
 
 if __name__ == "__main__":

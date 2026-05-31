@@ -49,10 +49,12 @@ Both files include an **Activity 2.1.8.1** safety header noting the cohort is sy
 Build the LA-SNP manifest once (offline Ensembl lookup; no participant data):
 
 ```bash
-uv run python scripts/ukb_la_snp_lookup.py \
+uv run python scripts/ukb_la_snp_lookup.py build \
   --input overlapping_genes_with_snps.xlsx \
   --output analysis/ukb_snp_manifest_v0.1.csv
 ```
+
+Optionally validate public allele frequencies (1KG extract + gnomAD comparison) before generating synthetic data — see **[LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md](LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md)**.
 
 See `notebooks/05_ukb_exploration/UKB_LA_SNP_FirstContact.ipynb` for manifest sanity checks.
 
@@ -118,6 +120,7 @@ uv run pytest tests/test_ukb_mock_gen.py
 
 ## Related documentation
 
+- [LA-SNP Public Frequency Pipeline](LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md) — manifest, 1KG extract, gnomAD comparison
 - [Synthetic UK Biobank Data Generator](SYNTHETIC_UKB_GENERATOR.md) — tabular mock clinical CSV (`mock_ukb_generator.py`)
 - [Synthetic Romanian Cohort VCF Generator](SYNTHETIC_ROMANIAN_VCF_GENERATOR.md) — general-purpose streaming VCF generator
 - [UK Biobank Pre-Commit Hook](UKB_PRE_COMMIT_HOOK.md) — security checks and whitelisting

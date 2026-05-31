@@ -65,7 +65,8 @@ Executable scripts and shell utilities. Run with `uv run scripts/<script>.py` or
 | `mock_ukb_generator.py` | Synthetic UK Biobank-style tabular data |
 | `ukb_mock_gen.py` | Synthetic UKB-RAP folder (phenotype CSV + LA-SNP VCF, joinable on `eid`) |
 | `generate_synthetic_romanian_vcf.py` | Streaming synthetic EUR-style cohort VCF v4.2 |
-| `ukb_la_snp_lookup.py` | Offline UKB genotype manifest: Excel overlap → Ensembl GRCh38 → CSV (no dx-toolkit) |
+| `ukb_la_snp_lookup.py` | Offline UKB genotype manifest (Ensembl GRCh38) + 1KG AF extract (cyvcf2; no dx-toolkit) |
+| `compare_af_gnomad.py` | 1KG vs gnomAD v4 NFE allele-frequency comparison (Activity 2.1.8.1) |
 | `render_longevity_network_diagram.py` | Matplotlib twin of `frontend` longevity network TSX |
 | `render_figure1c_mechanisms_network.py` | Figure 1C mechanisms network (networkx + matplotlib; PNG/PDF) |
 | `generate_la_snp_per_gene_plot.py` | Supplementary horizontal bar chart: unique LA-SNPs per gene from Excel (`Gene` / `SNP_rsID`; optional column flags) |
