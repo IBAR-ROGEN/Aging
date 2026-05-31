@@ -365,7 +365,32 @@ Scripts are entry points that call into `src/rogen_aging` or external tools. Run
 
 ---
 
-### 3.10 train_romanian_epigenetic_clock.py
+### 3.10 `rogen_aging.clock` package
+
+**Purpose:** Installable epigenetic clock library — wide-table training, held-out evaluation, Romanian mock cohort I/O, and GSE87571 external validation.
+
+| Module | API | Role |
+|--------|-----|------|
+| `data.py` | `load_wide_table`, `split_features_target`, `load_romanian_cohort` | Parquet/CSV loaders; re-exports `load_gse87571` |
+| `model.py` | `make_clock_pipeline` | `SimpleImputer(mean)` + `ElasticNetCV` |
+| `train.py` | `train_clock` | Fit, `joblib` model, training metrics JSON |
+| `evaluate.py` | `evaluate_clock` | MAE, Pearson r, decade MAE, residual/decade figures |
+| `external_data.py` | `load_gse87571`, `save_as_parquet` | GSE87571 GEO download / merge |
+
+**Tests:** `tests/test_clock_regression.py` (`test_data/mock_clock_wide.csv`).  
+**Related doc:** [docs/CLOCK_LIBRARY.md](CLOCK_LIBRARY.md).
+
+---
+
+### 3.10a run_clock.py
+
+**Purpose:** Thin argparse CLI with **`train`** and **`evaluate`** subcommands delegating to `rogen_aging.clock`.
+
+**Related doc:** [docs/CLOCK_LIBRARY.md](CLOCK_LIBRARY.md).
+
+---
+
+### 3.10b train_romanian_epigenetic_clock.py
 
 **Purpose:** Train a custom epigenetic aging clock with Elastic Net (`ElasticNetCV`) on a methylation feature matrix and chronological age metadata; Romanian-style mock cohort IDs when generating synthetic data.
 
@@ -379,7 +404,7 @@ Scripts are entry points that call into `src/rogen_aging` or external tools. Run
 
 ---
 
-### 3.10a train_clock_on_gse40279.py
+### 3.10c train_clock_on_gse40279.py
 
 **Purpose:** Backward-compatible CLI wrapper around **`rogen_aging.clock.train.train_clock`** for GSE40279-style wide methylation tables.
 
@@ -666,13 +691,13 @@ Exploratory QA for the offline UK Biobank longevity-associated SNP manifest (`sc
 | `scripts/mock_ukb_generator.py` | Synthetic UK Biobank-style mock tabular data. |
 | `scripts/ukb_mock_gen.py` | Synthetic UKB-RAP folder (phenotypes + LA-SNP VCF). |
 | `scripts/generate_synthetic_romanian_vcf.py` | Streaming synthetic EUR-style cohort VCF v4.2. |
-| `scripts/train_romanian_epigenetic_clock.py` | Elastic Net epigenetic clock (mock Romanian cohort / custom CSVs). |
-| `scripts/train_clock_on_gse40279.py` | GSE40279-style wide β + age table → imputer + ElasticNetCV pipeline (see GSE40279_CLOCK_TRAINING.md). |
-| `scripts/validate_clock.py` | Held-out validation for a saved clock model (MAE, r, decade MAE, figures). |
+| `scripts/run_clock.py` | Unified clock `train` / `evaluate` CLI (`rogen_aging.clock`). |
+| `scripts/run_integration.py` | Synthetic UKB integrative validation CLI (Activity 2.1.11.1). |
+| `scripts/train_romanian_epigenetic_clock.py` | Elastic Net epigenetic clock demo (mock Romanian cohort / custom CSVs). |
+| `scripts/train_clock_on_gse40279.py` | GSE40279-style training wrapper (see GSE40279_CLOCK_TRAINING.md). |
+| `scripts/validate_clock.py` | Held-out clock validation wrapper. |
 | `scripts/ukb_la_snp_lookup.py` | Offline UKB SNP manifest (Ensembl) + 1KG frequency extract (cyvcf2). |
 | `scripts/compare_af_gnomad.py` | 1KG vs gnomAD v4 NFE AF comparison + scatter (Activity 2.1.8.1). |
-| `scripts/run_integration.py` | Synthetic UKB integrative validation CLI (Activity 2.1.11.1). |
-| `scripts/run_clock.py` | Unified clock train/evaluate CLI. |
 | `scripts/generate_la_snp_per_gene_plot.py` | Supplementary LA-SNPs-per-gene bar chart (Excel → PNG). |
 | `scripts/generate_network_fig.py` | Activity 2.1.7.1 LA-SNP pathway hub-and-spoke network (Excel → PNG/PDF). |
 | `scripts/render_longevity_network_diagram.py` | Matplotlib longevity network (twin of `frontend/` TSX). |

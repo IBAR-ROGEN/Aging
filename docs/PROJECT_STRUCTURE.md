@@ -85,8 +85,11 @@ Executable scripts and shell utilities. Run with `uv run scripts/<script>.py` or
 | `analyze_alphagenome_results.py` | Process AlphaGenome outputs |
 | `visualize_alphagenome_results.py` | AlphaGenome visualizations |
 | `generate_*.py` | Figure generation (pipeline, heatmaps, agent schema, etc.) |
-| `train_clock_on_gse40279.py` | Elastic Net clock from wide methylation + age table (GSE40279-style; see GSE40279_CLOCK_TRAINING.md) |
-| `validate_clock.py` | Held-out epigenetic clock validation (see ROMANIAN_EPIGENETIC_CLOCK.md) |
+| `run_clock.py` | Unified epigenetic clock `train` / `evaluate` CLI (`rogen_aging.clock`; see CLOCK_LIBRARY.md) |
+| `run_integration.py` | Synthetic UKB phenotype–genotype integrative validation (see UKB_INTEGRATION_PIPELINE.md) |
+| `train_clock_on_gse40279.py` | GSE40279-style clock training wrapper (see GSE40279_CLOCK_TRAINING.md) |
+| `train_romanian_epigenetic_clock.py` | Romanian mock cohort clock demo (see ROMANIAN_EPIGENETIC_CLOCK.md) |
+| `validate_clock.py` | Held-out epigenetic clock validation wrapper (see ROMANIAN_EPIGENETIC_CLOCK.md) |
 
 ### `notebooks/`
 
@@ -113,9 +116,9 @@ Project documentation (Markdown).
 | `SYNTHETIC_UKB_GENERATOR.md` | Mock tabular data generator |
 | `SYNTHETIC_UKB_RAP_GENERATOR.md` | Mock UKB-RAP folder generator (`ukb_mock_gen.py`) |
 | `METHYLATION_PIPELINE_*.md` | Methylation pipeline usage |
-| `GSE40279_CLOCK_TRAINING.md` | GSE40279 / Hannum-style wide-table Elastic Net training (`train_clock_on_gse40279.py`) |
-| `CLOCK_LIBRARY.md` | `rogen_aging.clock` package and `run_clock.py` |
-| `UKB_INTEGRATION_PIPELINE.md` | Synthetic UKB join + associations (Activity 2.1.11.1) |
+| `CLOCK_LIBRARY.md` | `rogen_aging.clock` package and `run_clock.py` CLI |
+| `GSE40279_CLOCK_TRAINING.md` | GSE40279 / Hannum-style wide-table Elastic Net training |
+| `UKB_INTEGRATION_PIPELINE.md` | Synthetic UKB phenotype–genotype join + LA-SNP associations (Activity 2.1.11.1) |
 | `LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md` | LA-SNP manifest, 1KG extract, gnomAD comparison |
 | `ALPHAGENOME_ANALYSIS_EXPLANATION.md` | AlphaGenome methodology |
 
