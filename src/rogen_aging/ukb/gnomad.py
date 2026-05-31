@@ -13,6 +13,10 @@ Example:
         --input analysis/la_snp_1kg_frequencies.csv \\
         --output analysis/la_snp_af_1kg_vs_gnomad.csv \\
         --scatter analysis/af_1kg_vs_gnomad_scatter.png
+
+    uv run rogen-compare-af-gnomad summarize \\
+        --input analysis/la_snp_af_1kg_vs_gnomad.csv \\
+        --output analysis/af_comparison_summary.md
 """
 
 from __future__ import annotations
@@ -35,6 +39,7 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_INPUT = REPO_ROOT / "analysis" / "la_snp_1kg_frequencies.csv"
 DEFAULT_OUTPUT = REPO_ROOT / "analysis" / "la_snp_af_1kg_vs_gnomad.csv"
 DEFAULT_SCATTER = REPO_ROOT / "analysis" / "af_1kg_vs_gnomad_scatter.png"
+DEFAULT_SUMMARY = REPO_ROOT / "analysis" / "af_comparison_summary.md"
 DEFAULT_CACHE = REPO_ROOT / "data" / "geo" / "gnomad_r4_nfe_cache.json"
 
 GNOMAD_API_URL = "https://gnomad.broadinstitute.org/api"
@@ -63,9 +68,18 @@ VARIANT_FIELDS = """
 """
 
 
-def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+def _add_log_level_argument(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--log-level",
+        default="INFO",
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        help="Logging verbosity",
+    )
+
+
+def parse_compare_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description=__doc__,
+        description="Fetch gnomAD v4 NFE AFs and compare to 1KG frequencies.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument("--input", type=Path, default=DEFAULT_INPUT, help="1KG frequency CSV")
@@ -86,12 +100,34 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument("--timeout", type=float, default=DEFAULT_TIMEOUT_SEC, help="HTTP timeout in seconds")
     parser.add_argument("--max-retries", type=int, default=DEFAULT_MAX_RETRIES, help="Retries per HTTP request")
-    parser.add_argument(
-        "--log-level",
-        default="INFO",
-        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-        help="Logging verbosity",
+    _add_log_level_argument(parser)
+    return parser.parse_args(argv)
+
+
+def parse_summarize_args(argv: list[str] | None = None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Summarize a 1KG vs gnomAD comparison CSV for reporting.",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
+    parser.add_argument(
+        "--input",
+        type=Path,
+        default=DEFAULT_OUTPUT,
+        help="Comparison CSV from the compare step",
+    )
+    parser.add_argument(
+        "--output",
+        type=Path,
+        default=DEFAULT_SUMMARY,
+        help="Markdown summary path",
+    )
+    parser.add_argument(
+        "--diff-threshold",
+        type=float,
+        default=DIFF_THRESHOLD,
+        help="Concordance cutoff; discordant when |ΔAF| is at or above this value",
+    )
+    _add_log_level_argument(parser)
     return parser.parse_args(argv)
 
 
@@ -472,6 +508,126 @@ def plot_scatter(comparison: pd.DataFrame, output_path: Path) -> None:
     LOG.info("Wrote scatter plot to %s", output_path.resolve())
 
 
+@dataclass(frozen=True)
+class AfComparisonSummary:
+    total_snps: int
+    resolved_both: int
+    missing_1kg: int
+    missing_gnomad: int
+    concordant: int
+    discordant: int
+    mean_abs_diff_concordant: float | None
+    median_abs_diff_concordant: float | None
+    top_discordant: pd.DataFrame
+    diff_threshold: float
+
+
+def read_comparison_table(path: Path) -> pd.DataFrame:
+    df = pd.read_csv(path)
+    required = {"rsID", "AF_1kg", "AF_gnomad_nfe"}
+    missing = required - set(df.columns)
+    if missing:
+        raise ValueError(f"Comparison CSV is missing required columns: {sorted(missing)}")
+    if "abs_diff" not in df.columns:
+        paired = df["AF_1kg"].notna() & df["AF_gnomad_nfe"].notna()
+        df = df.copy()
+        df["abs_diff"] = None
+        df.loc[paired, "abs_diff"] = (df.loc[paired, "AF_1kg"] - df.loc[paired, "AF_gnomad_nfe"]).abs()
+    return df
+
+
+def summarize_comparison(
+    comparison: pd.DataFrame,
+    *,
+    diff_threshold: float = DIFF_THRESHOLD,
+) -> AfComparisonSummary:
+    total_snps = len(comparison)
+    has_1kg = comparison["AF_1kg"].notna()
+    has_gnomad = comparison["AF_gnomad_nfe"].notna()
+    resolved_both = int((has_1kg & has_gnomad).sum())
+    missing_1kg = int((~has_1kg).sum())
+    missing_gnomad = int((~has_gnomad).sum())
+
+    paired = comparison.loc[has_1kg & has_gnomad].copy()
+    paired["abs_diff"] = (paired["AF_1kg"] - paired["AF_gnomad_nfe"]).abs()
+    concordant_mask = paired["abs_diff"] < diff_threshold
+    concordant = int(concordant_mask.sum())
+    discordant = int((~concordant_mask).sum())
+
+    concordant_diffs = paired.loc[concordant_mask, "abs_diff"]
+    mean_abs_diff = float(concordant_diffs.mean()) if not concordant_diffs.empty else None
+    median_abs_diff = float(concordant_diffs.median()) if not concordant_diffs.empty else None
+
+    top_discordant = (
+        paired.sort_values("abs_diff", ascending=False)
+        .head(5)[["rsID", "AF_1kg", "AF_gnomad_nfe", "abs_diff"]]
+        .reset_index(drop=True)
+    )
+
+    return AfComparisonSummary(
+        total_snps=total_snps,
+        resolved_both=resolved_both,
+        missing_1kg=missing_1kg,
+        missing_gnomad=missing_gnomad,
+        concordant=concordant,
+        discordant=discordant,
+        mean_abs_diff_concordant=mean_abs_diff,
+        median_abs_diff_concordant=median_abs_diff,
+        top_discordant=top_discordant,
+        diff_threshold=diff_threshold,
+    )
+
+
+def _format_af(value: float | None) -> str:
+    if value is None or pd.isna(value):
+        return "NA"
+    return f"{float(value):.4f}"
+
+
+def format_summary_markdown(summary: AfComparisonSummary) -> str:
+    threshold = summary.diff_threshold
+    mean_part = (
+        "N/A"
+        if summary.mean_abs_diff_concordant is None
+        else f"{summary.mean_abs_diff_concordant:.4f}"
+    )
+    median_part = (
+        "N/A"
+        if summary.median_abs_diff_concordant is None
+        else f"{summary.median_abs_diff_concordant:.4f}"
+    )
+
+    paragraph = (
+        f"Of {summary.total_snps} LA-SNPs in the comparison table, "
+        f"{summary.resolved_both} had allele frequencies in both 1000 Genomes and gnomAD v4 NFE; "
+        f"{summary.missing_1kg} were missing from 1KG and {summary.missing_gnomad} from gnomAD. "
+        f"Among the {summary.resolved_both} with paired frequencies, "
+        f"{summary.concordant} were concordant (|ΔAF| < {threshold:g}) and "
+        f"{summary.discordant} were discordant (|ΔAF| ≥ {threshold:g}). "
+        f"Mean and median |ΔAF| among concordant loci were {mean_part} and {median_part}, respectively."
+    )
+
+    table_lines = [
+        "",
+        "| rsID | AF_1kg | AF_gnomad_nfe | abs_diff |",
+        "| --- | ---: | ---: | ---: |",
+    ]
+    if summary.top_discordant.empty:
+        table_lines.append("| — | — | — | — |")
+    else:
+        for _, row in summary.top_discordant.iterrows():
+            table_lines.append(
+                "| {rsid} | {af_1kg} | {af_gnomad} | {abs_diff} |".format(
+                    rsid=row["rsID"],
+                    af_1kg=_format_af(row["AF_1kg"]),
+                    af_gnomad=_format_af(row["AF_gnomad_nfe"]),
+                    abs_diff=_format_af(row["abs_diff"]),
+                )
+            )
+
+    return paragraph + "\n".join(table_lines) + "\n"
+
+
 def log_missing_gnomad(comparison: pd.DataFrame) -> None:
     missing = comparison.loc[comparison["AF_gnomad_nfe"].isna(), "rsID"].tolist()
     if not missing:
@@ -484,8 +640,8 @@ def log_missing_gnomad(comparison: pd.DataFrame) -> None:
     )
 
 
-def main(argv: list[str] | None = None) -> int:
-    args = parse_args(argv)
+def compare_main(argv: list[str] | None = None) -> int:
+    args = parse_compare_args(argv)
     logging.basicConfig(
         level=getattr(logging, str(args.log_level)),
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
@@ -526,6 +682,43 @@ def main(argv: list[str] | None = None) -> int:
 
     plot_scatter(comparison, args.scatter)
     return 0
+
+
+def summarize_main(argv: list[str] | None = None) -> int:
+    args = parse_summarize_args(argv)
+    logging.basicConfig(
+        level=getattr(logging, str(args.log_level)),
+        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+        datefmt="%Y-%m-%dT%H:%M:%S",
+    )
+
+    input_path: Path = args.input
+    if not input_path.is_file():
+        LOG.error("Comparison CSV does not exist: %s", input_path.resolve())
+        return 1
+
+    comparison = read_comparison_table(input_path)
+    summary = summarize_comparison(comparison, diff_threshold=float(args.diff_threshold))
+    markdown = format_summary_markdown(summary)
+
+    print(markdown, end="")
+
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    args.output.write_text(markdown, encoding="utf-8")
+    LOG.info("Wrote summary to %s", args.output.resolve())
+    return 0
+
+
+def main(argv: list[str] | None = None) -> int:
+    if argv is None:
+        argv = sys.argv[1:]
+    if not argv or argv[0].startswith("-"):
+        return compare_main(argv)
+    if argv[0] == "summarize":
+        return summarize_main(argv[1:])
+    if argv[0] == "compare":
+        return compare_main(argv[1:])
+    return compare_main(argv)
 
 
 if __name__ == "__main__":
