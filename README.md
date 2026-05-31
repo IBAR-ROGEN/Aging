@@ -244,6 +244,21 @@ uv run scripts/mock_ukb_generator.py
 
 See **[docs/SYNTHETIC_UKB_GENERATOR.md](docs/SYNTHETIC_UKB_GENERATOR.md)** for columns, CLI options, and pytest coverage in **`tests/test_mock_clinical_csv.py`**.
 
+## Synthetic UKB-RAP folder (phenotypes + LA-SNP VCF)
+
+Generate a **UK Biobank RAP-style directory** with a phenotype CSV (`eid` + v2 dictionary fields) and a matching LA-SNP VCF (~70 manifest SNPs) joinable on `eid`. Activity 2.1.8.1 — strictly synthetic, safe for GitHub (code only).
+
+```bash
+# Requires analysis/ukb_snp_manifest_v0.1.csv from ukb_la_snp_lookup.py
+uv run scripts/ukb_mock_gen.py \
+  --n-samples 1000 \
+  --snp-manifest analysis/ukb_snp_manifest_v0.1.csv \
+  --output-dir test_data/mock_ukb_rap/ \
+  --seed 42
+```
+
+See **[docs/SYNTHETIC_UKB_RAP_GENERATOR.md](docs/SYNTHETIC_UKB_RAP_GENERATOR.md)** for layout, phenotype columns, and **`tests/test_ukb_mock_gen.py`**.
+
 ## Synthetic Romanian cohort VCF
 
 Generate a **streaming VCF v4.2** with Hardy–Weinberg diploid genotypes, **EUR-like** allele frequencies, **`GT:AD:DP:GQ`** per sample, and GRCh38 **chr1–chr22** contigs (bcftools-friendly sort order). Output path is your choice; large VCFs should live under **`data/`** (git-ignored).
@@ -337,7 +352,8 @@ See comments in the script for IDE integration; `.r-env/` is git-ignored.
 |----------|-------------|
 | [docs/PROJECT_STRUCTURE.md](docs/PROJECT_STRUCTURE.md) | Bioinformatics project directory layout |
 | [docs/UKB_PRE_COMMIT_HOOK.md](docs/UKB_PRE_COMMIT_HOOK.md) | Git pre-commit security hook |
-| [docs/SYNTHETIC_UKB_GENERATOR.md](docs/SYNTHETIC_UKB_GENERATOR.md) | Mock UK Biobank data generator |
+| [docs/SYNTHETIC_UKB_GENERATOR.md](docs/SYNTHETIC_UKB_GENERATOR.md) | Mock UK Biobank tabular data generator |
+| [docs/SYNTHETIC_UKB_RAP_GENERATOR.md](docs/SYNTHETIC_UKB_RAP_GENERATOR.md) | Mock UKB-RAP folder (phenotypes + LA-SNP VCF) |
 | [docs/SYNTHETIC_ROMANIAN_VCF_GENERATOR.md](docs/SYNTHETIC_ROMANIAN_VCF_GENERATOR.md) | Synthetic Romanian cohort VCF (VCF 4.2) |
 | [docs/EDA_MOCK_INTEGRATION.md](docs/EDA_MOCK_INTEGRATION.md) | EDA mock epigenetic aging script |
 | [docs/ROMANIAN_EPIGENETIC_CLOCK.md](docs/ROMANIAN_EPIGENETIC_CLOCK.md) | Romanian cohort Elastic Net clock (`train_romanian_epigenetic_clock.py`) and held-out validation (`validate_clock.py`) |

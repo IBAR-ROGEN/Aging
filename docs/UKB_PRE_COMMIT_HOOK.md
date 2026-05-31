@@ -46,6 +46,8 @@ The following are excluded from content scanning:
 | `*security_check*` | The security script itself |
 | `*install_pre_commit*` | Hook installer |
 | `scripts/mock_ukb_generator.py` | Synthetic data generator (no real UKB data) |
+| `scripts/ukb_mock_gen.py` | Synthetic UKB-RAP folder generator (no real UKB data) |
+| `tests/test_ukb_mock_gen.py` | Pytest for synthetic UKB-RAP generator (no participant data) |
 | `test_data/mock_clinical_data.csv` | Synthetic mock output (MOCK_ IDs) |
 | `scripts/ukb_la_snp_lookup.py` | Offline Ensembl → CSV manifest builder only (no participant rows; reviewed path) |
 | `notebooks/05_ukb_exploration/*` | Offline manifest sanity-check notebooks only (no participant rows; cite extraction metadata labels) |
@@ -93,7 +95,7 @@ Your commit was BLOCKED to prevent accidental exposure of restricted data.
    Do not commit `.vcf` or `.bed` files. Place them in the git-ignored `data/` directory and reference them by path in code or config.
 
 3. **Legitimate mock/test data**  
-   Use `scripts/mock_ukb_generator.py` to produce synthetic data with `MOCK_` Sample_IDs. The generator and `test_data/mock_clinical_data.csv` are whitelisted.
+   Use `scripts/mock_ukb_generator.py` or `scripts/ukb_mock_gen.py` to produce synthetic data with `MOCK_` / `SYN_EID_` identifiers. The generators and `test_data/mock_clinical_data.csv` are whitelisted.
 
 ## Related Documentation
 

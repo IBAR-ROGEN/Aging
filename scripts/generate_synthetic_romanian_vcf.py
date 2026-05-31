@@ -243,6 +243,9 @@ def write_vcf_headers(
     out: TextIO,
     sample_ids: Sequence[str],
     cohort_label: str,
+    *,
+    source: str = "generate_synthetic_romanian_vcf.py",
+    extra_meta_lines: Sequence[str] = (),
 ) -> None:
     """Write VCF v4.2 meta and column header lines.
 
@@ -250,9 +253,13 @@ def write_vcf_headers(
         out: Output text stream.
         sample_ids: Sample column names in order.
         cohort_label: Short label for ``##cohort`` meta line.
+        source: Value for the ``##source`` meta line.
+        extra_meta_lines: Additional ``##`` meta lines inserted after ``##source``.
     """
     out.write("##fileformat=VCFv4.2\n")
-    out.write(f"##source=generate_synthetic_romanian_vcf.py\n")
+    out.write(f"##source={source}\n")
+    for line in extra_meta_lines:
+        out.write(f"{line}\n")
     out.write(f"##synthetic_cohort={cohort_label}\n")
     out.write('##FILTER=<ID=PASS,Description="All filters passed">\n')
     out.write(

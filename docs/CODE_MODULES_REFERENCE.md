@@ -29,6 +29,7 @@ Aging/
 ├── tests/                         # Pytest (package smoke + synthetic UKB/VCF generators)
 ├── scripts/                       # Entry-point scripts
 │   ├── mock_ukb_generator.py      # Synthetic UK Biobank data
+│   ├── ukb_mock_gen.py            # Synthetic UKB-RAP folder (phenotypes + LA-SNP VCF)
 │   ├── generate_synthetic_romanian_vcf.py  # Synthetic EUR-style cohort VCF v4.2
 │   ├── ukb_la_snp_lookup.py       # Offline UKB SNP manifest (Ensembl GRCh38)
 │   ├── render_*_network*.py       # Manuscript networks (matplotlib / networkx)
@@ -310,6 +311,22 @@ Scripts are entry points that call into `src/rogen_aging` or external tools. Run
 
 ---
 
+### 3.9a ukb_mock_gen.py
+
+**Purpose:** Generate a synthetic **UK Biobank RAP-style folder** with joinable phenotype CSV and LA-SNP VCF (Activity 2.1.8.1).
+
+**Responsibilities:**
+- Writes `phenotypes/ukb_phenotypes.csv` (`eid` + v2 phenotype dictionary: age, sex, parental longevity, AD/PD diagnosis codes, frailty components).
+- Writes `genotypes/ukb_la_snps.vcf` restricted to SNPs in the offline manifest; VCF sample columns match `eid` values (`SYN_EID_*`).
+- Reuses genotype simulation from `generate_synthetic_romanian_vcf.py` (Hardy–Weinberg, EUR-like AFs, `GT:AD:DP:GQ`).
+
+**Dependencies:** polars, numpy, typer; imports from `generate_synthetic_romanian_vcf`.  
+**CLI:** `--n-samples`, `--snp-manifest`, `--output-dir`, `--seed`, `--mean-depth`.  
+**Tests:** `tests/test_ukb_mock_gen.py`.  
+**Related doc:** [docs/SYNTHETIC_UKB_RAP_GENERATOR.md](SYNTHETIC_UKB_RAP_GENERATOR.md).
+
+---
+
 ### 3.10 train_romanian_epigenetic_clock.py
 
 **Purpose:** Train a custom epigenetic aging clock with Elastic Net (`ElasticNetCV`) on a methylation feature matrix and chronological age metadata; Romanian-style mock cohort IDs when generating synthetic data.
@@ -421,7 +438,7 @@ Scripts are entry points that call into `src/rogen_aging` or external tools. Run
 
 **Purpose:** UK Biobank pre-commit security hook — blocks commits containing `patient_id`, `UKB_`, or `.vcf`/`.bed` files.
 
-**Responsibilities (exemptions):** Content scanning skips `docs/*`, root `README.md`, `notebooks/README.md`, `notebooks/05_ukb_exploration/*`, the hook scripts themselves, `scripts/mock_ukb_generator.py`, `test_data/mock_clinical_data.csv`, **`scripts/ukb_la_snp_lookup.py`** (offline manifest only; must never hold participant IDs), and **`repo_structure.txt`** (generated tree listing). Reinstall the hook after editing `security_check.sh`.
+**Responsibilities (exemptions):** Content scanning skips `docs/*`, root `README.md`, `notebooks/README.md`, `notebooks/05_ukb_exploration/*`, the hook scripts themselves, `scripts/mock_ukb_generator.py`, `scripts/ukb_mock_gen.py`, `test_data/mock_clinical_data.csv`, **`scripts/ukb_la_snp_lookup.py`** (offline manifest only; must never hold participant IDs), and **`repo_structure.txt`** (generated tree listing). Reinstall the hook after editing `security_check.sh`.
 
 **Usage:** Run `./scripts/install_pre_commit_hook.sh` to install.  
 **Related doc:** [docs/UKB_PRE_COMMIT_HOOK.md](UKB_PRE_COMMIT_HOOK.md).
@@ -514,7 +531,8 @@ Exploratory QA for the offline UK Biobank longevity-associated SNP manifest (`sc
 | **CODE_MODULES_REFERENCE.md** | This document — reference for all code files and modules. |
 | **PROJECT_STRUCTURE.md** | Bioinformatics project directory layout. |
 | **UKB_PRE_COMMIT_HOOK.md** | Git pre-commit security hook for UK Biobank compliance. |
-| **SYNTHETIC_UKB_GENERATOR.md** | Synthetic UK Biobank data generator (`mock_ukb_generator.py`). |
+| **SYNTHETIC_UKB_GENERATOR.md** | Synthetic UK Biobank tabular data generator (`mock_ukb_generator.py`). |
+| **SYNTHETIC_UKB_RAP_GENERATOR.md** | Synthetic UKB-RAP folder generator (`ukb_mock_gen.py`). |
 | **ROMANIAN_EPIGENETIC_CLOCK.md** | Romanian cohort Elastic Net clock (`train_romanian_epigenetic_clock.py`) and held-out validation (`validate_clock.py`). |
 | **GSE40279_CLOCK_TRAINING.md** | Wide-table training for public GSE40279-style data (`train_clock_on_gse40279.py`) and GSE87571 external validation (`rogen_aging.clock.external_data`). |
 | **UKB_COMPLIANCE_AUDITOR.md** | UK Biobank compliance auditor (used with `03_validation_and_compliance/UKB_Compliance_Auditor.ipynb`). |
@@ -555,7 +573,9 @@ Exploratory QA for the offline UK Biobank longevity-associated SNP manifest (`sc
 | `scripts/generate_methylation_visualizations.py` | Pipeline workflow + example DMR + summary diagrams. |
 | `scripts/generate_pipeline_diagram.py` | Bioinformatics pipeline (diagrams/Graphviz). |
 | `scripts/install_graphviz.sh` | Install Graphviz on macOS. |
-| `scripts/mock_ukb_generator.py` | Synthetic UK Biobank-style mock data. |
+| `scripts/mock_ukb_generator.py` | Synthetic UK Biobank-style mock tabular data. |
+| `scripts/ukb_mock_gen.py` | Synthetic UKB-RAP folder (phenotypes + LA-SNP VCF). |
+| `scripts/generate_synthetic_romanian_vcf.py` | Streaming synthetic EUR-style cohort VCF v4.2. |
 | `scripts/train_romanian_epigenetic_clock.py` | Elastic Net epigenetic clock (mock Romanian cohort / custom CSVs). |
 | `scripts/train_clock_on_gse40279.py` | GSE40279-style wide β + age table → imputer + ElasticNetCV pipeline (see GSE40279_CLOCK_TRAINING.md). |
 | `scripts/validate_clock.py` | Held-out validation for a saved clock model (MAE, r, decade MAE, figures). |

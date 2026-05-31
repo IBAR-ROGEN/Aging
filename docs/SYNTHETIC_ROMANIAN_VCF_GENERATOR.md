@@ -121,6 +121,7 @@ uv run pytest tests/test_synthetic_vcf.py
 - [UK Biobank Pre-Commit Hook](UKB_PRE_COMMIT_HOOK.md) — Restricted extensions and staging rules
 - [Project Structure](PROJECT_STRUCTURE.md) — `data/` vs `test_data/`
 - [Synthetic UK Biobank Data Generator](SYNTHETIC_UKB_GENERATOR.md) — Mock tabular cohort data
+- [Synthetic UKB-RAP Folder Generator](SYNTHETIC_UKB_RAP_GENERATOR.md) — Mock phenotype + LA-SNP VCF layout
 
 ---
 

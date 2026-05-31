@@ -54,6 +54,7 @@ Pytest tests. Run with `uv run pytest` (install dev extras first: `uv sync --ext
 | `test_package_imports.py` | Smoke import of `rogen_aging` |
 | `test_mock_clinical_csv.py` | Synthetic UKB-style tabular generator |
 | `test_synthetic_vcf.py` | Synthetic Romanian cohort VCF generator |
+| `test_ukb_mock_gen.py` | Synthetic UKB-RAP folder (phenotypes + LA-SNP VCF) |
 
 ### `scripts/`
 
@@ -62,6 +63,8 @@ Executable scripts and shell utilities. Run with `uv run scripts/<script>.py` or
 | Script | Purpose |
 |--------|---------|
 | `mock_ukb_generator.py` | Synthetic UK Biobank-style tabular data |
+| `ukb_mock_gen.py` | Synthetic UKB-RAP folder (phenotype CSV + LA-SNP VCF, joinable on `eid`) |
+| `generate_synthetic_romanian_vcf.py` | Streaming synthetic EUR-style cohort VCF v4.2 |
 | `ukb_la_snp_lookup.py` | Offline UKB genotype manifest: Excel overlap → Ensembl GRCh38 → CSV (no dx-toolkit) |
 | `render_longevity_network_diagram.py` | Matplotlib twin of `frontend` longevity network TSX |
 | `render_figure1c_mechanisms_network.py` | Figure 1C mechanisms network (networkx + matplotlib; PNG/PDF) |
@@ -99,7 +102,8 @@ Project documentation (Markdown).
 | `CODE_MODULES_REFERENCE.md` | Code-level reference |
 | `UKB_PRE_COMMIT_HOOK.md` | Pre-commit security hook |
 | `UKB_COMPLIANCE_AUDITOR.md` | UKB compliance tool |
-| `SYNTHETIC_UKB_GENERATOR.md` | Mock data generator |
+| `SYNTHETIC_UKB_GENERATOR.md` | Mock tabular data generator |
+| `SYNTHETIC_UKB_RAP_GENERATOR.md` | Mock UKB-RAP folder generator (`ukb_mock_gen.py`) |
 | `METHYLATION_PIPELINE_*.md` | Methylation pipeline usage |
 | `GSE40279_CLOCK_TRAINING.md` | GSE40279 / Hannum-style wide-table Elastic Net training (`train_clock_on_gse40279.py`) |
 | `ALPHAGENOME_ANALYSIS_EXPLANATION.md` | AlphaGenome methodology |
@@ -155,7 +159,7 @@ Pipeline outputs and exported results. Kept local only.
 1. **Sensitive data** → `data/` (git-ignored)
 2. **Synthetic/mock data** → `test_data/` (versioned; safe for GitHub)
 3. **Generated outputs** → `analysis/`, `results/`, `outputs/` (typically git-ignored)
-4. **No real UK Biobank data** — Use `mock_ukb_generator.py` for pipeline development.
+4. **No real UK Biobank data** — Use `mock_ukb_generator.py` or `ukb_mock_gen.py` for pipeline development.
 
 ## Configuration
 

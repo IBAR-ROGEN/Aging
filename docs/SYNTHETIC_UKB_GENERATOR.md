@@ -95,6 +95,7 @@ uv run pytest tests/test_mock_clinical_csv.py
 
 ## Related Documentation
 
+- [Synthetic UKB-RAP Folder Generator](SYNTHETIC_UKB_RAP_GENERATOR.md) — phenotype CSV + LA-SNP VCF layout (`ukb_mock_gen.py`)
 - [UK Biobank Pre-Commit Hook](UKB_PRE_COMMIT_HOOK.md) — Security checks and whitelisting
 - [Project Structure](PROJECT_STRUCTURE.md) — Where `test_data/` and `data/` fit in the layout
 

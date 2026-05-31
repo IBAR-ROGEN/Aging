@@ -47,7 +47,7 @@ while IFS= read -r file; do
 
   # Skip content scan for docs (describe UKB patterns), security tool, and synthetic mock data
   case "$file" in
-    docs/*|README.md|*security_check*|*install_pre_commit*|scripts/mock_ukb_generator.py|test_data/mock_clinical_data.csv) continue ;;
+    docs/*|README.md|*security_check*|*install_pre_commit*|scripts/mock_ukb_generator.py|scripts/ukb_mock_gen.py|tests/test_ukb_mock_gen.py|test_data/mock_clinical_data.csv) continue ;;
     notebooks/README.md) continue ;;
     # Offline manifest builder (no participant data); path and manifest column use ukb/UKB tokens by design.
     scripts/ukb_la_snp_lookup.py) continue ;;
