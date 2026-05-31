@@ -69,6 +69,7 @@ Executable scripts and shell utilities. Run with `uv run scripts/<script>.py` or
 | `render_longevity_network_diagram.py` | Matplotlib twin of `frontend` longevity network TSX |
 | `render_figure1c_mechanisms_network.py` | Figure 1C mechanisms network (networkx + matplotlib; PNG/PDF) |
 | `generate_la_snp_per_gene_plot.py` | Supplementary horizontal bar chart: unique LA-SNPs per gene from Excel (`Gene` / `SNP_rsID`; optional column flags) |
+| `generate_network_fig.py` | Activity 2.1.7.1 hub-and-spoke LA-SNP network by functional pathway (networkx + matplotlib; PNG/PDF) |
 | `render_dashboard_figure_mockup.py` | Matplotlib twin of `components/DashboardFigureMockup.tsx` |
 | `bootstrap_r_env.sh` | Optional micromamba R base under `.r-env/` |
 | `security_check.sh` | UK Biobank pre-commit security scan |
@@ -127,6 +128,7 @@ Generated figures, reports, and downstream outputs. Some publication-ready PNG/P
 |-----------------------------|---------|
 | `Figure1C_Mechanisms.*` | LA-SNP mechanisms panel from `render_figure1c_mechanisms_network.py` |
 | `Fig_LA_SNPs_per_gene.png` | LA-SNPs per gene (overlap Excel) from `generate_la_snp_per_gene_plot.py` |
+| `Fig_LA_SNP_network.png` / `.pdf` | LA-SNP pathway network (overlap Excel) from `generate_network_fig.py` |
 | `dashboard_figure_mockup.png` | Dashboard mockup from `render_dashboard_figure_mockup.py` |
 | `methylation/` | Methylation pipeline outputs |
 | `aging_related_datasets/` | Aging dataset search results |

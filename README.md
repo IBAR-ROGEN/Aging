@@ -89,11 +89,14 @@ uv run python scripts/render_dashboard_figure_mockup.py
 
 # Supplementary figure — LA-SNPs per gene (defaults: Gene / SNP_rsID columns)
 uv run python scripts/generate_la_snp_per_gene_plot.py
+
+# Activity 2.1.7.1 — LA-SNP hub-and-spoke network by functional pathway (PNG + PDF)
+uv run python scripts/generate_network_fig.py
 ```
 
-Writes `analysis/Fig_LA_SNPs_per_gene.png`. If your Excel uses different headers (for example `Gene Symbol` / `SNP Identifier`), pass `--gene-column` and `--snp-column`.
+Writes `analysis/Fig_LA_SNPs_per_gene.png` and `analysis/Fig_LA_SNP_network.png` (+ companion PDF). If your Excel uses different headers (for example `Gene Symbol` / `SNP Identifier`), pass `--gene-column` and `--snp-column`. For the network figure, optional `--pathway-map` CSV (`Gene`, `Pathway`) overrides the hardcoded pathway groups in the script.
 
-See **[docs/CODE_MODULES_REFERENCE.md](docs/CODE_MODULES_REFERENCE.md)** (section 8 and manuscript figure script sections, including 3.12–3.18) for parameters and dependencies.
+See **[docs/CODE_MODULES_REFERENCE.md](docs/CODE_MODULES_REFERENCE.md)** (section 8 and manuscript figure script sections, including 3.12–3.19) for parameters and dependencies.
 
 ## UK Biobank SNP manifest (offline, Ensembl)
 
@@ -113,7 +116,7 @@ After building the CSV, run the exploratory notebook **`notebooks/05_ukb_explora
 
 - `src/rogen_aging/` — Installable Python package (`import rogen_aging`, `from rogen_aging import …`); epigenetic clock helpers under **`rogen_aging.clock`** (e.g. **`external_data`** for GSE87571)
 - `tests/` — Pytest tests (`uv run pytest` after `uv sync --extra dev`), including `test_mock_clinical_csv.py` and `test_synthetic_vcf.py` for the synthetic generators (`pyproject.toml` adds `scripts/` to pytest’s `pythonpath`)
-- `scripts/` — CLI scripts (AlphaGenome, mock tabular/VCF generators, figure renders, LA-SNP per-gene supplementary plot, UKB manifest builder, epigenetic clock train/validate, security hook)
+- `scripts/` — CLI scripts (AlphaGenome, mock tabular/VCF generators, figure renders, LA-SNP per-gene and pathway network figures, UKB manifest builder, epigenetic clock train/validate, security hook)
 - `notebooks/` — Genomic analysis notebooks (including `05_ukb_exploration/` for UKB manifest QA)
 - `docs/` — Project documentation
 - `components/` — React/TypeScript manuscript figure mockups (e.g. dashboard) and a small Vite capture app under `components/dashboard-figure-render/`

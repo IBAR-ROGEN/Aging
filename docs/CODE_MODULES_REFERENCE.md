@@ -42,6 +42,7 @@ Aging/
 │   ├── visualize_alphagenome_results.py
 │   ├── generate_*.py
 │   ├── generate_la_snp_per_gene_plot.py  # LA-SNPs per gene (supplementary bar chart)
+│   ├── generate_network_fig.py           # LA-SNP hub-and-spoke network by pathway (Activity 2.1.7.1)
 │   ├── train_romanian_epigenetic_clock.py  # Elastic Net mock clock
 │   ├── train_clock_on_gse40279.py # GSE40279-style wide table + ElasticNetCV
 │   ├── validate_clock.py          # Held-out validation for saved clock models
@@ -457,6 +458,18 @@ Scripts are entry points that call into `src/rogen_aging` or external tools. Run
 
 ---
 
+### 3.19 generate_network_fig.py
+
+**Purpose:** Activity 2.1.7.1 — hub-and-spoke network of longevity-associated genes clustered by functional pathway.
+
+**Responsibilities:** Read `.xlsx` overlap table (`Gene`, `SNP_rsID`); count unique SNPs per gene; assign pathways from `--pathway-map` CSV (`Gene`, `Pathway`) or fall back to four hardcoded groups (proteostasis, lipid metabolism, mitochondrial integrity, immune regulation); lay out pathway hubs on a circle with gene spokes scaled by SNP count; color nodes by pathway; write `analysis/Fig_LA_SNP_network.png` (300 DPI) and companion PDF.
+
+**CLI:** `argparse` defaults: `--input` repo-root `overlapping_genes_with_snps.xlsx`, `--output` `analysis/Fig_LA_SNP_network.png`, `--pathway-map` optional CSV, `--gene-column` `Gene`, `--snp-column` `SNP_rsID`. Genes missing from the pathway map are placed in an **Unassigned** hub with a warning log.
+
+**Dependencies:** pandas, openpyxl, networkx, matplotlib.
+
+---
+
 ## 4. Jupyter notebooks (notebooks/)
 
 Notebooks are grouped by functional area in numbered subfolders. Run with `uv run jupyter lab` from the project root. Large data should live in the root `data/` directory (git-ignored).
@@ -581,6 +594,7 @@ Exploratory QA for the offline UK Biobank longevity-associated SNP manifest (`sc
 | `scripts/validate_clock.py` | Held-out validation for a saved clock model (MAE, r, decade MAE, figures). |
 | `scripts/ukb_la_snp_lookup.py` | Offline UKB SNP manifest via Ensembl GRCh38 (CSV). |
 | `scripts/generate_la_snp_per_gene_plot.py` | Supplementary LA-SNPs-per-gene bar chart (Excel → PNG). |
+| `scripts/generate_network_fig.py` | Activity 2.1.7.1 LA-SNP pathway hub-and-spoke network (Excel → PNG/PDF). |
 | `scripts/render_longevity_network_diagram.py` | Matplotlib longevity network (twin of `frontend/` TSX). |
 | `scripts/render_figure1c_mechanisms_network.py` | Figure 1C mechanisms network (PNG/PDF). |
 | `scripts/render_dashboard_figure_mockup.py` | Matplotlib dashboard mockup (twin of `components/` TSX). |
