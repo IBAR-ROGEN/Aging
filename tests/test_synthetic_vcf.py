@@ -1,4 +1,4 @@
-"""Tests for ``scripts/generate_synthetic_romanian_vcf.py`` synthetic VCF output."""
+"""Tests for synthetic Romanian cohort VCF generation."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from generate_synthetic_romanian_vcf import main as write_synthetic_vcf
+from rogen_aging.vcf.synthetic import main as write_synthetic_vcf
 
 
 @pytest.fixture

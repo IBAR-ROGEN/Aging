@@ -17,7 +17,7 @@ from rogen_aging.integration.ukb_joiner import (
     run_association_scan,
     run_integration_pipeline,
 )
-from ukb_mock_gen import generate_ukb_rap_mock
+from rogen_aging.ukb.mock_rap import generate_ukb_rap_mock
 
 LA_SNP_COUNT = 70
 

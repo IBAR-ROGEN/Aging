@@ -2,9 +2,9 @@
 
 **Project:** IBAR-ROGEN Aging  
 **Activity:** 2.1.11.1  
-**Script:** `scripts/run_integration.py`  
+**Script:** `scripts/ukb/run_integration.py`  
 **Library:** `src/rogen_aging/integration/ukb_joiner.py`  
-**Input:** Mock UKB-RAP output from `scripts/ukb_mock_gen.py`
+**Input:** Mock UKB-RAP output from `scripts/ukb/mock_rap_folder.py` (`rogen-ukb-mock-rap`)
 
 ## Overview
 
@@ -20,11 +20,11 @@ This validates the integrative architecture end to end on **mock data only**. Ou
 Generate mock RAP artefacts first:
 
 ```bash
-uv run python scripts/ukb_la_snp_lookup.py build \
+uv run rogen-ukb-manifest build \
   --input overlapping_genes_with_snps.xlsx \
   --output analysis/ukb_snp_manifest_v0.1.csv
 
-uv run scripts/ukb_mock_gen.py \
+uv run rogen-ukb-mock-rap \
   --n-samples 1000 \
   --snp-manifest analysis/ukb_snp_manifest_v0.1.csv \
   --output-dir test_data/mock_ukb_rap/ \
@@ -36,7 +36,7 @@ See [Synthetic UKB-RAP Generator](SYNTHETIC_UKB_RAP_GENERATOR.md) and [LA-SNP Pu
 ## Usage
 
 ```bash
-uv run python scripts/run_integration.py \
+uv run python scripts/ukb/run_integration.py \
   --pheno test_data/mock_ukb_rap/phenotypes/ukb_phenotypes.csv \
   --vcf test_data/mock_ukb_rap/genotypes/ukb_la_snps.vcf \
   --output-dir analysis/
@@ -80,18 +80,18 @@ joined, parental, ad = run_integration_pipeline(
 uv run pytest tests/test_ukb_integration.py -q
 ```
 
-Uses a 70-SNP mock manifest fixture and `ukb_mock_gen.generate_ukb_rap_mock`.
+Uses a 70-SNP mock manifest fixture and `rogen_aging.ukb.mock_rap.generate_ukb_rap_mock`.
 
 ## Security and compliance
 
 - **Synthetic data only** — no real UKB participant IDs or genotypes.
 - Input VCF paths are read locally; do not commit `.vcf` files (git-ignored).
-- `scripts/run_integration.py` and `src/rogen_aging/integration/` are whitelisted in the pre-commit hook because they reference mock `ukb_*` paths by design.
+- `scripts/ukb/run_integration.py`, `src/rogen_aging/integration/`, and `src/rogen_aging/ukb/` are whitelisted in the pre-commit hook because they reference mock `ukb_*` paths by design.
 
 ## Related documentation
 
 - [Synthetic UKB-RAP Generator](SYNTHETIC_UKB_RAP_GENERATOR.md)
-- [Code Modules Reference](CODE_MODULES_REFERENCE.md) — §2.4 `rogen_aging.integration`, §3.21 `run_integration.py`
+- [WORKFLOWS.md](WORKFLOWS.md)
 - [UKB Pre-Commit Hook](UKB_PRE_COMMIT_HOOK.md)
 
 ---

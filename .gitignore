@@ -27,7 +27,7 @@ share/python-wheels/
 venv/
 ENV/
 
-# Local R (micromamba + conda-forge r-base); reinstall with scripts/bootstrap_r_env.sh
+# Local R (micromamba + conda-forge r-base); reinstall with scripts/dev/bootstrap_r_env.sh
 .r-env/
 .tools/
 

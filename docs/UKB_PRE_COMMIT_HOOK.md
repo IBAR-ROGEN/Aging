@@ -12,18 +12,13 @@ The UK Biobank pre-commit hook automatically blocks Git commits that could expos
 Install the hook from the project root:
 
 ```bash
-./scripts/install_pre_commit_hook.sh
+./scripts/dev/install_pre_commit_hook.sh
+# compatibility wrapper: ./scripts/install_pre_commit_hook.sh
 ```
 
-This copies `scripts/security_check.sh` to `.git/hooks/pre-commit` and makes it executable. The hook runs automatically on every `git commit`.
+This copies `scripts/dev/security_check.sh` to `.git/hooks/pre-commit` and makes it executable. The hook runs automatically on every `git commit`.
 
-**After `git pull`:** if `scripts/security_check.sh` changed on the branch you merged, run the installer again so `.git/hooks/pre-commit` matches the repository (the hook file in `.git/hooks` is not updated automatically).
-
-To reinstall (e.g. after updating the security script):
-
-```bash
-./scripts/install_pre_commit_hook.sh
-```
+**After `git pull`:** if `scripts/dev/security_check.sh` changed, run the installer again so `.git/hooks/pre-commit` matches the repository.
 
 ## What It Blocks
 
@@ -45,31 +40,31 @@ The following are excluded from content scanning:
 | `notebooks/README.md` | Notebook index (may name UKB workflows and manifest columns) |
 | `*security_check*` | The security script itself |
 | `*install_pre_commit*` | Hook installer |
-| `scripts/mock_ukb_generator.py` | Synthetic data generator (no real UKB data) |
-| `scripts/ukb_mock_gen.py` | Synthetic UKB-RAP folder generator (no real UKB data) |
-| `tests/test_ukb_mock_gen.py` | Pytest for synthetic UKB-RAP generator (no participant data) |
+| `scripts/mock_ukb_generator.py`, `scripts/ukb/mock_clinical_csv.py` | Synthetic clinical CSV generator |
+| `scripts/ukb_mock_gen.py`, `scripts/ukb/mock_rap_folder.py` | Synthetic UKB-RAP folder generator |
+| `tests/test_ukb_mock_gen.py` | Pytest for synthetic UKB-RAP generator |
 | `test_data/mock_clinical_data.csv` | Synthetic mock output (MOCK_ IDs) |
-| `scripts/ukb_la_snp_lookup.py` | Offline Ensembl → CSV manifest builder + 1KG extract only (no participant rows; reviewed path) |
-| `scripts/compare_af_gnomad.py` | Public 1KG vs gnomAD AF comparison only (no participant rows; reviewed path) |
-| `scripts/run_integration.py` | Synthetic UKB join + association scan only (no participant rows; reviewed path) |
-| `src/rogen_aging/integration/*` | Synthetic UKB join library (mock paths only; reviewed path) |
-| `tests/test_ukb_integration.py` | Integration tests referencing mock `ukb_*` artefacts |
-| `notebooks/05_ukb_exploration/*` | Offline manifest sanity-check notebooks only (no participant rows; cite extraction metadata labels) |
-| `repo_structure.txt` | Generated tree of tracked paths (may list compliance doc filenames) |
+| `scripts/ukb_la_snp_lookup.py`, `scripts/ukb/la_snp_lookup.py` | Offline manifest + 1KG extract |
+| `scripts/compare_af_gnomad.py`, `scripts/ukb/compare_af_gnomad.py` | Public 1KG vs gnomAD comparison |
+| `scripts/run_integration.py`, `scripts/ukb/run_integration.py` | Synthetic UKB join + associations |
+| `src/rogen_aging/integration/*`, `src/rogen_aging/ukb/*` | Synthetic UKB libraries |
+| `tests/test_ukb_integration.py` | Integration tests referencing mock artefacts |
+| `notebooks/05_ukb_exploration/*` | Offline manifest sanity-check notebooks |
 
 ## Manual Run
 
 Run the check without committing:
 
 ```bash
-./scripts/security_check.sh
+./scripts/dev/security_check.sh
+# compatibility wrapper: ./scripts/security_check.sh
 ```
 
 The script inspects **staged** files (`git diff --cached`). Stage files first if you want to test:
 
 ```bash
 git add <files>
-./scripts/security_check.sh
+./scripts/dev/security_check.sh
 ```
 
 ## Blocked Commit Output
@@ -99,7 +94,7 @@ Your commit was BLOCKED to prevent accidental exposure of restricted data.
    Do not commit `.vcf` or `.bed` files. Place them in the git-ignored `data/` directory and reference them by path in code or config.
 
 3. **Legitimate mock/test data**  
-   Use `scripts/mock_ukb_generator.py` or `scripts/ukb_mock_gen.py` to produce synthetic data with `MOCK_` / `SYN_EID_` identifiers. The generators and `test_data/mock_clinical_data.csv` are whitelisted.
+   Use `uv run rogen-ukb-mock-clinical` or `uv run rogen-ukb-mock-rap` to produce synthetic data with `MOCK_` / `SYN_EID_` identifiers.
 
 ## Related Documentation
 
@@ -108,4 +103,4 @@ Your commit was BLOCKED to prevent accidental exposure of restricted data.
 
 ---
 
-**Last Updated:** May 1, 2026
+**Last Updated:** May 31, 2026

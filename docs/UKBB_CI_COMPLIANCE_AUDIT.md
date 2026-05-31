@@ -1,9 +1,9 @@
 # UK Biobank–oriented CI repository audit
 
-**Script:** `scripts/ukbb_ci_compliance_audit.sh`  
+**Script:** `scripts/dev/ukbb_ci_compliance_audit.sh` (wrapper at `scripts/ukbb_ci_compliance_audit.sh`)  
 **Purpose:** Fail CI when the repository tree contains high-risk genomic/clinical files or disallowed hardcoded absolute paths in Python and shell code.
 
-This check complements the [pre-commit hook](UKB_PRE_COMMIT_HOOK.md) (`scripts/security_check.sh`), which inspects **staged** files, and the [notebook compliance auditor](UKB_COMPLIANCE_AUDITOR.md), which focuses on patterns such as EIDs. The CI script scans the **checked-out tree** (what the pipeline actually builds from), which is the right place to catch files that are already committed.
+This check complements the [pre-commit hook](UKB_PRE_COMMIT_HOOK.md) (`scripts/dev/security_check.sh`), which inspects **staged** files, and the [notebook compliance auditor](UKB_COMPLIANCE_AUDITOR.md), which focuses on patterns such as EIDs. The CI script scans the **checked-out tree** (what the pipeline actually builds from), which is the right place to catch files that are already committed.
 
 ## What it is not
 
@@ -22,13 +22,13 @@ No extra Python packages are required.
 From the repository root:
 
 ```bash
-./scripts/ukbb_ci_compliance_audit.sh
+./scripts/dev/ukbb_ci_compliance_audit.sh
 ```
 
 With optional environment overrides:
 
 ```bash
-MIN_SENSITIVE_BYTES=2097152 WORK=/data/ukb_isolated ./scripts/ukbb_ci_compliance_audit.sh
+MIN_SENSITIVE_BYTES=2097152 WORK=/data/ukb_isolated ./scripts/dev/ukbb_ci_compliance_audit.sh
 ```
 
 ## Exit codes
@@ -102,7 +102,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: UKB-oriented repository compliance audit
-        run: ./scripts/ukbb_ci_compliance_audit.sh
+        run: ./scripts/dev/ukbb_ci_compliance_audit.sh
         env:
           # Optional: allow literals under your isolated work filesystem
           # WORK: ${{ vars.UKB_ISOLATED_WORK_ROOT }}
@@ -120,8 +120,8 @@ Ensure the step runs from the repository root (default for `actions/checkout`).
 
 | Tool | Scope |
 |------|--------|
-| `scripts/ukbb_ci_compliance_audit.sh` | Full tree on CI; files + quoted paths in `.py`/`.sh` |
-| `scripts/security_check.sh` | Staged files; content patterns and some extensions |
+| `scripts/dev/ukbb_ci_compliance_audit.sh` | Full tree on CI; files + quoted paths in `.py`/`.sh` |
+| `scripts/dev/security_check.sh` | Staged files; content patterns and some extensions |
 | `notebooks/03_validation_and_compliance/UKB_Compliance_Auditor.ipynb` | Interactive audit (EIDs, patterns, extensions) |
 
 ---

@@ -1,7 +1,9 @@
 # Synthetic UK Biobank Data Generator
 
 **Project:** IBAR-ROGEN Aging  
-**Script:** `scripts/mock_ukb_generator.py`  
+**CLI:** `uv run rogen-ukb-mock-clinical`  
+**Script:** `scripts/ukb/mock_clinical_csv.py`  
+**Package:** `rogen_aging.ukb.mock_clinical`  
 **Output:** `test_data/mock_clinical_data.csv` (default)
 
 ## Overview
@@ -27,7 +29,7 @@ SNP genotypes follow a Hardy–Weinberg distribution with minor allele frequency
 ### Basic (1000 samples, default output)
 
 ```bash
-uv run scripts/mock_ukb_generator.py
+uv run rogen-ukb-mock-clinical
 ```
 
 Writes to `test_data/mock_clinical_data.csv`.
@@ -35,7 +37,7 @@ Writes to `test_data/mock_clinical_data.csv`.
 ### Custom sample count and output path
 
 ```bash
-uv run scripts/mock_ukb_generator.py --n-samples 500 --output data/synthetic_cohort.csv
+uv run rogen-ukb-mock-clinical --n-samples 500 --output data/synthetic_cohort.csv
 ```
 
 ### Reproducibility
@@ -43,7 +45,7 @@ uv run scripts/mock_ukb_generator.py --n-samples 500 --output data/synthetic_coh
 Use `--seed` for reproducible random data:
 
 ```bash
-uv run scripts/mock_ukb_generator.py --seed 42
+uv run rogen-ukb-mock-clinical --seed 42
 ```
 
 Use `--seed 0` to disable the seed (non-deterministic).
@@ -51,7 +53,7 @@ Use `--seed 0` to disable the seed (non-deterministic).
 ### All options
 
 ```bash
-uv run scripts/mock_ukb_generator.py --help
+uv run rogen-ukb-mock-clinical --help
 ```
 
 | Option | Short | Default | Description |
@@ -72,13 +74,11 @@ MOCK_00000003,66,1,31.5,0,2.90,1,0,0,1,1
 
 ## Automated tests
 
-Pytest coverage lives in **`tests/test_mock_clinical_csv.py`**: it calls the generator’s Python API with a small row count, checks required column names, and asserts plausible ranges (for example age and BMI). Run from the repo root after `uv sync --extra dev`:
+Pytest coverage lives in **`tests/test_mock_clinical_csv.py`**: it calls `rogen_aging.ukb.mock_clinical.generate_synthetic_ukb_data()` with a small row count, checks required column names, and asserts plausible ranges. Run from the repo root after `uv sync --extra dev`:
 
 ```bash
 uv run pytest tests/test_mock_clinical_csv.py
 ```
-
-`pyproject.toml` includes **`scripts/`** on pytest’s `pythonpath` so tests can import the generator module by name.
 
 ## Security and Compliance
 
@@ -95,10 +95,10 @@ uv run pytest tests/test_mock_clinical_csv.py
 
 ## Related Documentation
 
-- [Synthetic UKB-RAP Folder Generator](SYNTHETIC_UKB_RAP_GENERATOR.md) — phenotype CSV + LA-SNP VCF layout (`ukb_mock_gen.py`)
+- [Synthetic UKB-RAP Folder Generator](SYNTHETIC_UKB_RAP_GENERATOR.md) — phenotype CSV + LA-SNP VCF layout
 - [UK Biobank Pre-Commit Hook](UKB_PRE_COMMIT_HOOK.md) — Security checks and whitelisting
-- [Project Structure](PROJECT_STRUCTURE.md) — Where `test_data/` and `data/` fit in the layout
+- [WORKFLOWS.md](WORKFLOWS.md) — UKB workflow index
 
 ---
 
-**Last Updated:** May 1, 2026
+**Last Updated:** May 31, 2026

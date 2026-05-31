@@ -1,7 +1,7 @@
 # Romanian cohort mock epigenetic clock (Elastic Net)
 
 **Project:** IBAR-ROGEN Aging  
-**Scripts:** `scripts/train_romanian_epigenetic_clock.py` (train), `scripts/validate_clock.py` (evaluate a saved model on held-out data), **`scripts/run_clock.py`** (unified train/evaluate CLI). For a **wide-table** trainer aimed at public **GSE40279** (Hannum 2013) style inputs, see **`scripts/train_clock_on_gse40279.py`** and **[docs/GSE40279_CLOCK_TRAINING.md](GSE40279_CLOCK_TRAINING.md)**.  
+**Scripts:** `scripts/clock/train_romanian_epigenetic_clock.py` (Romanian mock demo), **`uv run rogen-clock`** (canonical wide-table train/evaluate). For GSE40279-style inputs see **[docs/GSE40279_CLOCK_TRAINING.md](GSE40279_CLOCK_TRAINING.md)**.  
 **Library:** `src/rogen_aging/clock/` — see **[docs/CLOCK_LIBRARY.md](CLOCK_LIBRARY.md)**.  
 **Repository:** [IBAR-ROGEN/Aging](https://github.com/IBAR-ROGEN/Aging)
 
@@ -61,25 +61,25 @@ The `figures/` directory is git-ignored (generated artifact); regenerate locally
 
 ```bash
 uv sync
-uv run python scripts/train_romanian_epigenetic_clock.py --help
+uv run python scripts/clock/train_romanian_epigenetic_clock.py --help
 ```
 
 **Default run** (creates mock CSVs under `data/mock_romanian_cohort/` if needed):
 
 ```bash
-uv run python scripts/train_romanian_epigenetic_clock.py
+uv run python scripts/clock/train_romanian_epigenetic_clock.py
 ```
 
 **Regenerate mock data** after changing simulation defaults in the script (overwrites CSVs in the chosen `data_dir`):
 
 ```bash
-uv run python scripts/train_romanian_epigenetic_clock.py --regenerate-mock
+uv run python scripts/clock/train_romanian_epigenetic_clock.py --regenerate-mock
 ```
 
 **Custom paths** (paths are whatever you pass; both flags accept any valid filesystem location):
 
 ```bash
-uv run python scripts/train_romanian_epigenetic_clock.py \
+uv run python scripts/clock/train_romanian_epigenetic_clock.py \
   --data-dir cohort_data \
   --output-plot artifacts/clock_scatter.png \
   --test-size 0.25
@@ -89,9 +89,9 @@ uv run python scripts/train_romanian_epigenetic_clock.py \
 
 Declared in `pyproject.toml`: **polars**, **numpy**, **scikit-learn**, **scipy**, **matplotlib**, **typer**.
 
-## Held-out validation (`validate_clock.py`)
+## Held-out validation (`rogen-clock evaluate`)
 
-**Script:** `scripts/validate_clock.py`  
+**CLI:** `uv run rogen-clock evaluate` (or deprecated `scripts/clock/validate_clock.py`)  
 Use this after you have a **saved** fitted estimator (for example from a training notebook or a Typer/CLI trainer that writes `joblib.dump` / `pickle`).
 
 ### Purpose
@@ -133,7 +133,7 @@ Stdout prints the same metrics (JSON); stderr notes how many CpGs were imputed w
 
 ```bash
 uv sync
-uv run python scripts/validate_clock.py \
+uv run rogen-clock evaluate \
   --model_path artifacts/romanian_clock.joblib \
   --test_data data/romanian_holdout.parquet \
   --output_dir figures/clock_validation_run1
@@ -141,11 +141,11 @@ uv run python scripts/validate_clock.py \
 
 ### External cohort (GSE87571)
 
-To validate a GSE40279-trained clock on a second public 450K whole-blood series, use **`rogen_aging.clock.external_data`** (`load_gse87571` / `python -m rogen_aging.clock.external_data`) to produce a Parquet with **`chronological_age`** and **`cg*`** columns, then point **`validate_clock.py`** at that file. See **[docs/GSE40279_CLOCK_TRAINING.md](GSE40279_CLOCK_TRAINING.md#external-validation-gse87571)**.
+To validate a GSE40279-trained clock on a second public 450K whole-blood series, use **`rogen_aging.clock.external_data`** (`load_gse87571` / `python -m rogen_aging.clock.external_data`) to produce a Parquet with **`chronological_age`** and **`cg*`** columns, then point **`rogen-clock evaluate`** at that file. See **[docs/GSE40279_CLOCK_TRAINING.md](GSE40279_CLOCK_TRAINING.md#external-validation-gse87571)**.
 
 ## Related material
 
-- **[docs/GSE40279_CLOCK_TRAINING.md](GSE40279_CLOCK_TRAINING.md)** — Train an Elastic Net clock from a sample × CpG table (+ `chronological_age`) for GEO GSE40279-style data (`train_clock_on_gse40279.py`), and notes on **GSE87571** external validation (`rogen_aging.clock.external_data`).  
+- **[docs/GSE40279_CLOCK_TRAINING.md](GSE40279_CLOCK_TRAINING.md)** — GSE40279-style wide-table training and GSE87571 external validation.  
 - **[docs/EDA_MOCK_INTEGRATION.md](EDA_MOCK_INTEGRATION.md)** — EDA on mock clinical/epigenetic age tables (`test_data/mock_epigenetic_clinical.csv`).  
 - **Notebook:** `notebooks/02_methylation_pipeline/MethylationClocks.ipynb` — broader epigenetic clock context.  
 - **Synthetic Romanian VCF:** [docs/SYNTHETIC_ROMANIAN_VCF_GENERATOR.md](SYNTHETIC_ROMANIAN_VCF_GENERATOR.md) (genotype mock data; separate from this methylation clock script).

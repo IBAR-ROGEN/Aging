@@ -1,22 +1,11 @@
-"""Pytest checks for synthetic cohort tabular output from the mock clinical CSV generator.
-
-Imports use string joins so the repository pre-commit scan for restricted
-Biobank-related column-name tokens does not false-positive on this test file.
-"""
+"""Pytest checks for synthetic cohort tabular output from the mock clinical CSV generator."""
 
 from __future__ import annotations
-
-import importlib
 
 import polars as pl
 import pytest
 
-_underscore = chr(95)
-_gen_mod = importlib.import_module(
-    "mock" + _underscore + "ukb" + _underscore + "generator"
-)
-DUMMY_SNP_IDS = _gen_mod.DUMMY_SNP_IDS
-_generate_fn = getattr(_gen_mod, "generate_synthetic_" + "ukb" + "_data")
+from rogen_aging.ukb.mock_clinical import DUMMY_SNP_IDS, generate_synthetic_ukb_data
 
 REQUIRED_CLINICAL_COLUMNS: tuple[str, ...] = (
     "Sample_ID",
@@ -31,7 +20,7 @@ REQUIRED_CLINICAL_COLUMNS: tuple[str, ...] = (
 @pytest.fixture
 def synthetic_clinical_frame() -> pl.DataFrame:
     """Small synthetic cohort in a biologically wide adult age range."""
-    df = _generate_fn(
+    df = generate_synthetic_ukb_data(
         n_samples=32,
         min_age=18,
         max_age=110,

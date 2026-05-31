@@ -141,7 +141,7 @@ Rscript -e "sessionInfo()"
 
 ## Links
 
-- Full Documentation: [METHYLATION_PIPELINE_README.md](../METHYLATION_PIPELINE_README.md)
+- Full Documentation: [METHYLATION_PIPELINE_README.md](METHYLATION_PIPELINE_README.md)
 - Detailed Usage: [METHYLATION_PIPELINE_USAGE.md](METHYLATION_PIPELINE_USAGE.md)
 - Dorado: https://github.com/nanoporetech/dorado
 - Modkit: https://github.com/nanoporetech/modkit

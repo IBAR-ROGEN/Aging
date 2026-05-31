@@ -1,4 +1,4 @@
-"""Tests for ``scripts/ukb_mock_gen.py`` UKB-RAP synthetic layout."""
+"""Tests for ``rogen_aging.ukb.mock_rap`` UKB-RAP synthetic layout."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ from pathlib import Path
 import polars as pl
 import pytest
 
-from ukb_mock_gen import (
+from rogen_aging.ukb.mock_rap import (
     PHENOTYPE_V2_FIELDS,
     generate_ukb_rap_mock,
     load_snp_manifest,

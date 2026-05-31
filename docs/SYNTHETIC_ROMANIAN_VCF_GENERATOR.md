@@ -1,7 +1,9 @@
 # Synthetic Romanian Cohort VCF Generator
 
 **Project:** [IBAR-ROGEN/Aging](https://github.com/IBAR-ROGEN/Aging)  
-**Script:** `scripts/generate_synthetic_romanian_vcf.py`  
+**CLI:** `uv run rogen-vcf-synthetic`  
+**Script:** `scripts/vcf/generate_synthetic_romanian_vcf.py`  
+**Package:** `rogen_aging.vcf.synthetic`  
 **Output:** User-specified path (uncompressed VCF v4.2 text)
 
 ## Overview
@@ -28,10 +30,8 @@ All sample IDs and variant IDs are **synthetic** (for example `RO_EUR_000001`, `
 
 ### Minimal example
 
-Write a VCF with 100 samples and 1,000 variants to a local path (use a directory that is **git-ignored** if the file is large; this repo ignores `*.vcf` at the root and under typical data paths):
-
 ```bash
-uv run scripts/generate_synthetic_romanian_vcf.py \
+uv run rogen-vcf-synthetic \
   --samples 100 \
   --variants 1000 \
   --output data/mock_romanian_eur.vcf
@@ -40,7 +40,7 @@ uv run scripts/generate_synthetic_romanian_vcf.py \
 ### Reproducibility
 
 ```bash
-uv run scripts/generate_synthetic_romanian_vcf.py \
+uv run rogen-vcf-synthetic \
   --samples 50 --variants 500 --seed 42 \
   --output data/mock_romanian_eur.vcf
 ```
@@ -50,8 +50,8 @@ uv run scripts/generate_synthetic_romanian_vcf.py \
 Progress logs go to **stderr** at INFO by default. Use **`-v` / `--verbose`** for DEBUG.
 
 ```bash
-uv run scripts/generate_synthetic_romanian_vcf.py \
-  --samples 10 --variants 100 --output /tmp/mock.vcf -v
+uv run rogen-vcf-synthetic \
+  --samples 10 --variants 100 --output data/mock.vcf -v
 ```
 
 ### Validate with bcftools (optional)
@@ -64,7 +64,7 @@ bcftools index data/mock_romanian_eur.vcf
 ### All options
 
 ```bash
-uv run scripts/generate_synthetic_romanian_vcf.py --help
+uv run rogen-vcf-synthetic --help
 ```
 
 | Option | Default | Description |
@@ -98,7 +98,7 @@ uv run scripts/generate_synthetic_romanian_vcf.py --help
 
 ## Automated tests
 
-**`tests/test_synthetic_vcf.py`** exercises `generate_synthetic_romanian_vcf.main()` with a tiny cohort written under pytest’s **`tmp_path`** (no committed VCF). It checks for `##fileformat=VCFv4.2`, the `#CHROM` header line, and that each variant row has the correct number of tab-separated columns for the requested sample count.
+**`tests/test_synthetic_vcf.py`** exercises `rogen_aging.vcf.synthetic.main()` with a tiny cohort written under pytest’s **`tmp_path`**.
 
 ```bash
 uv run pytest tests/test_synthetic_vcf.py
@@ -106,23 +106,16 @@ uv run pytest tests/test_synthetic_vcf.py
 
 ## Security and compliance
 
-- **Synthetic-only** — Safe for public repositories **as code**; generated `.vcf` files can be large and often should stay under **`data/`** (git-ignored) or **`test_data/`** only if small and policy allows.
-- **Pre-commit hook** — This repository’s hook blocks committing raw **`.vcf`** / **`.bed`** in many cases. Do not commit large synthetic VCFs unless you have an explicit exception path.
+- **Synthetic-only** — Safe for public repositories **as code**; generated `.vcf` files can be large and often should stay under **`data/`** (git-ignored).
+- **Pre-commit hook** — This repository’s hook blocks committing raw **`.vcf`** / **`.bed`** in many cases.
 - **Naming** — Sample names use the configurable prefix (default `RO_EUR`), not real study IDs.
-
-## Use cases
-
-1. **bcftools / HTSlib pipelines** — Smoke-test merge, subset, and indexing.
-2. **GWAS / QC tooling** — Shape and header checks without sharing real genetics.
-3. **Teaching** — Illustrate VCF structure, INFO vs FORMAT, and Hardy–Weinberg sampling.
 
 ## Related documentation
 
-- [UK Biobank Pre-Commit Hook](UKB_PRE_COMMIT_HOOK.md) — Restricted extensions and staging rules
-- [Project Structure](PROJECT_STRUCTURE.md) — `data/` vs `test_data/`
-- [Synthetic UK Biobank Data Generator](SYNTHETIC_UKB_GENERATOR.md) — Mock tabular cohort data
-- [Synthetic UKB-RAP Folder Generator](SYNTHETIC_UKB_RAP_GENERATOR.md) — Mock phenotype + LA-SNP VCF layout
+- [WORKFLOWS.md](WORKFLOWS.md)
+- [Synthetic UKB-RAP Folder Generator](SYNTHETIC_UKB_RAP_GENERATOR.md) — reuses VCF helpers for LA-SNP mock VCF
+- [UK Biobank Pre-Commit Hook](UKB_PRE_COMMIT_HOOK.md)
 
 ---
 
-**Last updated:** May 1, 2026
+**Last updated:** May 31, 2026

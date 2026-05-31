@@ -453,7 +453,7 @@ The repository includes visualization scripts that generate diagrams and example
 
 ```bash
 # Option 1: Using the script
-uv run python scripts/generate_methylation_visualizations.py
+uv run python scripts/figures/generate_methylation_visualizations.py
 
 # Option 2: Direct Python module
 uv run python -m src.rogen_aging.methylation_visualizations

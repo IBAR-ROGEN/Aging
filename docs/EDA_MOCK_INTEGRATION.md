@@ -1,7 +1,7 @@
 # EDA Mock Integration Script
 
 **Project:** IBAR-ROGEN Aging  
-**Script:** `scripts/eda_mock_integration.py`  
+**Script:** `scripts/eda/eda_mock_integration.py`  
 **Input:** `test_data/mock_epigenetic_clinical.csv`  
 **Output:** `results/mock_eaa_plot.png`
 
@@ -39,7 +39,7 @@ This script is intended for:
 ## Usage
 
 ```bash
-uv run python scripts/eda_mock_integration.py
+uv run python scripts/eda/eda_mock_integration.py
 ```
 
 Ensure `test_data/mock_epigenetic_clinical.csv` exists. A sample file is versioned in the repository.

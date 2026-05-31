@@ -1,22 +1,6 @@
 #!/usr/bin/env python3
-"""Generate the bimodal risk heatmap (Figure 2).
-
-This script generates the heatmap described in Activity 2.1.7, showing the 
-protective vs. risk effects of candidate longevity genes across different conditions.
-
-Usage:
-    python scripts/generate_bimodal_heatmap.py
-    or
-    uv run python scripts/generate_bimodal_heatmap.py
-"""
-
+import runpy, warnings
 from pathlib import Path
-import sys
-
-# Add src to path
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
-from src.rogen_aging.methylation_visualizations import create_bimodal_risk_heatmap
-
 if __name__ == "__main__":
-    create_bimodal_risk_heatmap()
+    warnings.warn("scripts/generate_bimodal_heatmap.py moved to scripts/figures/generate_bimodal_heatmap.py", DeprecationWarning, stacklevel=1)
+    runpy.run_path(str(Path(__file__).resolve().parent / "figures" / "generate_bimodal_heatmap.py"), run_name="__main__")

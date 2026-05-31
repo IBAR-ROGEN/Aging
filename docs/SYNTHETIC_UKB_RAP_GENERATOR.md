@@ -2,7 +2,9 @@
 
 **Project:** IBAR-ROGEN Aging  
 **Activity:** 2.1.8.1  
-**Script:** `scripts/ukb_mock_gen.py`  
+**CLI:** `uv run rogen-ukb-mock-rap`  
+**Script:** `scripts/ukb/mock_rap_folder.py`  
+**Package:** `rogen_aging.ukb.mock_rap`  
 **Output:** `test_data/mock_ukb_rap/` (default)
 
 ## Overview
@@ -14,7 +16,7 @@ This tool writes a **UK Biobank RAP-style directory** with two joinable artefact
 
 All participant identifiers and genotypes are **strictly synthetic**. No real UKB EIDs or participant data are used. Safe for GitHub when only the **code** is committed; generated `.vcf` and phenotype CSV outputs are git-ignored by default (see [Security and compliance](#security-and-compliance)).
 
-Genotype simulation reuses helpers from `scripts/generate_synthetic_romanian_vcf.py` (Hardy–Weinberg sampling, EUR-like allele frequencies, `GT:AD:DP:GQ` FORMAT fields).
+Genotype simulation reuses **`rogen_aging.vcf`** (Hardy–Weinberg sampling, EUR-like allele frequencies, `GT:AD:DP:GQ` FORMAT fields).
 
 ## Output layout
 
@@ -49,7 +51,7 @@ Both files include an **Activity 2.1.8.1** safety header noting the cohort is sy
 Build the LA-SNP manifest once (offline Ensembl lookup; no participant data):
 
 ```bash
-uv run python scripts/ukb_la_snp_lookup.py build \
+uv run rogen-ukb-manifest build \
   --input overlapping_genes_with_snps.xlsx \
   --output analysis/ukb_snp_manifest_v0.1.csv
 ```
@@ -63,7 +65,7 @@ See `notebooks/05_ukb_exploration/UKB_LA_SNP_FirstContact.ipynb` for manifest sa
 ### Basic (1000 samples, default output)
 
 ```bash
-uv run scripts/ukb_mock_gen.py
+uv run rogen-ukb-mock-rap
 ```
 
 Writes under `test_data/mock_ukb_rap/` using `analysis/ukb_snp_manifest_v0.1.csv`.
@@ -71,7 +73,7 @@ Writes under `test_data/mock_ukb_rap/` using `analysis/ukb_snp_manifest_v0.1.csv
 ### Custom cohort size and seed
 
 ```bash
-uv run scripts/ukb_mock_gen.py \
+uv run rogen-ukb-mock-rap \
   --n-samples 500 \
   --snp-manifest analysis/ukb_snp_manifest_v0.1.csv \
   --output-dir data/mock_ukb_rap/ \
@@ -81,7 +83,7 @@ uv run scripts/ukb_mock_gen.py \
 ### All options
 
 ```bash
-uv run scripts/ukb_mock_gen.py --help
+uv run rogen-ukb-mock-rap --help
 ```
 
 | Option | Short | Default | Description |
@@ -115,17 +117,16 @@ uv run pytest tests/test_ukb_mock_gen.py
 ## Security and compliance
 
 - **Synthetic EIDs:** `SYN_EID_*` prefix — not real UKB 7-digit participant IDs.
-- **Whitelisted script:** `scripts/ukb_mock_gen.py` is excluded from the UK Biobank pre-commit content scan (see [UKB_PRE_COMMIT_HOOK.md](UKB_PRE_COMMIT_HOOK.md)).
+- **Whitelisted paths:** `scripts/ukb/mock_rap_folder.py` and package `src/rogen_aging/ukb/` are excluded from the UK Biobank pre-commit content scan (see [UKB_PRE_COMMIT_HOOK.md](UKB_PRE_COMMIT_HOOK.md)).
 - **Generated outputs:** `.vcf` files are blocked by the pre-commit hook; phenotype CSVs under `test_data/` are git-ignored except for explicitly whitelisted fixtures. Keep generated RAP folders under `data/` or local paths.
 
 ## Related documentation
 
 - [LA-SNP Public Frequency Pipeline](LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md) — manifest, 1KG extract, gnomAD comparison
 - [UKB Integration Pipeline](UKB_INTEGRATION_PIPELINE.md) — synthetic join + association scan (Activity 2.1.11.1)
-- [Synthetic UK Biobank Data Generator](SYNTHETIC_UKB_GENERATOR.md) — tabular mock clinical CSV (`mock_ukb_generator.py`)
+- [Synthetic UK Biobank Data Generator](SYNTHETIC_UKB_GENERATOR.md) — tabular mock clinical CSV
 - [Synthetic Romanian Cohort VCF Generator](SYNTHETIC_ROMANIAN_VCF_GENERATOR.md) — general-purpose streaming VCF generator
-- [UK Biobank Pre-Commit Hook](UKB_PRE_COMMIT_HOOK.md) — security checks and whitelisting
-- [Code Modules Reference](CODE_MODULES_REFERENCE.md) — `ukb_la_snp_lookup.py` manifest builder
+- [WORKFLOWS.md](WORKFLOWS.md) — UKB workflow index
 
 ---
 

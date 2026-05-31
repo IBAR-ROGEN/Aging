@@ -8,7 +8,7 @@ npx playwright install chromium
 npm run capture
 ```
 
-Writes `../../analysis/dashboard_figure_mockup.png` (overwrites the matplotlib version from `scripts/render_dashboard_figure_mockup.py` if you use the same path).
+Writes `../../analysis/dashboard_figure_mockup.png` (overwrites the matplotlib version from `scripts/figures/render_dashboard_figure_mockup.py` if you use the same path).
 
 ```bash
 npm run dev

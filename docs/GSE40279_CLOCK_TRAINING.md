@@ -1,9 +1,9 @@
 # GSE40279 (Hannum 2013) Elastic Net clock training
 
 **Project:** IBAR-ROGEN Aging  
-**Script:** `scripts/train_clock_on_gse40279.py` (wrapper), **`scripts/run_clock.py`** (unified CLI)  
+**Canonical CLI:** `uv run rogen-clock train|evaluate`  
 **Library:** `src/rogen_aging/clock/` — see **[docs/CLOCK_LIBRARY.md](CLOCK_LIBRARY.md)**  
-**Validation:** `scripts/validate_clock.py` (same `cg*` + `chronological_age` convention as test data)
+**Legacy wrappers:** `scripts/clock/train_clock_on_gse40279.py`, `scripts/clock/validate_clock.py` (deprecated)
 
 ## Overview
 
@@ -27,7 +27,7 @@ The script does **not** download GEO Series Matrix files, parse IDATs, or map pr
 2. **Pipeline:** `SimpleImputer(strategy="mean")` → **`ElasticNetCV`** with `cv=10`, `l1_ratio=[0.1, 0.5, 0.7, 0.9, 0.95, 0.99, 1.0]`, `n_alphas=20`, `max_iter=5000`.
 3. **Held-out metrics:** MAE, RMSE (`root_mean_squared_error`), Pearson **r** (`scipy.stats.pearsonr`) on the test split.
 
-The saved object is the **fitted `Pipeline`**, written with **`joblib.dump`**. It exposes **`feature_names_in_`**, so **`validate_clock.py`** can align probes and mean-impute missing expected CpGs on new cohorts.
+The saved object is the **fitted `Pipeline`**, written with **`joblib.dump`**. It exposes **`feature_names_in_`**, so **`rogen-clock evaluate`** can align probes and mean-impute missing expected CpGs on new cohorts.
 
 ## CLI
 
@@ -50,22 +50,22 @@ Stdout prints a one-line summary: number of CpGs, `alpha`, `l1_ratio`, test MAE,
 
 ```bash
 uv sync
-uv run python scripts/train_clock_on_gse40279.py --help
+uv run rogen-clock train --help
 ```
 
 Example (paths are illustrative):
 
 ```bash
-uv run python scripts/train_clock_on_gse40279.py \
+uv run rogen-clock train \
   --input_data data/gse40279_beta_age.parquet \
   --output_model analysis/gse40279_elasticnet_clock.pkl \
   --output_metrics analysis/gse40279_train_metrics.json
 ```
 
-Equivalent unified CLI:
+Equivalent script path:
 
 ```bash
-uv run python scripts/run_clock.py train \
+uv run python scripts/clock/run_clock.py train \
   --input_data data/gse40279_beta_age.parquet \
   --output_model analysis/gse40279_elasticnet_clock.pkl \
   --output_metrics analysis/gse40279_train_metrics.json
@@ -73,13 +73,13 @@ uv run python scripts/run_clock.py train \
 
 ## Validating the saved model
 
-Use **`scripts/validate_clock.py`** with a held-out table in the same wide format. See **[docs/ROMANIAN_EPIGENETIC_CLOCK.md](ROMANIAN_EPIGENETIC_CLOCK.md#held-out-validation-validate_clockpy)** for CLI arguments, figures, and `validation_metrics.json`.
+Use **`uv run rogen-clock evaluate`** with a held-out table in the same wide format. See **[docs/ROMANIAN_EPIGENETIC_CLOCK.md](ROMANIAN_EPIGENETIC_CLOCK.md#held-out-validation-validate_clockpy)** for CLI arguments, figures, and `validation_metrics.json`.
 
 ### External validation (GSE87571)
 
 [GSE87571](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE87571) is a public Illumina 450K whole-blood cohort (hundreds of samples, wide age range) suitable for **external** checks on clocks trained on GSE40279-style inputs.
 
-Use the installable module **`rogen_aging.clock.external_data`** to build a **`validate_clock.py`**-compatible Parquet (or call **`load_gse87571`** then **`save_as_parquet`** in Python):
+Use the installable module **`rogen_aging.clock.external_data`** to build an evaluation-compatible Parquet (or call **`load_gse87571`** then **`save_as_parquet`** in Python):
 
 | Item | Detail |
 |------|--------|
@@ -97,7 +97,7 @@ uv run python -m rogen_aging.clock.external_data \
   --output data/gse87571.parquet \
   --restrict-cpgs-file data/my_clock_selected_cpgs.txt
 
-uv run python scripts/validate_clock.py \
+uv run rogen-clock evaluate \
   --model_path analysis/gse40279_elasticnet_clock.pkl \
   --test_data data/gse87571.parquet \
   --output_dir analysis/validation_gse87571
@@ -105,5 +105,6 @@ uv run python scripts/validate_clock.py \
 
 ## Related documentation
 
-- **[docs/ROMANIAN_EPIGENETIC_CLOCK.md](ROMANIAN_EPIGENETIC_CLOCK.md)** — Romanian-style mock trainer (`train_romanian_epigenetic_clock.py`) and shared validation notes for `validate_clock.py`.
+- **[docs/ROMANIAN_EPIGENETIC_CLOCK.md](ROMANIAN_EPIGENETIC_CLOCK.md)** — Romanian-style mock trainer and shared validation notes.
+- **[docs/WORKFLOWS.md](WORKFLOWS.md)** — Clock workflow index.
 - **`notebooks/02_methylation_pipeline/`** — Broader methylation and clock context.

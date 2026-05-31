@@ -36,8 +36,9 @@ The final result is expressed as a **Percentage Change (%)** between the Referen
 In the mitochondrial gene **NDUFS1**, the model predicted that the longevity-associated SNP **rs6435324** reduces the gene's expression in the brain by approximately **4.78%**. This suggests that a slight reduction in this mitochondrial component might be a mechanism linked to increased longevity.
 
 ## 5. Technical Details
-*   **Script**: `scripts/alphagenome_sequence_comparer.py`
-*   **Analysis**: `scripts/analyze_alphagenome_results.py`
+*   **Script**: `scripts/alphagenome/alphagenome_sequence_comparer.py`
+*   **Analysis**: `scripts/alphagenome/analyze_alphagenome_results.py`
+*   **Visualize**: `scripts/alphagenome/visualize_alphagenome_results.py`
 *   **Input Data**: `overlapping_genes_with_snps.xlsx`
 *   **Results File**: `alphagenome_comparison_results.csv`
 *   **Processed Impact**: `alphagenome_impact_analysis.csv`

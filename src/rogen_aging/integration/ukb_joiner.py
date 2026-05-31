@@ -1,7 +1,7 @@
 """Synthetic UKB phenotype–genotype join and LA-SNP association scan.
 
 Activity **2.1.11.1** — integrative architecture validation on **synthetic** mock RAP
-output only (from ``scripts/ukb_mock_gen.py``). No real UK Biobank data; outputs are
+output only (from ``scripts/ukb/mock_rap_folder.py``). No real UK Biobank data; outputs are
 for pipeline QA, **not** biological conclusions.
 """
 

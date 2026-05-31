@@ -2,7 +2,9 @@
 
 **Project:** IBAR-ROGEN Aging  
 **Activity:** 2.1.8.1  
-**Scripts:** `scripts/ukb_la_snp_lookup.py`, `scripts/compare_af_gnomad.py`  
+**CLI:** `uv run rogen-ukb-manifest`, `uv run rogen-compare-af-gnomad`  
+**Scripts:** `scripts/ukb/la_snp_lookup.py`, `scripts/ukb/compare_af_gnomad.py`  
+**Package:** `rogen_aging.ukb.manifest`, `rogen_aging.ukb.gnomad`  
 **Related:** [Synthetic UKB-RAP Generator](SYNTHETIC_UKB_RAP_GENERATOR.md), [UKB Pre-Commit Hook](UKB_PRE_COMMIT_HOOK.md)
 
 ## Overview
@@ -34,15 +36,15 @@ uv sync
 Resolve rs IDs to GRCh38 coordinates and add UKB-oriented chunk labels:
 
 ```bash
-uv run python scripts/ukb_la_snp_lookup.py build \
+uv run rogen-ukb-manifest build \
   --input overlapping_genes_with_snps.xlsx \
   --output analysis/ukb_snp_manifest_v0.1.csv
 ```
 
-Legacy invocation (no subcommand) is equivalent:
+Equivalent script path:
 
 ```bash
-uv run python scripts/ukb_la_snp_lookup.py \
+uv run python scripts/ukb/la_snp_lookup.py build \
   --input overlapping_genes_with_snps.xlsx \
   --output analysis/ukb_snp_manifest_v0.1.csv
 ```
@@ -54,9 +56,9 @@ Sanity-check the CSV in **`notebooks/05_ukb_exploration/UKB_LA_SNP_FirstContact.
 Pull the same loci from indexed 1KG VCFs by coordinate (no full-chromosome streaming):
 
 ```bash
-uv run python scripts/ukb_la_snp_lookup.py extract \
+uv run rogen-ukb-manifest extract \
   --manifest analysis/ukb_snp_manifest_v0.1.csv \
-  --vcf-glob '/path/to/1kg/ALL.chr*.vcf.gz' \
+  --vcf-glob 'data/1kg/ALL.chr*.vcf.gz' \
   --output analysis/la_snp_1kg_frequencies.csv
 ```
 
@@ -69,7 +71,7 @@ SNPs missing from 1KG are logged and written with empty `AF` / alleles — the r
 Join 1KG AFs to gnomAD v4 (`gnomad_r4`) NFE frequencies:
 
 ```bash
-uv run python scripts/compare_af_gnomad.py \
+uv run rogen-compare-af-gnomad \
   --input analysis/la_snp_1kg_frequencies.csv \
   --output analysis/la_snp_af_1kg_vs_gnomad.csv \
   --scatter analysis/af_1kg_vs_gnomad_scatter.png
@@ -95,13 +97,13 @@ uv run python scripts/compare_af_gnomad.py \
 ```
 overlapping_genes_with_snps.xlsx
         │
-        ▼  ukb_la_snp_lookup.py build (Ensembl)
+        ▼  rogen-ukb-manifest build (Ensembl)
 analysis/ukb_snp_manifest_v0.1.csv
         │
-        ▼  ukb_la_snp_lookup.py extract (1KG VCFs)
+        ▼  rogen-ukb-manifest extract (1KG VCFs)
 analysis/la_snp_1kg_frequencies.csv
         │
-        ▼  compare_af_gnomad.py (gnomAD GraphQL + cache)
+        ▼  rogen-compare-af-gnomad (gnomAD GraphQL + cache)
 analysis/la_snp_af_1kg_vs_gnomad.csv
 analysis/af_1kg_vs_gnomad_scatter.png
 ```
@@ -111,12 +113,12 @@ After validation, proceed to synthetic UKB-RAP generation or real UKB extraction
 ## Security and compliance
 
 - Output CSVs and caches under `analysis/` and `data/` are git-ignored (`.csv` and `data/` rules).
-- `scripts/ukb_la_snp_lookup.py` is whitelisted in the pre-commit hook for intentional `UKB_` manifest column names; it must never contain participant IDs.
+- `scripts/ukb/la_snp_lookup.py` and `src/rogen_aging/ukb/` are whitelisted in the pre-commit hook for intentional `UKB_` manifest column names; they must never contain participant IDs.
 - Do not commit `.vcf` / `.vcf.gz` files; keep 1KG VCFs in `data/`.
 
 ## Related documentation
 
-- [Code Modules Reference](CODE_MODULES_REFERENCE.md) — §3.12 `ukb_la_snp_lookup.py`, §3.20 `compare_af_gnomad.py`
+- [WORKFLOWS.md](WORKFLOWS.md) — UKB workflow index
 - [UKB Pre-Commit Hook](UKB_PRE_COMMIT_HOOK.md)
 - [Synthetic UKB-RAP Generator](SYNTHETIC_UKB_RAP_GENERATOR.md)
 

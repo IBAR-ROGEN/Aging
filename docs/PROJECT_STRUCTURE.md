@@ -1,191 +1,88 @@
 # Bioinformatics Project Directory Structure
 
 **Project:** IBAR-ROGEN Aging  
-**Related:** [Code Modules Reference](CODE_MODULES_REFERENCE.md)
+**Navigation:** [WORKFLOWS.md](WORKFLOWS.md) · [ACTIVITIES.md](ACTIVITIES.md) · [FIGURES.md](FIGURES.md)
 
 ## Overview
 
-This document describes the directory layout of the rogen_aging bioinformatics project. The structure separates source code, analysis, data, and documentation to support reproducible workflows while keeping sensitive data out of version control. Small **Vite + React** apps under `components/` and `frontend/` support manuscript figures alongside Python render scripts.
+The structure separates installable Python code (`src/`), grouped CLI scripts (`scripts/`), notebooks, documentation, and git-ignored data. Synthetic fixtures live in `test_data/`; real or large data in `data/`.
 
 ## Top-Level Structure
 
 ```
 rogen_aging/
-├── src/rogen_aging/          # Installable Python package (shared code)
-├── tests/                    # Pytest package smoke / unit tests
-├── scripts/                  # CLI and utility scripts
-├── notebooks/                # Jupyter notebooks by functional area
-├── docs/                     # Documentation
-├── components/               # React/TSX manuscript mockups + Vite capture app
-├── frontend/                 # Vite + React longevity network diagram + capture
-├── analysis/                 # Generated figures and reports (some committed)
-├── test_data/                # Small synthetic/test datasets (versioned)
+├── src/rogen_aging/          # Installable package
+├── scripts/                  # Grouped CLIs (+ flat deprecation shims)
+├── tests/
+├── notebooks/
+├── docs/
+├── components/               # React dashboard figure mockup + Vite capture
+├── frontend/                 # Longevity network diagram + Vite capture
+├── analysis/                 # Committed figure exports (PNG/PDF)
+├── test_data/                # Versioned synthetic fixtures
 ├── data/                     # Large/local data (git-ignored)
-├── results/                  # Pipeline outputs (git-ignored)
-├── outputs/                  # Other outputs (git-ignored)
-├── repo_structure.txt        # Optional snapshot of tracked paths (git ls-files)
-├── pyproject.toml            # Project metadata, deps, build (uv / setuptools)
-├── setup.py                  # Setuptools shim (reads pyproject.toml)
-├── requirements.txt          # Optional pip-style pin list for non-uv workflows
-├── .env.example              # Example environment variables
+├── .github/workflows/        # CI (pytest + UKB audit)
+├── pyproject.toml
 └── README.md
 ```
 
-## Directory Descriptions
-
-### `src/rogen_aging/`
-
-Installable package (`rogen-aging` on the environment path after `uv sync` or `uv pip install -e .`). Shared analysis logic and visualizations.
+## `src/rogen_aging/`
 
 | Path | Purpose |
 |------|---------|
-| `__init__.py` | Public API: re-exports visualization helpers and submodules (`methylation_visualizations`, `network_visualizer`, `pipeline`) |
-| `pipeline/` | Placeholder subpackage for shared pipeline steps (grow as scripts move here) |
-| `methylation_visualizations.py` | Pipeline diagrams, DMR plots, clock validation figures |
-| `network_visualizer.py` | Protein interaction network visualization |
-| `eda_dashboard/` | Streamlit EDA app for merged multi-omics Parquet ([EDA_DASHBOARD.md](EDA_DASHBOARD.md)) |
 | `clock/` | Epigenetic clock train/eval/data ([CLOCK_LIBRARY.md](CLOCK_LIBRARY.md)) |
-| `integration/` | Synthetic UKB join + LA-SNP associations ([UKB_INTEGRATION_PIPELINE.md](UKB_INTEGRATION_PIPELINE.md)) |
+| `ukb/` | LA-SNP manifest, gnomAD compare, mock clinical CSV ([LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md](LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md)) |
+| `vcf/` | Synthetic VCF utilities ([SYNTHETIC_ROMANIAN_VCF_GENERATOR.md](SYNTHETIC_ROMANIAN_VCF_GENERATOR.md)) |
+| `integration/` | Synthetic UKB join + associations ([UKB_INTEGRATION_PIPELINE.md](UKB_INTEGRATION_PIPELINE.md)) |
+| `eda_dashboard/` | Streamlit merged-cohort EDA ([EDA_DASHBOARD.md](EDA_DASHBOARD.md)) |
+| `cli/` | Console entry points (`rogen-clock`, `rogen-ukb-manifest`, …) |
+| `methylation_visualizations.py`, `network_visualizer.py` | Shared visualization helpers |
+| `pipeline/` | Placeholder for shared pipeline steps |
 
-### `tests/`
+## `scripts/`
 
-Pytest tests. Run with `uv run pytest` (install dev extras first: `uv sync --extra dev`). `pyproject.toml` sets `pythonpath = ["src", "scripts"]` so the installable package and repo **`scripts/`** modules (for example `mock_ukb_generator`, `generate_synthetic_romanian_vcf`) import cleanly during tests.
+Grouped by workflow. Flat `scripts/*.py` paths are **deprecation shims** that forward to these folders.
 
-| File | Purpose |
-|------|---------|
-| `test_package_imports.py` | Smoke import of `rogen_aging` |
-| `test_mock_clinical_csv.py` | Synthetic UKB-style tabular generator |
-| `test_synthetic_vcf.py` | Synthetic Romanian cohort VCF generator |
-| `test_ukb_mock_gen.py` | Synthetic UKB-RAP folder (phenotypes + LA-SNP VCF) |
-| `test_clock_regression.py` | Clock refactor regression vs legacy GSE40279 metrics |
-| `test_ukb_integration.py` | Synthetic UKB join + 70-SNP association scan |
+| Folder | Contents |
+|--------|----------|
+| `clock/` | `run_clock.py` (canonical), deprecated `validate_clock.py` / `train_clock_on_gse40279.py`, Romanian demo |
+| `ukb/` | `la_snp_lookup.py`, `compare_af_gnomad.py`, `mock_clinical_csv.py`, `mock_rap_folder.py`, `run_integration.py` |
+| `vcf/` | `generate_synthetic_romanian_vcf.py` |
+| `figures/` | `render_*`, `generate_*` manuscript figure scripts |
+| `alphagenome/` | Sequence comparer + analysis + visualize |
+| `eda/` | Mock epigenetic EDA |
+| `dev/` | `security_check.sh`, `install_pre_commit_hook.sh`, `ukbb_ci_compliance_audit.sh`, R bootstrap, utilities |
 
-### `scripts/`
+Shell wrappers at `scripts/security_check.sh` (etc.) delegate to `scripts/dev/`.
 
-Executable scripts and shell utilities. Run with `uv run scripts/<script>.py` or `./scripts/<script>.sh`.
+## `tests/`
 
-| Script | Purpose |
-|--------|---------|
-| `mock_ukb_generator.py` | Synthetic UK Biobank-style tabular data |
-| `ukb_mock_gen.py` | Synthetic UKB-RAP folder (phenotype CSV + LA-SNP VCF, joinable on `eid`) |
-| `generate_synthetic_romanian_vcf.py` | Streaming synthetic EUR-style cohort VCF v4.2 |
-| `ukb_la_snp_lookup.py` | Offline UKB genotype manifest (Ensembl GRCh38) + 1KG AF extract (cyvcf2; no dx-toolkit) |
-| `compare_af_gnomad.py` | 1KG vs gnomAD v4 NFE allele-frequency comparison (Activity 2.1.8.1) |
-| `run_integration.py` | Synthetic UKB phenotype–genotype join + LA-SNP associations (Activity 2.1.11.1) |
-| `run_clock.py` | Unified epigenetic clock train/evaluate CLI |
-| `render_longevity_network_diagram.py` | Matplotlib twin of `frontend` longevity network TSX |
-| `render_figure1c_mechanisms_network.py` | Figure 1C mechanisms network (networkx + matplotlib; PNG/PDF) |
-| `generate_la_snp_per_gene_plot.py` | Supplementary horizontal bar chart: unique LA-SNPs per gene from Excel (`Gene` / `SNP_rsID`; optional column flags) |
-| `generate_network_fig.py` | Activity 2.1.7.1 hub-and-spoke LA-SNP network by functional pathway (networkx + matplotlib; PNG/PDF) |
-| `render_dashboard_figure_mockup.py` | Matplotlib twin of `components/DashboardFigureMockup.tsx` |
-| `bootstrap_r_env.sh` | Optional micromamba R base under `.r-env/` |
-| `security_check.sh` | UK Biobank pre-commit security scan |
-| `install_pre_commit_hook.sh` | Install Git pre-commit hook |
-| `alphagenome_sequence_comparer.py` | AlphaGenome API batch submission |
-| `analyze_alphagenome_results.py` | Process AlphaGenome outputs |
-| `visualize_alphagenome_results.py` | AlphaGenome visualizations |
-| `generate_*.py` | Figure generation (pipeline, heatmaps, agent schema, etc.) |
-| `run_clock.py` | Unified epigenetic clock `train` / `evaluate` CLI (`rogen_aging.clock`; see CLOCK_LIBRARY.md) |
-| `run_integration.py` | Synthetic UKB phenotype–genotype integrative validation (see UKB_INTEGRATION_PIPELINE.md) |
-| `train_clock_on_gse40279.py` | GSE40279-style clock training wrapper (see GSE40279_CLOCK_TRAINING.md) |
-| `train_romanian_epigenetic_clock.py` | Romanian mock cohort clock demo (see ROMANIAN_EPIGENETIC_CLOCK.md) |
-| `validate_clock.py` | Held-out epigenetic clock validation wrapper (see ROMANIAN_EPIGENETIC_CLOCK.md) |
+Run with `uv run pytest` after `uv sync --extra dev`. Imports use `rogen_aging.*` only (no `scripts/` on `pythonpath`).
 
-### `notebooks/`
-
-Jupyter notebooks grouped by analysis type. Run with `uv run jupyter lab`.
-
-| Folder | Purpose |
-|--------|---------|
-| `01_genomics_analysis/` | AlphaGenome, gene lists, network analysis |
-| `02_methylation_pipeline/` | Methylation downstream analysis, clocks |
-| `03_validation_and_compliance/` | UKB compliance auditor, validations |
-| `04_exploratory_visualizations/` | Publication figures, exploratory plots |
-| `05_ukb_exploration/` | UKB LA-SNP manifest sanity checks (`UKB_LA_SNP_FirstContact.ipynb`) before extraction |
-
-### `docs/`
-
-Project documentation (Markdown).
+## `docs/`
 
 | Document | Purpose |
 |----------|---------|
-| `PROJECT_STRUCTURE.md` | This file — directory layout |
-| `CODE_MODULES_REFERENCE.md` | Code-level reference |
-| `UKB_PRE_COMMIT_HOOK.md` | Pre-commit security hook |
-| `UKB_COMPLIANCE_AUDITOR.md` | UKB compliance tool |
-| `SYNTHETIC_UKB_GENERATOR.md` | Mock tabular data generator |
-| `SYNTHETIC_UKB_RAP_GENERATOR.md` | Mock UKB-RAP folder generator (`ukb_mock_gen.py`) |
-| `METHYLATION_PIPELINE_*.md` | Methylation pipeline usage |
-| `CLOCK_LIBRARY.md` | `rogen_aging.clock` package and `run_clock.py` CLI |
-| `GSE40279_CLOCK_TRAINING.md` | GSE40279 / Hannum-style wide-table Elastic Net training |
-| `UKB_INTEGRATION_PIPELINE.md` | Synthetic UKB phenotype–genotype join + LA-SNP associations (Activity 2.1.11.1) |
-| `LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md` | LA-SNP manifest, 1KG extract, gnomAD comparison |
-| `ALPHAGENOME_ANALYSIS_EXPLANATION.md` | AlphaGenome methodology |
+| [WORKFLOWS.md](WORKFLOWS.md) | Workflow index and console commands |
+| [ACTIVITIES.md](ACTIVITIES.md) | Activity ID → code map |
+| [FIGURES.md](FIGURES.md) | Manuscript figure assets |
+| [CODE_MODULES_REFERENCE.md](CODE_MODULES_REFERENCE.md) | Package and CLI reference |
+| Per-topic guides | Clock, UKB, methylation, compliance, … |
 
-### `components/` and `frontend/`
-
-TypeScript/React **manuscript figure** utilities (not the Streamlit EDA app). Each folder is a small **Vite** project: install with `npm install`, develop with `npm run dev`, and (where provided) export PNG via Playwright (`npm run capture` or `node scripts/capture*.mjs`). Python scripts under `scripts/render_*.py` produce matplotlib equivalents for CI and paper workflows without Node.
-
-| Path | Purpose |
-|------|---------|
-| `components/DashboardFigureMockup.tsx` | Wide multi-panel dashboard mockup for figures |
-| `components/dashboard-figure-render/` | Vite wrapper + capture script for the dashboard mockup |
-| `frontend/src/components/LongevityNetworkDiagram.tsx` | Longevity conceptual network diagram |
-| `frontend/scripts/capture-diagram.mjs` | Headless PNG export for the longevity diagram |
-
-### `analysis/`
-
-Generated figures, reports, and downstream outputs. Some publication-ready PNG/PDF assets are versioned; large or sensitive outputs should stay git-ignored.
-
-| Subfolder / file (examples) | Purpose |
-|-----------------------------|---------|
-| `Figure1C_Mechanisms.*` | LA-SNP mechanisms panel from `render_figure1c_mechanisms_network.py` |
-| `Fig_LA_SNPs_per_gene.png` | LA-SNPs per gene (overlap Excel) from `generate_la_snp_per_gene_plot.py` |
-| `Fig_LA_SNP_network.png` / `.pdf` | LA-SNP pathway network (overlap Excel) from `generate_network_fig.py` |
-| `dashboard_figure_mockup.png` | Dashboard mockup from `render_dashboard_figure_mockup.py` |
-| `methylation/` | Methylation pipeline outputs |
-| `aging_related_datasets/` | Aging dataset search results |
-
-### `test_data/`
-
-Small synthetic datasets suitable for version control and CI.
-
-| File | Purpose |
-|------|---------|
-| `mock_clinical_data.csv` | Synthetic UK Biobank-style clinical data (Sample_ID, Age, Sex, BMI, AD_diagnosis, EAA, dummy SNPs); regenerate with `mock_ukb_generator.py` if the schema changes |
-| `gb-2013-14-10-r115-S3.csv` | Example/public dataset |
-
-### `data/` (git-ignored)
-
-Large or sensitive data. Not committed.
-
-- `raw/` — Raw sequencing data
-- `processed/` — Processed intermediate files
-- `fasta/` — Reference genomes, etc.
-
-Place Supplementary tables, longevitymap.sqlite, and similar files here.
-
-### `results/`, `outputs/` (git-ignored)
-
-Pipeline outputs and exported results. Kept local only.
-
-## Data Flow Principles
+## Data flow
 
 1. **Sensitive data** → `data/` (git-ignored)
-2. **Synthetic/mock data** → `test_data/` (versioned; safe for GitHub)
-3. **Generated outputs** → `analysis/`, `results/`, `outputs/` (typically git-ignored)
-4. **No real UK Biobank data** — Use `mock_ukb_generator.py` or `ukb_mock_gen.py` for pipeline development.
+2. **Synthetic fixtures** → `test_data/` (versioned)
+3. **Figure exports** → `analysis/` (selected PNG/PDF committed)
+4. **No real UKB data** — use `rogen-ukb-mock-clinical` / `scripts/ukb/mock_rap_folder.py`
 
 ## Configuration
 
 | File | Purpose |
 |------|---------|
-| `pyproject.toml` | Dependencies, Python version (≥3.12), `[build-system]` for setuptools, optional `dev` extra (pytest) |
-| `setup.py` | Thin `setuptools.setup()` entry point; metadata lives in `pyproject.toml` |
-| `requirements.txt` | Loose lower bounds for core bioinformatics tools; prefer `uv sync` for the full graph |
-| `.env` | API keys, local paths (git-ignored; copy from `.env.example`) |
-| `.gitignore` | Excludes `data/`, `results/`, `outputs/`, most `.csv`, `.vcf`, `.bed` |
+| `pyproject.toml` | Dependencies, `[project.scripts]` console entry points, pytest |
+| `.env` | API keys (git-ignored; copy from `.env.example`) |
 
 ---
 
-**Last Updated:** May 1, 2026
+**Last updated:** May 31, 2026
