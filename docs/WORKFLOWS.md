@@ -25,6 +25,7 @@ Install the Git pre-commit hook (UKB data protection):
 | `rogen-clock train …` / `rogen-clock evaluate …` | Epigenetic clock train & validation ([CLOCK_LIBRARY.md](CLOCK_LIBRARY.md)) |
 | `rogen-ukb-manifest build …` / `… extract …` | LA-SNP manifest + 1KG AF ([LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md](LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md)) |
 | `rogen-compare-af-gnomad …` | 1KG vs gnomAD v4 NFE ([LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md](LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md)) |
+| `rogen-compare-af-gnomad summarize …` | Markdown summary + top-|ΔAF| table from comparison CSV |
 | `rogen-ukb-mock-clinical …` | Synthetic clinical CSV ([SYNTHETIC_UKB_GENERATOR.md](SYNTHETIC_UKB_GENERATOR.md)) |
 | `rogen-ukb-mock-rap …` | Synthetic UKB-RAP folder (phenotypes + LA-SNP VCF) ([SYNTHETIC_UKB_RAP_GENERATOR.md](SYNTHETIC_UKB_RAP_GENERATOR.md)) |
 | `rogen-ukb-integrate …` | Mock phenotype–genotype join + LA-SNP associations ([UKB_INTEGRATION_PIPELINE.md](UKB_INTEGRATION_PIPELINE.md)) |

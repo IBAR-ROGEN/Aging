@@ -92,6 +92,30 @@ uv run rogen-compare-af-gnomad \
 | `analysis/af_1kg_vs_gnomad_scatter.png` | Scatter with identity line; large-diff points highlighted |
 | Log / stderr | Lists rsIDs missing from gnomAD or lacking NFE AF |
 
+## Step 4 — Summarize for reporting (optional)
+
+Turn the comparison CSV into a manuscript-ready Markdown paragraph and a top-|ΔAF| table:
+
+```bash
+uv run rogen-compare-af-gnomad summarize \
+  --input analysis/la_snp_af_1kg_vs_gnomad.csv \
+  --output analysis/af_comparison_summary.md
+```
+
+Dev helper (same logic):
+
+```bash
+uv run python scripts/dev/summarize_af_comparison.py \
+  --input analysis/la_snp_af_1kg_vs_gnomad.csv \
+  --output analysis/af_comparison_summary.md
+```
+
+| Artifact | Description |
+|----------|-------------|
+| `analysis/af_comparison_summary.md` | Headline concordance stats (paired SNPs, concordant vs discordant at \|ΔAF\| &lt; 0.05) plus top five discordant loci |
+
+**Tests:** `tests/test_af_comparison_summary.py`.
+
 ## Typical workflow diagram
 
 ```
@@ -106,6 +130,9 @@ analysis/la_snp_1kg_frequencies.csv
         ▼  rogen-compare-af-gnomad (gnomAD GraphQL + cache)
 analysis/la_snp_af_1kg_vs_gnomad.csv
 analysis/af_1kg_vs_gnomad_scatter.png
+        │
+        ▼  rogen-compare-af-gnomad summarize (optional)
+analysis/af_comparison_summary.md
 ```
 
 After validation, proceed to synthetic UKB-RAP generation or real UKB extraction planning — see [Synthetic UKB-RAP Generator](SYNTHETIC_UKB_RAP_GENERATOR.md).

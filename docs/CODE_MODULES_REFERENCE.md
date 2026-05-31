@@ -25,7 +25,7 @@ This document summarizes installable modules and CLI entry points. Per-file inve
 |---------|--------|
 | `rogen-clock` | `rogen_aging.cli.clock` |
 | `rogen-ukb-manifest` | `rogen_aging.cli.ukb_manifest` → `ukb.manifest` |
-| `rogen-compare-af-gnomad` | `rogen_aging.cli.compare_af_gnomad` → `ukb.gnomad` |
+| `rogen-compare-af-gnomad` | `rogen_aging.cli.compare_af_gnomad` → `ukb.gnomad` (`compare` + `summarize` subcommands) |
 | `rogen-ukb-mock-clinical` | `rogen_aging.cli.ukb_mock_clinical` |
 | `rogen-ukb-mock-rap` | `rogen_aging.cli.ukb_mock_rap` |
 | `rogen-ukb-integrate` | `rogen_aging.cli.ukb_integrate` → `integration.run_cli` |

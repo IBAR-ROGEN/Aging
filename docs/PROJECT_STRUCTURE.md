@@ -51,7 +51,7 @@ Grouped by workflow. Flat `scripts/*.py` paths are **deprecation shims** that fo
 | `figures/` | `render_*`, `generate_*` manuscript figure scripts |
 | `alphagenome/` | Sequence comparer + analysis + visualize |
 | `eda/` | Mock epigenetic EDA |
-| `dev/` | `security_check.sh`, `install_pre_commit_hook.sh`, `ukbb_ci_compliance_audit.sh`, R bootstrap, utilities |
+| `dev/` | `security_check.sh`, `install_pre_commit_hook.sh`, `summarize_af_comparison.py`, R bootstrap, utilities |
 
 Shell wrappers at `scripts/security_check.sh` (etc.) delegate to `scripts/dev/`.
 
@@ -67,6 +67,7 @@ Run with `uv run pytest` after `uv sync --extra dev`. Imports use `rogen_aging.*
 | [ACTIVITIES.md](ACTIVITIES.md) | Activity ID → code map |
 | [FIGURES.md](FIGURES.md) | Manuscript figure assets |
 | [CODE_MODULES_REFERENCE.md](CODE_MODULES_REFERENCE.md) | Package and CLI reference |
+| [LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md](LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md) | LA-SNP manifest, 1KG extract, gnomAD compare + summarize |
 | Per-topic guides | Clock, UKB, methylation, compliance, … |
 
 ## Data flow
