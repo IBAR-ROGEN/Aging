@@ -73,6 +73,7 @@ analysis/vep_cache/
 analysis/vep_annotation/
 analysis/gtex_cache/
 analysis/gtex_annotation/
+analysis/results/cache/
 analysis/validation_gse87571/
 analysis/gse40279_train_metrics.json
 

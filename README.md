@@ -101,6 +101,18 @@ uv run rogen-ukb-mock-rap --n-samples 1000 --output-dir test_data/mock_ukb_rap/
 uv run rogen-ukb-integrate --output-dir analysis/
 ```
 
+### Genomics validation (GRCh38)
+
+```bash
+uv run python analysis/validate_genomics_tables/validate_genomics_tables.py \
+  --input overlapping_genes_with_snps.xlsx --output-dir results
+uv run python analysis/overlap_enrichment/run_overlap_enrichment.py --output-dir results
+uv run python analysis/variant_functional_annotation/run_variant_functional_annotation.py \
+  --input results/snps_validated.csv --output-dir results
+```
+
+See [docs/GENOMICS_ANALYSIS.md](docs/GENOMICS_ANALYSIS.md).
+
 ### Figures and annotation scripts
 
 ```bash
@@ -122,6 +134,7 @@ Flat paths such as `plot_clock_eval.py`, `plot_af_comparison.py`, `annotate_la_s
 | Code reference | [docs/CODE_MODULES_REFERENCE.md](docs/CODE_MODULES_REFERENCE.md) |
 | Directory layout | [docs/PROJECT_STRUCTURE.md](docs/PROJECT_STRUCTURE.md) |
 | Manuscript figures | [docs/FIGURES.md](docs/FIGURES.md) |
+| Genomics validation pipeline | [docs/GENOMICS_ANALYSIS.md](docs/GENOMICS_ANALYSIS.md) |
 | LA-SNP VEP / GTEx annotation | [docs/LA_SNP_VEP_ANNOTATION.md](docs/LA_SNP_VEP_ANNOTATION.md) · [docs/LA_SNP_GTEX_ANNOTATION.md](docs/LA_SNP_GTEX_ANNOTATION.md) |
 | Epigenetic clock | [docs/CLOCK_LIBRARY.md](docs/CLOCK_LIBRARY.md) · [eval figure](docs/CLOCK_EVAL_FIGURES.md) |
 | LA-SNP public AF validation | [docs/LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md](docs/LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md) · [comparison figure](docs/AF_COMPARISON_FIGURES.md) |

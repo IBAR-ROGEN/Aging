@@ -58,6 +58,18 @@ Grouped by workflow. Flat `scripts/*.py` paths are **deprecation shims** that fo
 
 Shell wrappers at `scripts/security_check.sh` (etc.) delegate to `scripts/dev/`.
 
+## `analysis/` (genomics validation)
+
+GRCh38/hg38 pipelines for manuscript table audit and LA-SNP functional classification.
+See [GENOMICS_ANALYSIS.md](GENOMICS_ANALYSIS.md).
+
+| Path | Script | Outputs (default: `results/`) |
+|------|--------|-------------------------------|
+| `validate_genomics_tables/` | `validate_genomics_tables.py` | `validation_report.md`, `snps_validated.csv` |
+| `overlap_enrichment/` | `run_overlap_enrichment.py` | `overlap_enrichment.md`, `overlap_enrichment_stats.csv` |
+| `variant_functional_annotation/` | `run_variant_functional_annotation.py` | `variant_functional_annotation.csv`, `coding_vs_noncoding_summary.md` |
+| `genomics/` | — | Index README linking the three modules above |
+
 ## `tests/`
 
 Run with `uv run pytest` after `uv sync --extra dev`. Imports use `rogen_aging.*` only (no `scripts/` on `pythonpath`).

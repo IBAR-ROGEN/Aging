@@ -10,6 +10,9 @@ Maps IBAR-ROGEN activity IDs to console entry points, source modules, outputs, a
 | **2.1.7.1** | LA-SNP VEP functional consequences (manuscript) | `scripts/ukb/annotate_la_snps_vep.py` | — (repo script) | [LA_SNP_VEP_ANNOTATION.md](LA_SNP_VEP_ANNOTATION.md) |
 | **2.1.7.1** | LA-SNP GTEx eQTL annotation (manuscript) | `scripts/ukb/annotate_la_snps_gtex.py` | — (repo script) | [LA_SNP_GTEX_ANNOTATION.md](LA_SNP_GTEX_ANNOTATION.md) |
 | **2.1.7.1** | LA-SNP pathway network figure | `scripts/figures/generate_network_fig.py` | — | [FIGURES.md](FIGURES.md) |
+| **2.1.7.2** | Genomics table validation (GRCh38) | `analysis/validate_genomics_tables/validate_genomics_tables.py` | — (repo script) | [GENOMICS_ANALYSIS.md](GENOMICS_ANALYSIS.md) |
+| **2.1.7.3** | Cluster ∩ LongevityMap overlap enrichment | `analysis/overlap_enrichment/run_overlap_enrichment.py` | — (repo script) | [GENOMICS_ANALYSIS.md](GENOMICS_ANALYSIS.md) |
+| **2.1.7.4** | Variant functional annotation (coding vs regulatory) | `analysis/variant_functional_annotation/run_variant_functional_annotation.py` | — (repo script) | [GENOMICS_ANALYSIS.md](GENOMICS_ANALYSIS.md) |
 | **2.1.8.1** | Methylation calling pipeline (ONT) | `scripts/dev/pipeline_validation.sh`, `scripts/dev/downstream_analysis.R` | `rogen_aging.methylation_visualizations` | [METHYLATION_PIPELINE_README.md](METHYLATION_PIPELINE_README.md) |
 | **2.1.8.1** | LA-SNP manifest + public AF validation | `rogen-ukb-manifest`, `rogen-compare-af-gnomad` | `rogen_aging.ukb.manifest`, `rogen_aging.ukb.gnomad` | [LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md](LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md) |
 | **2.1.8.1** | Synthetic UKB-RAP mock folder | `rogen-ukb-mock-rap` | `rogen_aging.ukb.mock_rap`, `rogen_aging.vcf` | [SYNTHETIC_UKB_RAP_GENERATOR.md](SYNTHETIC_UKB_RAP_GENERATOR.md) |
@@ -65,6 +68,42 @@ Maps IBAR-ROGEN activity IDs to console entry points, source modules, outputs, a
 | **Source modules** | `scripts/figures/generate_network_fig.py` (networkx + matplotlib) |
 | **Output files** | `analysis/Fig_LA_SNP_network.png`, `analysis/Fig_LA_SNP_network.pdf` (committed snapshots; regenerate under `figures/` — see [FIGURES.md](FIGURES.md)) |
 | **Documentation** | [FIGURES.md](FIGURES.md) |
+
+### 2.1.7.2 — Genomics table validation (GRCh38)
+
+**Title:** Independent recomputation of manuscript genomics table counts and legacy SNP alias resolution.
+
+| | |
+|---|---|
+| **Console entry points** | `uv run python analysis/validate_genomics_tables/validate_genomics_tables.py` |
+| **Source modules** | `analysis/validate_genomics_tables/validate_genomics_tables.py` |
+| **Input files** | `overlapping_genes_with_snps.xlsx` · optional `data/Supplementary Table 3.xlsx` |
+| **Output files** | `results/validation_report.md` · `results/snps_validated.csv` · cache under `results/cache/` |
+| **Documentation** | [GENOMICS_ANALYSIS.md](GENOMICS_ANALYSIS.md) |
+
+### 2.1.7.3 — Cluster ∩ LongevityMap overlap enrichment
+
+**Title:** Fisher/hypergeometric test of AD/PD cluster genes vs LongevityMap longevity genes.
+
+| | |
+|---|---|
+| **Console entry points** | `uv run python analysis/overlap_enrichment/run_overlap_enrichment.py` |
+| **Source modules** | `analysis/overlap_enrichment/run_overlap_enrichment.py` |
+| **Input files** | `data/Supplementary Table 3.xlsx` · `data/longevitymap.sqlite` · `results/snps_validated.csv` |
+| **Output files** | `results/overlap_enrichment.md` · `results/overlap_enrichment_stats.csv` |
+| **Documentation** | [GENOMICS_ANALYSIS.md](GENOMICS_ANALYSIS.md) |
+
+### 2.1.7.4 — Variant functional annotation (coding vs regulatory)
+
+**Title:** VEP + AlphaMissense + GWAS annotation; AlphaGenome interpretability split.
+
+| | |
+|---|---|
+| **Console entry points** | `uv run python analysis/variant_functional_annotation/run_variant_functional_annotation.py` |
+| **Source modules** | `analysis/variant_functional_annotation/run_variant_functional_annotation.py` |
+| **Input files** | `results/snps_validated.csv` |
+| **Output files** | `results/variant_functional_annotation.csv` · `results/coding_vs_noncoding_summary.md` · cache under `results/cache/variant_annotation/` |
+| **Documentation** | [GENOMICS_ANALYSIS.md](GENOMICS_ANALYSIS.md) |
 
 ---
 

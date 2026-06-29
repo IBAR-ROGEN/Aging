@@ -42,6 +42,7 @@ See [ACTIVITIES.md](ACTIVITIES.md) for the full tree. Highlights:
 - **`scripts/ukb/`** — manifest, gnomAD, VEP + GTEx annotation, mock generators, integration
 - **`scripts/figures/`** — matplotlib/networkx renders + `plot_clock_eval.py` ([FIGURES.md](FIGURES.md)); flat `scripts/generate_*.py` shims forward here
 - **`scripts/alphagenome/`** — AlphaGenome batch + analysis (tables → `analysis/alphagenome/`, plots → `figures/alphagenome/`)
+- **`analysis/validate_genomics_tables/`**, **`analysis/overlap_enrichment/`**, **`analysis/variant_functional_annotation/`** — GRCh38 genomics validation ([GENOMICS_ANALYSIS.md](GENOMICS_ANALYSIS.md); index: [analysis/genomics/README.md](../analysis/genomics/README.md))
 - **`scripts/dev/`** — `security_check.sh`, CI audit, ONT pipeline validation, R bootstrap, `find_r.sh`
 
 ## Root-level shims (deprecated)
@@ -67,7 +68,7 @@ See [ACTIVITIES.md](ACTIVITIES.md) for the full tree. Highlights:
 
 | Folder | Focus |
 |--------|-------|
-| `01_genomics_analysis/` | AlphaGenome, gene lists |
+| `01_genomics_analysis/` | AlphaGenome, gene lists, GRCh38 validation pipelines |
 | `02_methylation_pipeline/` | Methylation downstream |
 | `03_validation_and_compliance/` | UKB compliance |
 | `04_exploratory_visualizations/` | Publication figures |

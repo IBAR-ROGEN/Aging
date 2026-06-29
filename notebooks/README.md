@@ -5,9 +5,18 @@ This directory contains Jupyter notebooks for the ROGEN Aging Research project, 
 ## Directory Structure
 
 ### `01_genomics_analysis/`
-Notebooks focused on genomic data analysis, gene list exploration, and network analysis.
+Notebooks and scripts for genomic data analysis, gene list exploration, and LA-SNP validation.
 - **AlphaGenome.ipynb**: Comprehensive analysis of AD/PD gene lists using the AlphaGenome API.
 - **AlphaGenome_updated.ipynb**: Updated version with enhanced network visualizations.
+
+Deterministic validation pipelines (GRCh38/hg38) live under `analysis/` — see
+[docs/GENOMICS_ANALYSIS.md](../docs/GENOMICS_ANALYSIS.md):
+
+| Module | Script |
+|--------|--------|
+| Table validation | `analysis/validate_genomics_tables/validate_genomics_tables.py` |
+| Overlap enrichment | `analysis/overlap_enrichment/run_overlap_enrichment.py` |
+| Variant annotation | `analysis/variant_functional_annotation/run_variant_functional_annotation.py` |
 
 ### `02_methylation_pipeline/`
 Notebooks for processing and analyzing DNA methylation data from Oxford Nanopore sequencing.

@@ -103,6 +103,21 @@ uv run python scripts/ukb/annotate_la_snps_gtex.py
 
 See [LA_SNP_GTEX_ANNOTATION.md](LA_SNP_GTEX_ANNOTATION.md).
 
+### Genomics validation pipeline (Activities 2.1.7.2–2.1.7.4)
+
+Table validation, LongevityMap overlap enrichment, and variant functional annotation
+(GRCh38/hg38). Outputs → `results/`.
+
+```bash
+uv run python analysis/validate_genomics_tables/validate_genomics_tables.py \
+  --input overlapping_genes_with_snps.xlsx --output-dir results
+uv run python analysis/overlap_enrichment/run_overlap_enrichment.py --output-dir results
+uv run python analysis/variant_functional_annotation/run_variant_functional_annotation.py \
+  --input results/snps_validated.csv --output-dir results
+```
+
+See [GENOMICS_ANALYSIS.md](GENOMICS_ANALYSIS.md) · module index: [analysis/genomics/README.md](../analysis/genomics/README.md).
+
 ### Manuscript figures
 
 Canonical renders live under **`scripts/figures/`** (flat `scripts/render_*.py` / `scripts/generate_*.py` are deprecation shims). Default output: **`figures/`**.
