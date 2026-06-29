@@ -12,11 +12,12 @@ This document summarizes installable modules and CLI entry points. Per-file inve
 | `ukb/manifest.py` | Ensembl manifest build + 1KG VCF extract |
 | `ukb/gnomad.py` | 1KG vs gnomAD v4 NFE comparison |
 | `ukb/mock_clinical.py` | Synthetic clinical CSV generator |
+| `ukb/mock_rap.py` | Synthetic UKB-RAP phenotype + LA-SNP VCF folder |
 | `integration/ukb_joiner.py` | Mock phenotype–genotype join + LA-SNP associations |
 | `vcf/synthetic.py` | Streaming synthetic VCF (Hardy–Weinberg, GRCh38) |
 | `eda_dashboard/` | Streamlit multi-omics EDA — [EDA_DASHBOARD.md](EDA_DASHBOARD.md) |
 | `cli/` | Console entry points wired in `pyproject.toml` |
-| `methylation_visualizations.py` | Pipeline / DMR / clock validation plots |
+| `methylation_visualizations.py` | Pipeline / DMR / clock validation plots (default output: `figures/`) |
 | `network_visualizer.py` | Protein interaction networks |
 
 ## Console entry points
@@ -38,18 +39,27 @@ This document summarizes installable modules and CLI entry points. Per-file inve
 
 See [ACTIVITIES.md](ACTIVITIES.md) for the full tree. Highlights:
 
-- **`scripts/ukb/`** — manifest, gnomAD, mock generators, integration
-- **`scripts/figures/`** — eleven matplotlib/networkx render scripts ([FIGURES.md](FIGURES.md)); flat `scripts/generate_*.py` shims forward here
-- **`scripts/alphagenome/`** — AlphaGenome batch + analysis
-- **`scripts/dev/`** — `security_check.sh`, CI audit, R bootstrap
+- **`scripts/ukb/`** — manifest, gnomAD, VEP annotation, mock generators, integration
+- **`scripts/figures/`** — matplotlib/networkx renders + `plot_clock_eval.py` ([FIGURES.md](FIGURES.md)); flat `scripts/generate_*.py` shims forward here
+- **`scripts/alphagenome/`** — AlphaGenome batch + analysis (tables → `analysis/alphagenome/`, plots → `figures/alphagenome/`)
+- **`scripts/dev/`** — `security_check.sh`, CI audit, ONT pipeline validation, R bootstrap, `find_r.sh`
 
-## Root-level non-Python
+## Root-level shims (deprecated)
+
+| Shim | Forwards to |
+|------|-------------|
+| `annotate_la_snps_vep.py` | `scripts/ukb/annotate_la_snps_vep.py` |
+| `plot_clock_eval.py` | `scripts/figures/plot_clock_eval.py` |
+| `pipeline_validation.sh` | `scripts/dev/pipeline_validation.sh` |
+| `find_r.sh` | `scripts/dev/find_r.sh` |
+
+## Root-level non-Python (canonical under `scripts/dev/`)
 
 | File | Purpose |
 |------|---------|
-| `pipeline_validation.sh` | ONT methylation pipeline validation |
-| `downstream_analysis.R` | DMRcaller downstream workflow |
-| `find_r.sh` | Locate R for IDE setup |
+| `scripts/dev/pipeline_validation.sh` | ONT methylation pipeline validation |
+| `scripts/dev/downstream_analysis.R` | DMRcaller downstream workflow |
+| `scripts/dev/find_r.sh` | Locate R for IDE setup |
 
 ## Notebooks
 
@@ -66,8 +76,8 @@ See [ACTIVITIES.md](ACTIVITIES.md) for the full tree. Highlights:
 | Path | Role |
 |------|------|
 | `components/DashboardFigureMockup.tsx` | Dashboard manuscript mockup |
-| `components/dashboard-figure-render/` | Vite + Playwright capture |
-| `frontend/` | Longevity network diagram + capture |
+| `components/dashboard-figure-render/` | Vite + Playwright capture → `figures/dashboard_figure_mockup.png` |
+| `frontend/` | Longevity network diagram + capture → `figures/longevity_network_diagram.png` |
 
 ## Tests
 
@@ -82,4 +92,4 @@ See [ACTIVITIES.md](ACTIVITIES.md) for the full tree. Highlights:
 
 ---
 
-**Last updated:** May 31, 2026
+**Last updated:** June 29, 2026

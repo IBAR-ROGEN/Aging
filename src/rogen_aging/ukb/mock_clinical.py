@@ -26,7 +26,7 @@ def generate_synthetic_ukb_data(
     snp_maf: float = 0.2,
     seed: int | None = 42,
 ) -> pd.DataFrame:
-    """Generate synthetic UK Biobank-style tabular data."""
+    """Generate a synthetic UK Biobank-style clinical table with mock SNP genotypes."""
     rng = np.random.default_rng(seed)
     sample_ids = [f"MOCK_{i:08d}" for i in range(1, n_samples + 1)]
     age = rng.integers(min_age, max_age + 1, size=n_samples)

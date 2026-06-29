@@ -21,10 +21,10 @@ def create_pipeline_diagram(output_path: Optional[str] = None) -> None:
     """Create a professional pipeline diagram for scientific reports.
     
     Args:
-        output_path: Path to save the diagram. If None, saves to analysis/ directory.
+        output_path: Path to save the diagram. If None, saves to ``figures/`` directory.
     """
     if output_path is None:
-        output_dir = Path(__file__).parent.parent.parent / "analysis"
+        output_dir = Path(__file__).parent.parent.parent / "figures"
         output_dir.mkdir(exist_ok=True)
         output_path = output_dir / "Bioinformatics_Pipeline_Diagram.png"
     else:

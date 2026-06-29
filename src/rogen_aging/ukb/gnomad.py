@@ -12,7 +12,7 @@ Example:
     uv run rogen-compare-af-gnomad \\
         --input analysis/la_snp_1kg_frequencies.csv \\
         --output analysis/la_snp_af_1kg_vs_gnomad.csv \\
-        --scatter analysis/af_1kg_vs_gnomad_scatter.png
+        --scatter figures/af_1kg_vs_gnomad_scatter.png
 
     uv run rogen-compare-af-gnomad summarize \\
         --input analysis/la_snp_af_1kg_vs_gnomad.csv \\
@@ -38,7 +38,7 @@ import requests
 REPO_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_INPUT = REPO_ROOT / "analysis" / "la_snp_1kg_frequencies.csv"
 DEFAULT_OUTPUT = REPO_ROOT / "analysis" / "la_snp_af_1kg_vs_gnomad.csv"
-DEFAULT_SCATTER = REPO_ROOT / "analysis" / "af_1kg_vs_gnomad_scatter.png"
+DEFAULT_SCATTER = REPO_ROOT / "figures" / "af_1kg_vs_gnomad_scatter.png"
 DEFAULT_SUMMARY = REPO_ROOT / "analysis" / "af_comparison_summary.md"
 DEFAULT_CACHE = REPO_ROOT / "data" / "geo" / "gnomad_r4_nfe_cache.json"
 
@@ -132,6 +132,7 @@ def parse_summarize_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 
 def normalize_chromosome_label(chromosome: str) -> str:
+    """Normalise a chromosome label for gnomAD variant IDs (strip ``chr``, map MT)."""
     label = str(chromosome).strip()
     if label.upper().startswith("CHR"):
         label = label[3:]
@@ -145,6 +146,7 @@ def normalize_chromosome_label(chromosome: str) -> str:
 
 
 def normalize_rsid(rsid: str) -> str:
+    """Ensure an rsID string has an ``rs`` prefix."""
     value = str(rsid).strip()
     if not value:
         return ""
@@ -152,10 +154,12 @@ def normalize_rsid(rsid: str) -> str:
 
 
 def to_gnomad_variant_id(chromosome: str, position: int, ref: str, alt: str) -> str:
+    """Build a gnomAD-style variant ID ``CHROM-POS-REF-ALT``."""
     return f"{normalize_chromosome_label(chromosome)}-{position}-{ref}-{alt}"
 
 
 def read_1kg_frequencies(path: Path) -> pd.DataFrame:
+    """Load the 1KG allele-frequency table produced by ``rogen-ukb-manifest extract``."""
     df = pd.read_csv(path)
     required = {"rsID", "AF"}
     missing = required - set(df.columns)
@@ -165,6 +169,7 @@ def read_1kg_frequencies(path: Path) -> pd.DataFrame:
 
 
 def load_cache(path: Path) -> dict[str, dict[str, Any]]:
+    """Load a gnomAD GraphQL response cache from JSON, or return an empty dict."""
     if not path.is_file():
         return {}
     payload = json.loads(path.read_text(encoding="utf-8"))
@@ -174,11 +179,13 @@ def load_cache(path: Path) -> dict[str, dict[str, Any]]:
 
 
 def save_cache(path: Path, cache: dict[str, dict[str, Any]]) -> None:
+    """Persist the gnomAD GraphQL response cache as formatted JSON."""
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(cache, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
 def population_nfe_af(variant: dict[str, Any] | None) -> float | None:
+    """Extract the non-Finnish European allele frequency from a gnomAD variant payload."""
     if not variant:
         return None
     for source in ("joint", "exome", "genome"):
@@ -344,6 +351,8 @@ class GnomadClient:
 
 @dataclass
 class LookupPlan:
+    """One LA-SNP row scheduled for a gnomAD allele-frequency lookup."""
+
     rsid: str
     af_1kg: float | None
     variant_id: str | None
@@ -354,6 +363,7 @@ class LookupPlan:
 
 
 def build_lookup_plans(df: pd.DataFrame) -> list[LookupPlan]:
+    """Build gnomAD lookup plans from a 1KG frequency table with optional coordinates."""
     plans: list[LookupPlan] = []
     for _, row in df.iterrows():
         rsid = normalize_rsid(row["rsID"]) if pd.notna(row["rsID"]) else ""
@@ -395,6 +405,7 @@ def fetch_gnomad_afs(
     batch_size: int,
     client: GnomadClient,
 ) -> dict[str, dict[str, Any]]:
+    """Fetch gnomAD allele frequencies for lookup plans, using and updating ``cache_path``."""
     cache = {} if refresh_cache else load_cache(cache_path)
     pending_variant_ids: dict[str, list[LookupPlan]] = {}
     pending_regions: dict[str, LookupPlan] = {}
@@ -446,6 +457,7 @@ def fetch_gnomad_afs(
 
 
 def build_comparison_table(plans: list[LookupPlan], cache: dict[str, dict[str, Any]]) -> pd.DataFrame:
+    """Merge lookup plans with cached gnomAD responses into a comparison table."""
     rows: list[dict[str, Any]] = []
     for plan in plans:
         cached = cache.get(plan.rsid, {})
@@ -470,6 +482,7 @@ def build_comparison_table(plans: list[LookupPlan], cache: dict[str, dict[str, A
 
 
 def plot_scatter(comparison: pd.DataFrame, output_path: Path) -> None:
+    """Write a 1KG vs gnomAD NFE allele-frequency scatter plot."""
     plotted = comparison.dropna(subset=["AF_1kg", "AF_gnomad_nfe"])
     if plotted.empty:
         LOG.warning("No overlapping AF values to plot; skipping scatter.")
@@ -510,6 +523,8 @@ def plot_scatter(comparison: pd.DataFrame, output_path: Path) -> None:
 
 @dataclass(frozen=True)
 class AfComparisonSummary:
+    """Headline statistics from a 1KG vs gnomAD allele-frequency comparison."""
+
     total_snps: int
     resolved_both: int
     missing_1kg: int
@@ -523,6 +538,7 @@ class AfComparisonSummary:
 
 
 def read_comparison_table(path: Path) -> pd.DataFrame:
+    """Load a comparison CSV written by ``compare_main``."""
     df = pd.read_csv(path)
     required = {"rsID", "AF_1kg", "AF_gnomad_nfe"}
     missing = required - set(df.columns)
@@ -541,6 +557,7 @@ def summarize_comparison(
     *,
     diff_threshold: float = DIFF_THRESHOLD,
 ) -> AfComparisonSummary:
+    """Compute headline concordance statistics for a 1KG vs gnomAD table."""
     total_snps = len(comparison)
     has_1kg = comparison["AF_1kg"].notna()
     has_gnomad = comparison["AF_gnomad_nfe"].notna()
@@ -641,6 +658,7 @@ def log_missing_gnomad(comparison: pd.DataFrame) -> None:
 
 
 def compare_main(argv: list[str] | None = None) -> int:
+    """CLI entry: fetch gnomAD AFs and write comparison CSV plus scatter plot."""
     args = parse_compare_args(argv)
     logging.basicConfig(
         level=getattr(logging, str(args.log_level)),
@@ -685,6 +703,7 @@ def compare_main(argv: list[str] | None = None) -> int:
 
 
 def summarize_main(argv: list[str] | None = None) -> int:
+    """CLI entry: summarize an existing comparison CSV as Markdown."""
     args = parse_summarize_args(argv)
     logging.basicConfig(
         level=getattr(logging, str(args.log_level)),

@@ -43,11 +43,23 @@ htmlcov/
 # Jupyter
 .ipynb_checkpoints/
 
-# Project data and artifacts
-data/
-results/
-outputs/
-/figures/
+# Project data and artifacts (directory placeholders stay in git)
+data/*
+!data/.gitkeep
+results/*
+!results/.gitkeep
+outputs/*
+!outputs/.gitkeep
+figures/*
+!figures/.gitkeep
+
+# Regenerable analysis artifacts (committed manuscript PNG/PDF under analysis/ stay trackable)
+analysis/*.pkl
+analysis/*.joblib
+analysis/vep_cache/
+analysis/vep_annotation/
+analysis/validation_gse87571/
+analysis/gse40279_train_metrics.json
 
 # macOS
 .DS_Store
@@ -264,12 +276,6 @@ marimo/_lsp/
 __marimo__/
 
 # === Bioinformatics: data/code separation (setup_rogen_env.py) ===
-# Block entire data and results folders - never commit large/sensitive data
-data/
-results/
-outputs/
-/figures/
-
 # Block sensitive bioinformatics file types globally (safety net)
 *.vcf
 *.vcf.gz

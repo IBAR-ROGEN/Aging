@@ -18,6 +18,18 @@ Install the Git pre-commit hook (UKB data protection):
 ./scripts/dev/install_pre_commit_hook.sh
 ```
 
+## Output directories
+
+| Directory | Role |
+|-----------|------|
+| `figures/` | **Regenerated plots** (git-ignored) — default for matplotlib/networkx scripts |
+| `analysis/` | Pipeline CSVs, models, VEP cache; plus **committed** manuscript PNG/PDF snapshots |
+| `data/` | Large/local inputs (git-ignored) |
+| `outputs/` | Optional scratch (git-ignored) |
+| `test_data/` | Versioned synthetic fixtures |
+
+See [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md#data-flow) for the full path reference.
+
 ## Console entry points (`uv run …`)
 
 | Command | Purpose |
@@ -31,7 +43,7 @@ Install the Git pre-commit hook (UKB data protection):
 | `rogen-ukb-integrate …` | Mock phenotype–genotype join + LA-SNP associations ([UKB_INTEGRATION_PIPELINE.md](UKB_INTEGRATION_PIPELINE.md)) |
 | `rogen-vcf-synthetic …` | Streaming synthetic VCF ([SYNTHETIC_ROMANIAN_VCF_GENERATOR.md](SYNTHETIC_ROMANIAN_VCF_GENERATOR.md)) |
 
-Legacy script paths under `scripts/*.py` remain as **deprecation shims** forwarding to `scripts/<workflow>/`.
+Legacy script paths under `scripts/*.py` and at the repo root remain as **deprecation shims** forwarding to `scripts/<workflow>/`.
 
 ## Workflows
 
@@ -40,7 +52,7 @@ Legacy script paths under `scripts/*.py` remain as **deprecation shims** forward
 - **Package:** `src/rogen_aging/clock/` (`data.py`, `model.py`, `train.py`, `evaluate.py`, `external_data.py`)
 - **Canonical CLI:** `uv run rogen-clock train|evaluate` or `scripts/clock/run_clock.py`
 - **GSE87571 external cohort:** `uv run python -m rogen_aging.clock.external_data --output data/gse87571.parquet`
-- **External-validation figure:** `uv run python plot_clock_eval.py` → [CLOCK_EVAL_FIGURES.md](CLOCK_EVAL_FIGURES.md)
+- **External-validation figure:** `uv run python scripts/figures/plot_clock_eval.py` → [CLOCK_EVAL_FIGURES.md](CLOCK_EVAL_FIGURES.md)
 - **Romanian mock demo** (separate StandardScaler path): `scripts/clock/train_romanian_epigenetic_clock.py`
 - **Docs:** [CLOCK_LIBRARY.md](CLOCK_LIBRARY.md), [GSE40279_CLOCK_TRAINING.md](GSE40279_CLOCK_TRAINING.md), [CLOCK_EVAL_FIGURES.md](CLOCK_EVAL_FIGURES.md), [ROMANIAN_EPIGENETIC_CLOCK.md](ROMANIAN_EPIGENETIC_CLOCK.md), [ACTIVITIES.md](ACTIVITIES.md#21101--methylation-aging-clock)
 
@@ -53,7 +65,7 @@ Legacy script paths under `scripts/*.py` remain as **deprecation shims** forward
 
 ### Methylation (Oxford Nanopore)
 
-- **Root scripts:** `pipeline_validation.sh`, `downstream_analysis.R`
+- **Canonical scripts:** `scripts/dev/pipeline_validation.sh`, `scripts/dev/downstream_analysis.R` (root paths are shims)
 - **Docs:** [METHYLATION_PIPELINE_README.md](METHYLATION_PIPELINE_README.md), [METHYLATION_PIPELINE_USAGE.md](METHYLATION_PIPELINE_USAGE.md)
 
 ### Multi-omics EDA dashboard
@@ -72,22 +84,22 @@ uv run python scripts/alphagenome/analyze_alphagenome_results.py
 uv run python scripts/alphagenome/visualize_alphagenome_results.py
 ```
 
-See [ALPHAGENOME_ANALYSIS_EXPLANATION.md](ALPHAGENOME_ANALYSIS_EXPLANATION.md).
+Tables → `analysis/alphagenome/` · plots → `figures/alphagenome/`. See [ALPHAGENOME_ANALYSIS_EXPLANATION.md](ALPHAGENOME_ANALYSIS_EXPLANATION.md).
 
 **VEP functional consequences (manuscript table):**
 
 ```bash
-uv run python annotate_la_snps_vep.py
+uv run python scripts/ukb/annotate_la_snps_vep.py
 ```
 
 See [LA_SNP_VEP_ANNOTATION.md](LA_SNP_VEP_ANNOTATION.md).
 
 ### Manuscript figures
 
-Canonical renders live under **`scripts/figures/`** (flat `scripts/render_*.py` / `scripts/generate_*.py` are deprecation shims).
+Canonical renders live under **`scripts/figures/`** (flat `scripts/render_*.py` / `scripts/generate_*.py` are deprecation shims). Default output: **`figures/`**.
 
 ```bash
-uv run python scripts/figures/generate_network_fig.py          # Activity 2.1.7.1 → analysis/Fig_LA_SNP_network.*
+uv run python scripts/figures/generate_network_fig.py          # → figures/Fig_LA_SNP_network.*
 uv run python scripts/figures/render_figure1c_mechanisms_network.py
 uv run python scripts/figures/generate_la_snp_per_gene_plot.py
 uv run python scripts/figures/render_dashboard_figure_mockup.py

@@ -2,6 +2,7 @@ import os
 import pandas as pd
 import requests
 import time
+from pathlib import Path
 from typing import Dict, Any, List, Optional, Tuple
 from dotenv import load_dotenv
 from alphagenome.data import genome
@@ -13,6 +14,10 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 load_dotenv()
+
+REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+ALPHAGENOME_DATA_DIR = REPO_ROOT / "analysis" / "alphagenome"
+COMPARISON_CSV = ALPHAGENOME_DATA_DIR / "alphagenome_comparison_results.csv"
 
 ALPHA_GENOME_API_KEY = os.getenv("ALPHA_GENOME_API_KEY")
 ENSEMBL_REST_URL = "https://rest.ensembl.org"
@@ -204,8 +209,9 @@ def run_sequence_comparer():
         time.sleep(0.05)
 
     results_df = pd.DataFrame(results)
-    results_df.to_csv('alphagenome_comparison_results.csv', index=False)
-    logger.info(f"Analysis complete. Processed {processed_count} Gene/SNP pairs. Results saved to alphagenome_comparison_results.csv")
+    ALPHAGENOME_DATA_DIR.mkdir(parents=True, exist_ok=True)
+    results_df.to_csv(COMPARISON_CSV, index=False)
+    logger.info(f"Analysis complete. Processed {processed_count} Gene/SNP pairs. Results saved to {COMPARISON_CSV}")
 
 if __name__ == "__main__":
     run_sequence_comparer()

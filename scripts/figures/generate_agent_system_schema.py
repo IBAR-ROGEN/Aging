@@ -42,7 +42,7 @@ def create_agent_system_schema(output_path: Optional[str] = None) -> None:
     """Create Figure 4: Agent System Schema architecture diagram.
     
     Args:
-        output_path: Path to save the diagram. If None, saves to analysis/ directory.
+        output_path: Path to save the diagram. If None, saves to ``figures/`` directory.
     """
     # Check for Graphviz
     dot_path = find_graphviz()
@@ -83,7 +83,7 @@ def create_agent_system_schema(output_path: Optional[str] = None) -> None:
                 )
     
     if output_path is None:
-        output_dir = Path(__file__).parent.parent.parent / "analysis"
+        output_dir = Path(__file__).parent.parent.parent / "figures"
         output_dir.mkdir(exist_ok=True)
         output_path = output_dir / "Fig4_Agent_System_Schema.png"
     else:

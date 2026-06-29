@@ -100,10 +100,10 @@ uv run python -m rogen_aging.clock.external_data \
 uv run rogen-clock evaluate \
   --model_path analysis/gse40279_elasticnet_clock.pkl \
   --test_data data/gse87571.parquet \
-  --output_dir analysis/validation_gse87571
+  --output_dir figures/validation_gse87571
 
 # Optional: publication two-panel figure (scatter + top CpG weights)
-uv run python plot_clock_eval.py
+uv run python scripts/figures/plot_clock_eval.py
 ```
 
 See **[docs/CLOCK_EVAL_FIGURES.md](CLOCK_EVAL_FIGURES.md)** for `plot_clock_eval.py` configuration, per-sample input options, and output paths.

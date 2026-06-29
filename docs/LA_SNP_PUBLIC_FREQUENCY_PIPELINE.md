@@ -74,7 +74,7 @@ Join 1KG AFs to gnomAD v4 (`gnomad_r4`) NFE frequencies:
 uv run rogen-compare-af-gnomad \
   --input analysis/la_snp_1kg_frequencies.csv \
   --output analysis/la_snp_af_1kg_vs_gnomad.csv \
-  --scatter analysis/af_1kg_vs_gnomad_scatter.png
+  --scatter figures/af_1kg_vs_gnomad_scatter.png
 ```
 
 ### gnomAD lookup behaviour
@@ -89,7 +89,7 @@ uv run rogen-compare-af-gnomad \
 | Artifact | Description |
 |----------|-------------|
 | `analysis/la_snp_af_1kg_vs_gnomad.csv` | Per-SNP table: `rsID`, `AF_1kg`, `AF_gnomad_nfe`, `abs_diff`, `large_diff` (`\|diff\| > 0.05`) |
-| `analysis/af_1kg_vs_gnomad_scatter.png` | Scatter with identity line; large-diff points highlighted |
+| `figures/af_1kg_vs_gnomad_scatter.png` | Scatter with identity line; large-diff points highlighted |
 | Log / stderr | Lists rsIDs missing from gnomAD or lacking NFE AF |
 
 ## Step 4 — Summarize for reporting (optional)
@@ -129,7 +129,7 @@ analysis/la_snp_1kg_frequencies.csv
         │
         ▼  rogen-compare-af-gnomad (gnomAD GraphQL + cache)
 analysis/la_snp_af_1kg_vs_gnomad.csv
-analysis/af_1kg_vs_gnomad_scatter.png
+figures/af_1kg_vs_gnomad_scatter.png
         │
         ▼  rogen-compare-af-gnomad summarize (optional)
 analysis/af_comparison_summary.md

@@ -24,10 +24,10 @@ def create_pipeline_workflow_diagram(output_path: Optional[str] = None) -> None:
     """Create a workflow diagram showing the methylation pipeline architecture.
     
     Args:
-        output_path: Path to save the figure. If None, saves to analysis/ directory.
+        output_path: Path to save the figure. If None, saves to ``figures/`` directory.
     """
     if output_path is None:
-        output_dir = Path(__file__).parent.parent.parent / "analysis"
+        output_dir = Path(__file__).parent.parent.parent / "figures"
         output_dir.mkdir(exist_ok=True)
         output_path = output_dir / "Methylation_Pipeline_Workflow.png"
     
@@ -171,10 +171,10 @@ def create_example_dmr_visualizations(output_path: Optional[str] = None) -> None
     """Create example DMR visualizations with simulated data.
     
     Args:
-        output_path: Path to save the figure. If None, saves to analysis/ directory.
+        output_path: Path to save the figure. If None, saves to ``figures/`` directory.
     """
     if output_path is None:
-        output_dir = Path(__file__).parent.parent.parent / "analysis"
+        output_dir = Path(__file__).parent.parent.parent / "figures"
         output_dir.mkdir(exist_ok=True)
         output_path = output_dir / "Example_DMR_Visualizations.png"
     
@@ -277,10 +277,10 @@ def create_pipeline_summary_diagram(output_path: Optional[str] = None) -> None:
     """Create a summary diagram showing pipeline components and outputs.
     
     Args:
-        output_path: Path to save the figure. If None, saves to analysis/ directory.
+        output_path: Path to save the figure. If None, saves to ``figures/`` directory.
     """
     if output_path is None:
-        output_dir = Path(__file__).parent.parent.parent / "analysis"
+        output_dir = Path(__file__).parent.parent.parent / "figures"
         output_dir.mkdir(exist_ok=True)
         output_path = output_dir / "Methylation_Pipeline_Summary.png"
     
@@ -399,10 +399,10 @@ def create_bimodal_risk_heatmap(output_path: Optional[str] = None) -> None:
     gene associations.
     
     Args:
-        output_path: Path to save the figure. If None, saves to analysis/ directory.
+        output_path: Path to save the figure. If None, saves to ``figures/`` directory.
     """
     if output_path is None:
-        output_dir = Path(__file__).parent.parent.parent / "analysis"
+        output_dir = Path(__file__).parent.parent.parent / "figures"
         output_dir.mkdir(exist_ok=True)
         output_path = output_dir / "Fig2_Risk_Heatmap.png"
     
@@ -469,10 +469,10 @@ def create_clock_validation_plot(output_path: Optional[str] = None) -> None:
     relationship between chronological age and DNAm predicted age with MAE ~ 2.1 years.
     
     Args:
-        output_path: Path to save the figure. If None, saves to analysis/ directory.
+        output_path: Path to save the figure. If None, saves to ``figures/`` directory.
     """
     if output_path is None:
-        output_dir = Path(__file__).parent.parent.parent / "analysis"
+        output_dir = Path(__file__).parent.parent.parent / "figures"
         output_dir.mkdir(exist_ok=True)
         output_path = output_dir / "Fig3_Clock_Validation.png"
     

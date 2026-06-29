@@ -2,7 +2,7 @@
 
 **Project:** IBAR-ROGEN Aging  
 **Activity:** 2.1.7.1 (manuscript supplementary table)  
-**Script:** `annotate_la_snps_vep.py`  
+**Script:** `scripts/ukb/annotate_la_snps_vep.py` (deprecated shim: `annotate_la_snps_vep.py` at repo root)  
 **Related:** [ALPHAGENOME_ANALYSIS_EXPLANATION.md](ALPHAGENOME_ANALYSIS_EXPLANATION.md), [LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md](LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md)
 
 ## Overview
@@ -22,14 +22,14 @@ The script defaults to the curated AlphaGenome LA-SNP table:
 
 | File | Column | Rows | Unique rsIDs | Notes |
 |------|--------|------|--------------|-------|
-| `alphagenome_impact_analysis.csv` | `snp` | 70 | 58 | **Default.** Gene–SNP pairs from `scripts/alphagenome/alphagenome_sequence_comparer.py` |
+| `analysis/alphagenome/alphagenome_impact_analysis.csv` | `snp` | 70 | 58 | **Default.** Gene–SNP pairs from `scripts/alphagenome/alphagenome_sequence_comparer.py` |
 | `overlapping_genes_with_snps.xlsx` | `SNP Identifier` | 225 | 173 (rs-formatted) | Canonical longevity-map overlap table; requires export or column rename |
 | Plain `.txt` | one rsID per line | — | — | Set `INPUT_RSID_FILE` to your list |
 
-To switch inputs, edit the **CONSTANTS** block at the top of `annotate_la_snps_vep.py`:
+To switch inputs, edit the **CONSTANTS** block at the top of `scripts/ukb/annotate_la_snps_vep.py`:
 
 ```python
-INPUT_RSID_FILE = Path("alphagenome_impact_analysis.csv")
+INPUT_RSID_FILE = Path("analysis/alphagenome/alphagenome_impact_analysis.csv")
 RSID_COLUMN = "snp"
 ```
 
@@ -48,7 +48,7 @@ Dependencies used by the script: `requests`, `pandas`, `openpyxl` (Excel export 
 From the repo root:
 
 ```bash
-uv run python annotate_la_snps_vep.py
+uv run python scripts/ukb/annotate_la_snps_vep.py
 ```
 
 The script prints progress per rsID and a summary at the end:
@@ -101,6 +101,6 @@ Add these under `analysis/` in `.gitignore` if you prefer not to commit cache ar
 ## Manuscript workflow
 
 1. Confirm the rsID input file matches the LA-SNP set used in the main text (~70 pairs / 58 unique rsIDs from AlphaGenome, or your chosen export from `overlapping_genes_with_snps.xlsx`).
-2. Run `uv run python annotate_la_snps_vep.py`.
+2. Run `uv run python scripts/ukb/annotate_la_snps_vep.py`.
 3. Import `analysis/vep_annotation/la_snp_vep_annotations.xlsx` into the supplementary **Inferred functional consequences** table.
 4. Cross-check coordinates against `uv run rogen-ukb-manifest build` output when the UKB manifest is available.

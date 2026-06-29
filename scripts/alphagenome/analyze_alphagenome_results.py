@@ -1,7 +1,14 @@
-import pandas as pd
-import numpy as np
-import ast
 import re
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+
+REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+ALPHAGENOME_DATA_DIR = REPO_ROOT / "analysis" / "alphagenome"
+COMPARISON_CSV = ALPHAGENOME_DATA_DIR / "alphagenome_comparison_results.csv"
+IMPACT_CSV = ALPHAGENOME_DATA_DIR / "alphagenome_impact_analysis.csv"
+
 
 def parse_track_data(data_str):
     """
@@ -27,7 +34,7 @@ def parse_track_data(data_str):
         return 0.0, 0.0
 
 def analyze_results():
-    df = pd.read_csv('alphagenome_comparison_results.csv')
+    df = pd.read_csv(COMPARISON_CSV)
     
     # Filter for successful runs
     success_df = df[df['status'] == 'success'].copy()
@@ -83,8 +90,9 @@ def analyze_results():
     print(top_results[['gene', 'snp', 'ref_score', 'alt_score', 'perc_change']].head(10).to_string(index=False))
     
     # Save the processed analysis
-    top_results.to_csv('alphagenome_impact_analysis.csv', index=False)
-    print("\nFull impact analysis saved to alphagenome_impact_analysis.csv")
+    ALPHAGENOME_DATA_DIR.mkdir(parents=True, exist_ok=True)
+    top_results.to_csv(IMPACT_CSV, index=False)
+    print(f"\nFull impact analysis saved to {IMPACT_CSV}")
 
 if __name__ == "__main__":
     analyze_results()

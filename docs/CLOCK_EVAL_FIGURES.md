@@ -2,7 +2,7 @@
 
 **Project:** IBAR-ROGEN Aging  
 **Activity:** 2.1.10.1 — methylation aging clock (GSE40279 train, GSE87571 validate)  
-**Script:** [`plot_clock_eval.py`](../plot_clock_eval.py) (repo root)  
+**Script:** [`scripts/figures/plot_clock_eval.py`](../scripts/figures/plot_clock_eval.py) (deprecated shim: [`plot_clock_eval.py`](../plot_clock_eval.py) at repo root)  
 **Related:** [CLOCK_LIBRARY.md](CLOCK_LIBRARY.md) · [GSE40279_CLOCK_TRAINING.md](GSE40279_CLOCK_TRAINING.md) · [ACTIVITIES.md](ACTIVITIES.md#21101--methylation-aging-clock)
 
 ## Purpose
@@ -40,7 +40,7 @@ uv run python -m rogen_aging.clock.external_data \
 uv run rogen-clock evaluate \
   --model_path analysis/gse40279_elasticnet_clock.pkl \
   --test_data data/gse87571.parquet \
-  --output_dir analysis/validation_gse87571
+  --output_dir figures/validation_gse87571
 ```
 
 See [GSE40279_CLOCK_TRAINING.md](GSE40279_CLOCK_TRAINING.md) for input formats, GEO download notes, and `restrict_to_cpgs` options.
@@ -48,7 +48,7 @@ See [GSE40279_CLOCK_TRAINING.md](GSE40279_CLOCK_TRAINING.md) for input formats, 
 ## Run the figure script
 
 ```bash
-uv run python plot_clock_eval.py
+uv run python scripts/figures/plot_clock_eval.py
 ```
 
 Stdout reports **MAE**, **Pearson r**, **n samples**, and the paths to the saved PNG and PDF.
@@ -57,8 +57,8 @@ Default outputs:
 
 | File | Description |
 |------|-------------|
-| `analysis/validation_gse87571/figures/clock_eval_gse87571.png` | Raster figure (300 dpi) |
-| `analysis/validation_gse87571/figures/clock_eval_gse87571.pdf` | Vector figure |
+| `figures/validation_gse87571/clock_eval_gse87571.png` | Raster figure (300 dpi) |
+| `figures/validation_gse87571/clock_eval_gse87571.pdf` | Vector figure |
 
 ## Configuration
 
@@ -66,10 +66,10 @@ All paths and styling are **constants at the top of** `plot_clock_eval.py` (no C
 
 | Constant | Default | Role |
 |----------|---------|------|
-| `EVAL_CSV` | `analysis/validation_gse87571/per_sample_predictions.csv` | Optional per-sample table (see below) |
+| `EVAL_CSV` | `figures/validation_gse87571/per_sample_predictions.csv` | Optional per-sample table (see below) |
 | `MODEL_PATH` | `analysis/gse40279_elasticnet_clock.pkl` | Fitted `Pipeline` from `rogen-clock train` |
 | `TEST_DATA_PATH` | `data/gse87571.parquet` | External validation wide table |
-| `OUTPUT_DIR` | `analysis/validation_gse87571/figures` | Directory for PNG/PDF |
+| `OUTPUT_DIR` | `figures/validation_gse87571` | Directory for PNG/PDF |
 | `FIG_BASENAME` | `clock_eval_gse87571` | Output filename stem |
 | `TOP_N_CPgs` | `25` | Number of probes in panel B |
 | `FIGURE_DPI` | `300` | PNG resolution |

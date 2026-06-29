@@ -40,7 +40,8 @@ In the mitochondrial gene **NDUFS1**, the model predicted that the longevity-ass
 *   **Analysis**: `scripts/alphagenome/analyze_alphagenome_results.py`
 *   **Visualize**: `scripts/alphagenome/visualize_alphagenome_results.py`
 *   **Input Data**: `overlapping_genes_with_snps.xlsx`
-*   **Results File**: `alphagenome_comparison_results.csv`
-*   **Processed Impact**: `alphagenome_impact_analysis.csv`
+*   **Results file**: `analysis/alphagenome/alphagenome_comparison_results.csv`
+*   **Processed impact**: `analysis/alphagenome/alphagenome_impact_analysis.csv`
+*   **Plots (regenerated)**: `figures/alphagenome/alphagenome_impact_bar_plot.png`, `figures/alphagenome/alphagenome_ref_vs_alt_scatter.png`
 *   **Target Length**: 131,072 bp (128kb)
 *   **Ontology Term**: UBERON:0001157 (Caudate nucleus)

@@ -71,7 +71,7 @@ def _draw_round_rect(
 @app.command()
 def main(
     output: Path = typer.Option(
-        REPO_ROOT / "analysis" / "dashboard_figure_mockup.png",
+        REPO_ROOT / "figures" / "dashboard_figure_mockup.png",
         help="Output PNG path.",
         path_type=Path,
     ),

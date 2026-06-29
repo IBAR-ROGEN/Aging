@@ -1,8 +1,8 @@
 # rogen_aging
 
-Project scaffold for genomic notebooks and analysis, managed with `uv`.
+IBAR-ROGEN aging analysis: epigenetic clocks, UK Biobank LA-SNP public-frequency tooling, synthetic cohort integration, and manuscript figure pipelines. Python ≥3.12, managed with [uv](https://docs.astral.sh/uv/).
 
-## Quickstart
+## Install
 
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh
@@ -23,46 +23,90 @@ Install the UK Biobank pre-commit security hook:
 ./scripts/dev/install_pre_commit_hook.sh
 ```
 
-## Where to go next
+## Package map
 
-| Topic | Link |
-|-------|------|
-| **Workflow index** | [docs/WORKFLOWS.md](docs/WORKFLOWS.md) |
-| **Activity map** | [docs/ACTIVITIES.md](docs/ACTIVITIES.md) |
-| **Code reference** | [docs/CODE_MODULES_REFERENCE.md](docs/CODE_MODULES_REFERENCE.md) |
-| **Directory layout** | [docs/PROJECT_STRUCTURE.md](docs/PROJECT_STRUCTURE.md) |
-| **Manuscript figures** | [docs/FIGURES.md](docs/FIGURES.md) |
-| **Epigenetic clock** | [docs/CLOCK_LIBRARY.md](docs/CLOCK_LIBRARY.md) · [eval figure](docs/CLOCK_EVAL_FIGURES.md) |
-| **Synthetic UKB integration** | [docs/UKB_INTEGRATION_PIPELINE.md](docs/UKB_INTEGRATION_PIPELINE.md) |
-| **Methylation pipeline** | [docs/METHYLATION_PIPELINE_README.md](docs/METHYLATION_PIPELINE_README.md) |
+Installable code lives under `src/rogen_aging/`. Console entry points are registered in `pyproject.toml`.
 
-## Layout (summary)
+| Module | Purpose |
+|--------|---------|
+| **`rogen_aging.clock`** | Train and evaluate ElasticNet epigenetic clocks; load GSE87571 and Romanian mock cohorts |
+| **`rogen_aging.ukb`** | Build LA-SNP manifest CSVs, extract 1KG allele frequencies, compare to gnomAD, generate synthetic UKB-RAP mocks |
+| `rogen_aging.vcf` | Synthetic Romanian VCF generation for pipeline testing |
+| `rogen_aging.integration` | Join synthetic UKB phenotypes/genotypes and run LA-SNP association summaries |
+| `rogen_aging.eda_dashboard` | Streamlit EDA on merged mock clinical / epigenetic-age tables |
+| `rogen_aging.cli` | Typer wrappers: `rogen-clock`, `rogen-ukb-manifest`, `rogen-ukb-integrate`, … |
 
-- `src/rogen_aging/` — installable package (`clock`, `ukb`, `vcf`, `integration`, `eda_dashboard`, …)
-- `scripts/` — grouped CLIs (`clock/`, `ukb/`, `figures/`, …); flat paths are deprecation shims
-- `tests/` — pytest (`uv run pytest`)
-- `notebooks/` — Jupyter by analysis area
-- `docs/` — guides and workflow index
-- `components/`, `frontend/` — React/Vite manuscript figure mockups
-- `test_data/` — versioned synthetic fixtures
-- `data/`, `results/`, `outputs/` — local/large data (git-ignored)
+## Directory layout
 
-## Common console commands
+| Path | Role |
+|------|------|
+| `src/rogen_aging/` | Installable package |
+| `scripts/` | Grouped CLIs (`clock/`, `ukb/`, `figures/`, `alphagenome/`, `dev/`); flat paths are deprecation shims |
+| `tests/` | pytest (`uv run pytest`) |
+| `notebooks/` | Jupyter by analysis area |
+| `docs/` | Workflow guides — start at [docs/WORKFLOWS.md](docs/WORKFLOWS.md) |
+| `analysis/` | Committed manuscript figure snapshots, alphagenome tables, pipeline CSVs/manifests |
+| `figures/` | **Local regenerated plots** (git-ignored; `.gitkeep` only in git) |
+| `data/` | Large/local inputs and caches (git-ignored) |
+| `outputs/` | Optional scratch for ad-hoc pipeline runs (git-ignored) |
+| `test_data/` | Versioned synthetic fixtures |
+
+## Common commands
+
+### Epigenetic clock
 
 ```bash
-uv run rogen-clock train --input_data … --output_model … --output_metrics …
-uv run rogen-clock evaluate --model_path … --test_data … --output_dir …
-uv run rogen-ukb-manifest build --input overlap.xlsx --output analysis/ukb_snp_manifest_v0.1.csv
+uv run rogen-clock train \
+  --input_data data/gse40279.parquet \
+  --output_model analysis/gse40279_elasticnet_clock.pkl \
+  --output_metrics analysis/gse40279_train_metrics.json
+
+uv run python -m rogen_aging.clock.external_data --output data/gse87571.parquet
+
+uv run rogen-clock evaluate \
+  --model_path analysis/gse40279_elasticnet_clock.pkl \
+  --test_data data/gse87571.parquet \
+  --output_dir figures/validation_gse87571
+
+uv run python scripts/figures/plot_clock_eval.py
+# → figures/validation_gse87571/clock_eval_gse87571.png + .pdf
+```
+
+### UK Biobank LA-SNP pipeline (public data only)
+
+```bash
+uv run rogen-ukb-manifest build --input overlapping_genes_with_snps.xlsx \
+  --output analysis/ukb_snp_manifest_v0.1.csv
+uv run rogen-compare-af-gnomad \
+  --input analysis/la_snp_1kg_frequencies.csv \
+  --scatter figures/af_1kg_vs_gnomad_scatter.png
 uv run rogen-ukb-mock-rap --n-samples 1000 --output-dir test_data/mock_ukb_rap/
 uv run rogen-ukb-integrate --output-dir analysis/
+```
+
+### Figures and annotation scripts
+
+```bash
+uv run python scripts/figures/generate_network_fig.py      # → figures/Fig_LA_SNP_network.*
+uv run python scripts/ukb/annotate_la_snps_vep.py          # VEP table + cache under analysis/
+uv run python scripts/alphagenome/alphagenome_sequence_comparer.py
 uv run streamlit run src/rogen_aging/eda_dashboard/app.py
 ```
 
-See [docs/WORKFLOWS.md](docs/WORKFLOWS.md) for full command tables and legacy script paths.
+Flat paths such as `plot_clock_eval.py` and `annotate_la_snps_vep.py` at the repo root forward to `scripts/` with a deprecation warning.
 
-## Python version
+## Documentation index
 
-Python ≥3.12 (`pyproject.toml`).
+| Topic | Link |
+|-------|------|
+| Workflow index | [docs/WORKFLOWS.md](docs/WORKFLOWS.md) |
+| Activity map | [docs/ACTIVITIES.md](docs/ACTIVITIES.md) |
+| Code reference | [docs/CODE_MODULES_REFERENCE.md](docs/CODE_MODULES_REFERENCE.md) |
+| Directory layout | [docs/PROJECT_STRUCTURE.md](docs/PROJECT_STRUCTURE.md) |
+| Manuscript figures | [docs/FIGURES.md](docs/FIGURES.md) |
+| Epigenetic clock | [docs/CLOCK_LIBRARY.md](docs/CLOCK_LIBRARY.md) · [eval figure](docs/CLOCK_EVAL_FIGURES.md) |
+| Synthetic UKB integration | [docs/UKB_INTEGRATION_PIPELINE.md](docs/UKB_INTEGRATION_PIPELINE.md) |
+| Methylation pipeline | [docs/METHYLATION_PIPELINE_README.md](docs/METHYLATION_PIPELINE_README.md) |
 
 ## License
 

@@ -1,5 +1,5 @@
 /**
- * Build the Vite app, serve preview, screenshot #dashboard-figure-root to analysis/.
+ * Build the Vite app, serve preview, screenshot #dashboard-figure-root to figures/.
  */
 import { spawn } from "node:child_process";
 import fs from "node:fs";
@@ -10,7 +10,7 @@ import { chromium } from "playwright";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const appRoot = path.resolve(__dirname, "..");
 const repoRoot = path.resolve(appRoot, "..", "..");
-const outDir = path.join(repoRoot, "analysis");
+const outDir = path.join(repoRoot, "figures");
 const outFile = path.join(outDir, "dashboard_figure_mockup.png");
 
 function run(cmd, args, opts) {

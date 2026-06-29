@@ -4,7 +4,7 @@
 Reads ``overlapping_genes_with_snps.xlsx`` (columns ``Gene``, ``SNP_rsID``). Pathway
 assignments come from ``--pathway-map`` CSV (``Gene``, ``Pathway``) or fall back to four
 hardcoded pathway groups below. Each pathway is a hub node; genes are spokes scaled by
-unique LA-SNP count. Writes PNG (300 DPI) and PDF to ``analysis/``.
+unique LA-SNP count. Writes PNG (300 DPI) and PDF to ``figures/``.
 """
 
 from __future__ import annotations
@@ -20,7 +20,7 @@ import pandas as pd
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 DEFAULT_INPUT = REPO_ROOT / "overlapping_genes_with_snps.xlsx"
-DEFAULT_OUTPUT = REPO_ROOT / "analysis" / "Fig_LA_SNP_network.png"
+DEFAULT_OUTPUT = REPO_ROOT / "figures" / "Fig_LA_SNP_network.png"
 
 # Fallback pathway → gene lists (Activity 2.1.7.1). Extend to cover all 41 genes.
 DEFAULT_PATHWAY_GENES: dict[str, tuple[str, ...]] = {

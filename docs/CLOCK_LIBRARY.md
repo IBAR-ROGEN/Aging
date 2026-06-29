@@ -45,7 +45,7 @@ uv run rogen-clock train \
 uv run rogen-clock evaluate \
   --model_path analysis/gse40279_elasticnet_clock.pkl \
   --test_data data/gse87571.parquet \
-  --output_dir analysis/clock_validation/
+  --output_dir figures/validation_gse87571
 ```
 
 Wide-table convention: `cg*` probe columns + `chronological_age` target.
@@ -55,8 +55,8 @@ Wide-table convention: `cg*` probe columns + `chronological_age` target.
 After train + evaluate on GSE87571, generate a two-panel scatter (predicted vs chronological age) and top-CpG weight bar chart:
 
 ```bash
-uv run python plot_clock_eval.py
-# → analysis/validation_gse87571/figures/clock_eval_gse87571.png + .pdf
+uv run python scripts/figures/plot_clock_eval.py
+# → figures/validation_gse87571/clock_eval_gse87571.png + .pdf
 ```
 
 See **[CLOCK_EVAL_FIGURES.md](CLOCK_EVAL_FIGURES.md)** for configuration constants, input options, and how this relates to `rogen-clock evaluate` outputs.

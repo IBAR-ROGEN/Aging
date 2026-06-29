@@ -1,14 +1,26 @@
-import pandas as pd
+from pathlib import Path
+
 import matplotlib.pyplot as plt
-import seaborn as sns
 import numpy as np
+import pandas as pd
+import seaborn as sns
+
+REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+ALPHAGENOME_DATA_DIR = REPO_ROOT / "analysis" / "alphagenome"
+FIGURES_DIR = REPO_ROOT / "figures" / "alphagenome"
+IMPACT_CSV = ALPHAGENOME_DATA_DIR / "alphagenome_impact_analysis.csv"
+BAR_PLOT = FIGURES_DIR / "alphagenome_impact_bar_plot.png"
+SCATTER_PLOT = FIGURES_DIR / "alphagenome_ref_vs_alt_scatter.png"
+
 
 def create_visualizations():
     try:
-        df = pd.read_csv('alphagenome_impact_analysis.csv')
+        df = pd.read_csv(IMPACT_CSV)
     except FileNotFoundError:
-        print("Analysis file not found. Run the analysis script first.")
+        print(f"Analysis file not found at {IMPACT_CSV}. Run the analysis script first.")
         return
+
+    FIGURES_DIR.mkdir(parents=True, exist_ok=True)
 
     # Filter for top 20 variants by absolute percentage change
     top_df = df.sort_values(by='abs_perc_change', ascending=False).head(20)
@@ -27,8 +39,8 @@ def create_visualizations():
     plt.xlabel('Predicted Expression Change (%)', fontsize=12)
     plt.ylabel('Gene (SNP ID)', fontsize=12)
     plt.tight_layout()
-    plt.savefig('alphagenome_impact_bar_plot.png')
-    print("Saved alphagenome_impact_bar_plot.png")
+    plt.savefig(BAR_PLOT)
+    print(f"Saved {BAR_PLOT}")
 
     # 2. Scatter plot of Ref vs Alt scores
     plt.figure(figsize=(10, 8))
@@ -50,8 +62,8 @@ def create_visualizations():
                      textcoords="offset points", xytext=(0,10), ha='center', fontsize=9)
                      
     plt.tight_layout()
-    plt.savefig('alphagenome_ref_vs_alt_scatter.png')
-    print("Saved alphagenome_ref_vs_alt_scatter.png")
+    plt.savefig(SCATTER_PLOT)
+    print(f"Saved {SCATTER_PLOT}")
 
 if __name__ == "__main__":
     create_visualizations()
