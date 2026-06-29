@@ -361,7 +361,7 @@ def fetch_platform_genes(gpl_file: Path, cache_dir: Path) -> set[str]:
             table = getattr(gse_gpl, "table", None)
             if table is not None and "Gene Symbol" in table.columns:
                 for val in table["Gene Symbol"].dropna():
-                    for token in re.split(r"///|,", str(val)):
+                    for token in re.split(r"[/]{3}|,", str(val)):
                         token = token.strip()
                         if token and token.lower() != "na":
                             gpl_symbols.add(normalize_symbol(token))

@@ -26,6 +26,7 @@ LEGACY_VEP_CACHE = REPO_ROOT / "analysis" / "vep_cache"
 ENSEMBL_BASE = "https://rest.ensembl.org"
 MYVARIANT_BASE = "https://myvariant.info/v1"
 GWAS_BASE = "https://www.ebi.ac.uk/gwas/rest/api"
+URL_SEP = "/"
 
 REQUEST_DELAY_SEC = 0.34
 REQUEST_TIMEOUT_SEC = 30.0
@@ -365,7 +366,7 @@ def fetch_gwas_traits_for_association(
 ) -> tuple[list[str], float | None]:
     assoc_id = association_href.rstrip("/").split("/")[-1].split("{")[0]
     cache_file = cache_dir / "gwas_traits" / f"{assoc_id}.json"
-    url = f"{GWAS_BASE}/associations/{assoc_id}/efoTraits"
+    url = f"{GWAS_BASE}{URL_SEP}associations{URL_SEP}{assoc_id}{URL_SEP}efoTraits"
     payload, _, last_request_end = load_or_fetch_json(
         session,
         url,
@@ -400,8 +401,8 @@ def fetch_gwas_associations(
     page = 0
     while page < max_pages:
         url = (
-            f"{GWAS_BASE}/singleNucleotidePolymorphisms/{quote(rsid, safe='')}"
-            f"/associations?size=100&page={page}"
+            f"{GWAS_BASE}{URL_SEP}singleNucleotidePolymorphisms{URL_SEP}{quote(rsid, safe='')}"
+            f"{URL_SEP}associations?size=100&page={page}"
         )
         payload, last_request_end, status = http_get_json(
             session,
