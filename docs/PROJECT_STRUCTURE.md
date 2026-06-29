@@ -21,6 +21,7 @@ rogen_aging/
 ├── analysis/                 # Committed figure snapshots, alphagenome tables, pipeline CSVs
 ├── figures/                  # Local regenerated plots (git-ignored; .gitkeep tracked)
 ├── outputs/                  # Optional scratch for ad-hoc runs (git-ignored)
+├── results/                  # EDA / ad-hoc plot output (git-ignored; .gitkeep tracked)
 ├── data/                     # Large/local data (git-ignored)
 ├── test_data/                # Versioned synthetic fixtures
 ├── .github/workflows/        # CI (pytest + UKB audit)
@@ -100,6 +101,7 @@ Run with `uv run pytest` after `uv sync --extra dev`. Imports use `rogen_aging.*
 | gnomAD scatter plot | `figures/` | `figures/af_1kg_vs_gnomad_scatter.png` |
 | AlphaGenome tables | `analysis/alphagenome/` | `analysis/alphagenome/alphagenome_impact_analysis.csv` |
 | AlphaGenome plots (new runs) | `figures/alphagenome/` | `figures/alphagenome/alphagenome_impact_bar_plot.png` |
+| AlphaGenome plots (committed snapshots) | `analysis/alphagenome/` | `analysis/alphagenome/alphagenome_impact_bar_plot.png` |
 | LA-SNP manifest / AF CSVs | `analysis/` | `analysis/ukb_snp_manifest_v0.1.csv` |
 | VEP annotation + cache | `analysis/` | `analysis/vep_annotation/`, `analysis/vep_cache/` |
 | GTEx eQTL annotation + cache | `analysis/` | `analysis/gtex_annotation/`, `analysis/gtex_cache/` |

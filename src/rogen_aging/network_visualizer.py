@@ -6,7 +6,7 @@ import numpy as np
 from pathlib import Path
 
 
-def create_network_visualization(output_path: str = "Network_Analysis_Nov.png") -> None:
+def create_network_visualization(output_path: str = "analysis/Network_Analysis_Nov.png") -> None:
     """
     Create and save a network visualization of protein interactions.
     
