@@ -39,7 +39,7 @@ This document summarizes installable modules and CLI entry points. Per-file inve
 
 See [ACTIVITIES.md](ACTIVITIES.md) for the full tree. Highlights:
 
-- **`scripts/ukb/`** — manifest, gnomAD, VEP annotation, mock generators, integration
+- **`scripts/ukb/`** — manifest, gnomAD, VEP + GTEx annotation, mock generators, integration
 - **`scripts/figures/`** — matplotlib/networkx renders + `plot_clock_eval.py` ([FIGURES.md](FIGURES.md)); flat `scripts/generate_*.py` shims forward here
 - **`scripts/alphagenome/`** — AlphaGenome batch + analysis (tables → `analysis/alphagenome/`, plots → `figures/alphagenome/`)
 - **`scripts/dev/`** — `security_check.sh`, CI audit, ONT pipeline validation, R bootstrap, `find_r.sh`
@@ -49,7 +49,9 @@ See [ACTIVITIES.md](ACTIVITIES.md) for the full tree. Highlights:
 | Shim | Forwards to |
 |------|-------------|
 | `annotate_la_snps_vep.py` | `scripts/ukb/annotate_la_snps_vep.py` |
+| `annotate_la_snps_gtex.py` | `scripts/ukb/annotate_la_snps_gtex.py` |
 | `plot_clock_eval.py` | `scripts/figures/plot_clock_eval.py` |
+| `plot_af_comparison.py` | `scripts/figures/plot_af_comparison.py` |
 | `pipeline_validation.sh` | `scripts/dev/pipeline_validation.sh` |
 | `find_r.sh` | `scripts/dev/find_r.sh` |
 

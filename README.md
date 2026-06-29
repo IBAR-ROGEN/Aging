@@ -92,11 +92,12 @@ uv run rogen-ukb-integrate --output-dir analysis/
 ```bash
 uv run python scripts/figures/generate_network_fig.py      # → figures/Fig_LA_SNP_network.*
 uv run python scripts/ukb/annotate_la_snps_vep.py          # VEP table + cache under analysis/
+uv run python scripts/ukb/annotate_la_snps_gtex.py         # GTEx eQTL table + cache under analysis/
 uv run python scripts/alphagenome/alphagenome_sequence_comparer.py
 uv run streamlit run src/rogen_aging/eda_dashboard/app.py
 ```
 
-Flat paths such as `plot_clock_eval.py`, `plot_af_comparison.py`, and `annotate_la_snps_vep.py` at the repo root forward to `scripts/` with a deprecation warning.
+Flat paths such as `plot_clock_eval.py`, `plot_af_comparison.py`, `annotate_la_snps_vep.py`, and `annotate_la_snps_gtex.py` at the repo root forward to `scripts/` with a deprecation warning.
 
 ## Documentation index
 
@@ -107,6 +108,7 @@ Flat paths such as `plot_clock_eval.py`, `plot_af_comparison.py`, and `annotate_
 | Code reference | [docs/CODE_MODULES_REFERENCE.md](docs/CODE_MODULES_REFERENCE.md) |
 | Directory layout | [docs/PROJECT_STRUCTURE.md](docs/PROJECT_STRUCTURE.md) |
 | Manuscript figures | [docs/FIGURES.md](docs/FIGURES.md) |
+| LA-SNP VEP / GTEx annotation | [docs/LA_SNP_VEP_ANNOTATION.md](docs/LA_SNP_VEP_ANNOTATION.md) · [docs/LA_SNP_GTEX_ANNOTATION.md](docs/LA_SNP_GTEX_ANNOTATION.md) |
 | Epigenetic clock | [docs/CLOCK_LIBRARY.md](docs/CLOCK_LIBRARY.md) · [eval figure](docs/CLOCK_EVAL_FIGURES.md) |
 | LA-SNP public AF validation | [docs/LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md](docs/LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md) · [comparison figure](docs/AF_COMPARISON_FIGURES.md) |
 | Synthetic UKB integration | [docs/UKB_INTEGRATION_PIPELINE.md](docs/UKB_INTEGRATION_PIPELINE.md) |
