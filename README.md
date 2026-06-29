@@ -79,7 +79,10 @@ uv run rogen-ukb-manifest build --input overlapping_genes_with_snps.xlsx \
   --output analysis/ukb_snp_manifest_v0.1.csv
 uv run rogen-compare-af-gnomad \
   --input analysis/la_snp_1kg_frequencies.csv \
+  --output analysis/la_snp_af_1kg_vs_gnomad.csv \
   --scatter figures/af_1kg_vs_gnomad_scatter.png
+uv run python scripts/figures/plot_af_comparison.py
+# → figures/af_1kg_vs_gnomad_comparison.png + .pdf
 uv run rogen-ukb-mock-rap --n-samples 1000 --output-dir test_data/mock_ukb_rap/
 uv run rogen-ukb-integrate --output-dir analysis/
 ```
@@ -93,7 +96,7 @@ uv run python scripts/alphagenome/alphagenome_sequence_comparer.py
 uv run streamlit run src/rogen_aging/eda_dashboard/app.py
 ```
 
-Flat paths such as `plot_clock_eval.py` and `annotate_la_snps_vep.py` at the repo root forward to `scripts/` with a deprecation warning.
+Flat paths such as `plot_clock_eval.py`, `plot_af_comparison.py`, and `annotate_la_snps_vep.py` at the repo root forward to `scripts/` with a deprecation warning.
 
 ## Documentation index
 
@@ -105,6 +108,7 @@ Flat paths such as `plot_clock_eval.py` and `annotate_la_snps_vep.py` at the rep
 | Directory layout | [docs/PROJECT_STRUCTURE.md](docs/PROJECT_STRUCTURE.md) |
 | Manuscript figures | [docs/FIGURES.md](docs/FIGURES.md) |
 | Epigenetic clock | [docs/CLOCK_LIBRARY.md](docs/CLOCK_LIBRARY.md) · [eval figure](docs/CLOCK_EVAL_FIGURES.md) |
+| LA-SNP public AF validation | [docs/LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md](docs/LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md) · [comparison figure](docs/AF_COMPARISON_FIGURES.md) |
 | Synthetic UKB integration | [docs/UKB_INTEGRATION_PIPELINE.md](docs/UKB_INTEGRATION_PIPELINE.md) |
 | Methylation pipeline | [docs/METHYLATION_PIPELINE_README.md](docs/METHYLATION_PIPELINE_README.md) |
 

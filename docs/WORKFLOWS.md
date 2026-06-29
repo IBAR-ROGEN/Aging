@@ -61,7 +61,8 @@ Legacy script paths under `scripts/*.py` and at the repo root remain as **deprec
 - **Packages:** `src/rogen_aging/ukb/`, `src/rogen_aging/integration/`
 - **Mock clinical CSV:** `scripts/ukb/mock_clinical_csv.py` · **Mock RAP folder:** `scripts/ukb/mock_rap_folder.py`
 - **Integration scan:** `uv run rogen-ukb-integrate` or `scripts/ukb/run_integration.py`
-- **Docs:** [SYNTHETIC_UKB_GENERATOR.md](SYNTHETIC_UKB_GENERATOR.md), [SYNTHETIC_UKB_RAP_GENERATOR.md](SYNTHETIC_UKB_RAP_GENERATOR.md), [UKB_INTEGRATION_PIPELINE.md](UKB_INTEGRATION_PIPELINE.md), [LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md](LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md)
+- **Docs:** [SYNTHETIC_UKB_GENERATOR.md](SYNTHETIC_UKB_GENERATOR.md), [SYNTHETIC_UKB_RAP_GENERATOR.md](SYNTHETIC_UKB_RAP_GENERATOR.md), [UKB_INTEGRATION_PIPELINE.md](UKB_INTEGRATION_PIPELINE.md), [LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md](LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md), [AF_COMPARISON_FIGURES.md](AF_COMPARISON_FIGURES.md)
+- **Publication AF figure:** `uv run python scripts/figures/plot_af_comparison.py` → `figures/af_1kg_vs_gnomad_comparison.png` + `.pdf`
 
 ### Methylation (Oxford Nanopore)
 
@@ -107,6 +108,8 @@ uv run python scripts/figures/render_longevity_network_diagram.py
 uv run python scripts/figures/generate_methylation_visualizations.py
 uv run python scripts/figures/generate_bimodal_heatmap.py
 uv run python scripts/figures/generate_clock_validation.py
+uv run python scripts/figures/plot_clock_eval.py              # GSE87571 external validation
+uv run python scripts/figures/plot_af_comparison.py           # 1KG vs gnomAD AF comparison
 uv run python scripts/figures/generate_agent_system_schema.py
 uv run python scripts/figures/generate_pipeline_diagram.py   # requires Graphviz `dot` on PATH
 ```

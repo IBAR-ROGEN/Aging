@@ -52,6 +52,7 @@ while IFS= read -r file; do
     test_data/mock_clinical_data.csv) continue ;;
     notebooks/README.md|notebooks/05_ukb_exploration/*) continue ;;
     scripts/ukb_la_snp_lookup.py|scripts/compare_af_gnomad.py|scripts/run_integration.py) continue ;;
+    scripts/figures/plot_af_comparison.py) continue ;;
     src/rogen_aging/integration/*|src/rogen_aging/ukb/*|src/rogen_aging/cli/*) continue ;;
   esac
 

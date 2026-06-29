@@ -74,8 +74,9 @@ Maps IBAR-ROGEN activity IDs to console entry points, source modules, outputs, a
 |---|---|
 | **Console entry points** | `uv run rogen-ukb-manifest build …` · `uv run rogen-ukb-manifest extract …` · `uv run rogen-compare-af-gnomad …` |
 | **Source modules** | `src/rogen_aging/ukb/manifest.py` · `src/rogen_aging/ukb/gnomad.py` · CLI: `src/rogen_aging/cli/ukb_manifest.py`, `src/rogen_aging/cli/compare_af_gnomad.py` |
-| **Output files** | `analysis/ukb_snp_manifest_v0.1.csv` (build) · `analysis/la_snp_1kg_frequencies.csv` (extract) · `analysis/la_snp_af_1kg_vs_gnomad.csv`, `figures/af_1kg_vs_gnomad_scatter.png`, `data/geo/gnomad_r4_nfe_cache.json` (compare) |
-| **Documentation** | [LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md](LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md) |
+| **Output files** | `analysis/ukb_snp_manifest_v0.1.csv` (build) · `analysis/la_snp_1kg_frequencies.csv` (extract) · `analysis/la_snp_af_1kg_vs_gnomad.csv`, `figures/af_1kg_vs_gnomad_scatter.png`, `data/geo/gnomad_r4_nfe_cache.json` (compare) · `figures/af_1kg_vs_gnomad_comparison.png` + `.pdf` (publication figure) |
+| **Figure script** | [`scripts/figures/plot_af_comparison.py`](../scripts/figures/plot_af_comparison.py) — two-panel 1KG vs gnomAD AF figure with gene labels; see [AF_COMPARISON_FIGURES.md](AF_COMPARISON_FIGURES.md) |
+| **Documentation** | [LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md](LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md) · [AF_COMPARISON_FIGURES.md](AF_COMPARISON_FIGURES.md) |
 
 Example:
 
@@ -93,6 +94,9 @@ uv run rogen-compare-af-gnomad \
   --input analysis/la_snp_1kg_frequencies.csv \
   --output analysis/la_snp_af_1kg_vs_gnomad.csv \
   --scatter figures/af_1kg_vs_gnomad_scatter.png
+
+uv run python scripts/figures/plot_af_comparison.py
+# → figures/af_1kg_vs_gnomad_comparison.png + .pdf
 ```
 
 ### 2.1.8.1 — Synthetic UKB-RAP mock folder

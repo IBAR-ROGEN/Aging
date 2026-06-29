@@ -82,6 +82,17 @@ uv run python scripts/figures/plot_clock_eval.py
 
 Full configuration and input options: [CLOCK_EVAL_FIGURES.md](CLOCK_EVAL_FIGURES.md).
 
+## LA-SNP public AF comparison (1KG vs gnomAD v4 NFE)
+
+Two-panel figure from `rogen-compare-af-gnomad` output, with gene names merged from the LA-SNP manifest:
+
+```bash
+uv run python scripts/figures/plot_af_comparison.py
+# → figures/af_1kg_vs_gnomad_comparison.png + .pdf
+```
+
+Requires `analysis/la_snp_af_1kg_vs_gnomad.csv` and `analysis/ukb_snp_manifest_v0.1.csv`. Full configuration: [AF_COMPARISON_FIGURES.md](AF_COMPARISON_FIGURES.md).
+
 ## Architecture diagrams
 
 | Script | Output | Notes |
@@ -109,6 +120,7 @@ uv run python scripts/figures/generate_pipeline_diagram.py
 | `generate_agent_system_schema.py` | Agent system schema |
 | `generate_agent_system_schema_fallback.py` | Matplotlib fallback (called by schema script) |
 | `plot_clock_eval.py` | GSE87571 external-validation two-panel figure |
+| `plot_af_comparison.py` | 1KG vs gnomAD v4 NFE allele-frequency two-panel figure |
 | `generate_pipeline_diagram.py` | Bioinformatics pipeline architecture |
 
 ## Which asset is canonical?

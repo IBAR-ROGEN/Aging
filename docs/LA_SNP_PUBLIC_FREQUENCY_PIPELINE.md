@@ -116,6 +116,23 @@ uv run python scripts/dev/summarize_af_comparison.py \
 
 **Tests:** `tests/test_af_comparison_summary.py`.
 
+## Step 5 — Publication figure (optional)
+
+Two-panel manuscript figure: AF scatter with gene-labelled top discrepancies + ranked \|ΔAF\| bar chart.
+
+```bash
+uv run python scripts/figures/plot_af_comparison.py
+```
+
+| Artifact | Description |
+|----------|-------------|
+| `figures/af_1kg_vs_gnomad_comparison.png` | Two-panel figure (300 dpi) |
+| `figures/af_1kg_vs_gnomad_comparison.pdf` | Vector export |
+
+Merges gene names from `analysis/ukb_snp_manifest_v0.1.csv` onto the comparison table. Prints a coverage summary to stdout (total SNPs, paired AFs, flagged count).
+
+Full configuration and column reference: [AF_COMPARISON_FIGURES.md](AF_COMPARISON_FIGURES.md).
+
 ## Typical workflow diagram
 
 ```
@@ -133,6 +150,9 @@ figures/af_1kg_vs_gnomad_scatter.png
         │
         ▼  rogen-compare-af-gnomad summarize (optional)
 analysis/af_comparison_summary.md
+        │
+        ▼  plot_af_comparison.py (optional)
+figures/af_1kg_vs_gnomad_comparison.png + .pdf
 ```
 
 After validation, proceed to synthetic UKB-RAP generation or real UKB extraction planning — see [Synthetic UKB-RAP Generator](SYNTHETIC_UKB_RAP_GENERATOR.md).
@@ -146,9 +166,10 @@ After validation, proceed to synthetic UKB-RAP generation or real UKB extraction
 ## Related documentation
 
 - [WORKFLOWS.md](WORKFLOWS.md) — UKB workflow index
+- [AF_COMPARISON_FIGURES.md](AF_COMPARISON_FIGURES.md) — two-panel comparison figure
 - [UKB Pre-Commit Hook](UKB_PRE_COMMIT_HOOK.md)
 - [Synthetic UKB-RAP Generator](SYNTHETIC_UKB_RAP_GENERATOR.md)
 
 ---
 
-**Last updated:** May 31, 2026
+**Last updated:** June 29, 2026
