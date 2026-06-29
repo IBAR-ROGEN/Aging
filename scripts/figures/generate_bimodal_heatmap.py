@@ -10,13 +10,7 @@ Usage:
     uv run python scripts/generate_bimodal_heatmap.py
 """
 
-from pathlib import Path
-import sys
-
-# Add src to path
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-
-from src.rogen_aging.methylation_visualizations import create_bimodal_risk_heatmap
+from rogen_aging.methylation_visualizations import create_bimodal_risk_heatmap
 
 if __name__ == "__main__":
     create_bimodal_risk_heatmap()

@@ -12,13 +12,7 @@ Usage:
     uv run python scripts/generate_methylation_visualizations.py
 """
 
-from pathlib import Path
-import sys
-
-# Add src to path
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-
-from src.rogen_aging.methylation_visualizations import generate_all_visualizations
+from rogen_aging.methylation_visualizations import generate_all_visualizations
 
 if __name__ == "__main__":
     generate_all_visualizations()
