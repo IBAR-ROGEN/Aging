@@ -126,5 +126,6 @@ uv run python scripts/figures/generate_pipeline_diagram.py
 ## Which asset is canonical?
 
 - **Publication PNG/PDF:** regenerate under **`figures/`** via **`scripts/figures/`** (reproducible, no Node in CI). Committed snapshots under **`analysis/`** are historical exports for the manuscript.
+- **AlphaGenome plots:** new runs write to **`figures/alphagenome/`**; committed PNGs under **`analysis/alphagenome/`** are manuscript snapshots only.
 - **Layout exploration:** use React apps under `components/` and `frontend/`.
 - **Streamlit EDA** (live data, not a static figure): [EDA_DASHBOARD.md](EDA_DASHBOARD.md).

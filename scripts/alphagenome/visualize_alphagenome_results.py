@@ -1,3 +1,14 @@
+"""Plot AlphaGenome impact bar chart and ref-vs-alt scatter from impact CSV.
+
+Inputs:
+    ``analysis/alphagenome/alphagenome_impact_analysis.csv`` (from
+    ``analyze_alphagenome_results.py``).
+
+Outputs:
+    ``figures/alphagenome/alphagenome_impact_bar_plot.png``
+    ``figures/alphagenome/alphagenome_ref_vs_alt_scatter.png``
+"""
+
 from pathlib import Path
 
 import matplotlib.pyplot as plt

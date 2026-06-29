@@ -124,7 +124,7 @@ Panel A labels use `rs429358 (APOE)` when a gene is known; panel B y-axis shows 
 | Tool | Output |
 |------|--------|
 | **`rogen-compare-af-gnomad`** | `analysis/la_snp_af_1kg_vs_gnomad.csv` + optional single-panel `--scatter` PNG |
-| **`rogen-compare-af-gnomad summarize`** | `analysis/af_comparison_summary.md` with headline stats and top-five discordant table |
+| **`rogen-compare-af-gnomad summarize`** | `analysis/af_comparison_summary.md` with headline stats and top-five discordant table (generate first; not shipped in repo) |
 | **`plot_af_comparison.py`** | Two-panel PNG/PDF with gene-labelled scatter and ranked \|ΔAF\| bars |
 
 ## Related documentation

@@ -1,3 +1,14 @@
+"""Summarize AlphaGenome comparison CSV into per-variant impact scores.
+
+Inputs:
+    ``analysis/alphagenome/alphagenome_comparison_results.csv`` (from
+    ``alphagenome_sequence_comparer.py``).
+
+Outputs:
+    ``analysis/alphagenome/alphagenome_impact_analysis.csv`` — ref/alt RNA-seq
+    scores and percentage change per successful variant.
+"""
+
 import re
 from pathlib import Path
 

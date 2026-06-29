@@ -16,7 +16,7 @@
 
 Outputs are written as **PNG (300 dpi)** and **PDF** under a configurable output directory.
 
-This complements the built-in figures from **`rogen-clock evaluate`** (`Fig_Clock_Residuals.png`, `Fig_Clock_MAE_by_decade.png`), which focus on residuals and decade-stratified MAE rather than a predicted-vs-chronological scatter with model weights.
+This complements the built-in figures from **`rogen-clock evaluate`** (`Fig_Clock_Residuals.png`, `Fig_Clock_MAE_by_decade.png` under the evaluate `--output_dir`), which focus on residuals and decade-stratified MAE rather than a predicted-vs-chronological scatter with model weights. Those evaluate outputs are **not committed** — run step 3 below before expecting them on disk.
 
 ## Prerequisites
 

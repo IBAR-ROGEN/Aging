@@ -59,6 +59,9 @@ Installable code lives under `src/rogen_aging/`. Console entry points are regist
 | `figures/` | **Local regenerated plots** (git-ignored; `.gitkeep` only in git) |
 | `data/` | Large/local inputs and caches (git-ignored) |
 | `outputs/` | Optional scratch for ad-hoc pipeline runs (git-ignored) |
+| `results/` | EDA and ad-hoc plot output (git-ignored; see [docs/EDA_MOCK_INTEGRATION.md](docs/EDA_MOCK_INTEGRATION.md)) |
+| `frontend/` | React/Vite longevity network diagram (layout + PNG capture) |
+| `components/` | React/Vite dashboard figure mockup (layout + PNG capture) |
 | `test_data/` | Versioned synthetic fixtures |
 
 ## Common commands

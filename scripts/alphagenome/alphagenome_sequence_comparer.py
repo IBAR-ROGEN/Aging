@@ -1,3 +1,14 @@
+"""Batch AlphaGenome ref-vs-alt regulatory predictions for LA gene–SNP pairs.
+
+Inputs:
+    ``overlapping_genes_with_snps.xlsx`` at repo root (gene/SNP list).
+    ``ALPHA_GENOME_API_KEY`` in ``.env`` (required for live API calls).
+
+Outputs:
+    ``analysis/alphagenome/alphagenome_comparison_results.csv`` — raw API results
+    per gene/SNP pair (success, failed, or skipped).
+"""
+
 import os
 import pandas as pd
 import requests

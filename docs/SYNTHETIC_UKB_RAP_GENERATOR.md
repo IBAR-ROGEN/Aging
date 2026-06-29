@@ -56,6 +56,8 @@ uv run rogen-ukb-manifest build \
   --output analysis/ukb_snp_manifest_v0.1.csv
 ```
 
+The default mock RAP folder (`test_data/mock_ukb_rap/`) is **not committed** — generate it with `uv run rogen-ukb-mock-rap` before integration or notebook workflows that expect phenotype/VCF fixtures on disk.
+
 Optionally validate public allele frequencies (1KG extract + gnomAD comparison) before generating synthetic data — see **[LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md](LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md)**.
 
 See `notebooks/05_ukb_exploration/UKB_LA_SNP_FirstContact.ipynb` for manifest sanity checks.
