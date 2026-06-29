@@ -104,3 +104,4 @@ Add these under `analysis/` in `.gitignore` if you prefer not to commit cache ar
 2. Run `uv run python scripts/ukb/annotate_la_snps_vep.py`.
 3. Import `analysis/vep_annotation/la_snp_vep_annotations.xlsx` into the supplementary **Inferred functional consequences** table.
 4. Cross-check coordinates against `uv run rogen-ukb-manifest build` output when the UKB manifest is available.
+5. Optionally run GTEx eQTL annotation: [LA_SNP_GTEX_ANNOTATION.md](LA_SNP_GTEX_ANNOTATION.md).

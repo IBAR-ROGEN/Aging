@@ -8,6 +8,7 @@ Maps IBAR-ROGEN activity IDs to console entry points, source modules, outputs, a
 |----------|-------|-------------|------------------|---------------|
 | **2.1.7.1** | AlphaGenome LA-SNP regulatory comparison | `scripts/alphagenome/alphagenome_sequence_comparer.py` | — (repo scripts) | [ALPHAGENOME_ANALYSIS_EXPLANATION.md](ALPHAGENOME_ANALYSIS_EXPLANATION.md) |
 | **2.1.7.1** | LA-SNP VEP functional consequences (manuscript) | `scripts/ukb/annotate_la_snps_vep.py` | — (repo script) | [LA_SNP_VEP_ANNOTATION.md](LA_SNP_VEP_ANNOTATION.md) |
+| **2.1.7.1** | LA-SNP GTEx eQTL annotation (manuscript) | `scripts/ukb/annotate_la_snps_gtex.py` | — (repo script) | [LA_SNP_GTEX_ANNOTATION.md](LA_SNP_GTEX_ANNOTATION.md) |
 | **2.1.7.1** | LA-SNP pathway network figure | `scripts/figures/generate_network_fig.py` | — | [FIGURES.md](FIGURES.md) |
 | **2.1.8.1** | Methylation calling pipeline (ONT) | `scripts/dev/pipeline_validation.sh`, `scripts/dev/downstream_analysis.R` | `rogen_aging.methylation_visualizations` | [METHYLATION_PIPELINE_README.md](METHYLATION_PIPELINE_README.md) |
 | **2.1.8.1** | LA-SNP manifest + public AF validation | `rogen-ukb-manifest`, `rogen-compare-af-gnomad` | `rogen_aging.ukb.manifest`, `rogen_aging.ukb.gnomad` | [LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md](LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md) |
@@ -41,6 +42,18 @@ Maps IBAR-ROGEN activity IDs to console entry points, source modules, outputs, a
 | **Input files** | `analysis/alphagenome/alphagenome_impact_analysis.csv` (default `snp` column) · or plain-text / CSV rsID list |
 | **Output files** | `analysis/vep_annotation/la_snp_vep_annotations.csv` · `.xlsx` · `la_snp_vep_not_found.txt` · cache under `analysis/vep_cache/` |
 | **Documentation** | [LA_SNP_VEP_ANNOTATION.md](LA_SNP_VEP_ANNOTATION.md) |
+
+### 2.1.7.1 — LA-SNP GTEx eQTL annotation (manuscript)
+
+**Title:** GTEx single-tissue eQTL evidence for LA-SNPs in brain and whole blood (GTEx Portal API v2).
+
+| | |
+|---|---|
+| **Console entry points** | `uv run python scripts/ukb/annotate_la_snps_gtex.py` (deprecated shim: `annotate_la_snps_gtex.py` at repo root) |
+| **Source modules** | `scripts/ukb/annotate_la_snps_gtex.py` (GTEx Portal API + local JSON cache) |
+| **Input files** | `analysis/alphagenome/alphagenome_impact_analysis.csv` · `analysis/vep_annotation/la_snp_vep_annotations.xlsx` |
+| **Output files** | `analysis/gtex_annotation/la_snp_gtex_eqtls.csv` · `.xlsx` · `la_snp_gtex_unresolved.txt` · cache under `analysis/gtex_cache/` |
+| **Documentation** | [LA_SNP_GTEX_ANNOTATION.md](LA_SNP_GTEX_ANNOTATION.md) |
 
 ### 2.1.7.1 — LA-SNP pathway network figure
 

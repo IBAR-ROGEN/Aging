@@ -95,6 +95,14 @@ uv run python scripts/ukb/annotate_la_snps_vep.py
 
 See [LA_SNP_VEP_ANNOTATION.md](LA_SNP_VEP_ANNOTATION.md).
 
+**GTEx eQTL evidence (brain + whole blood):**
+
+```bash
+uv run python scripts/ukb/annotate_la_snps_gtex.py
+```
+
+See [LA_SNP_GTEX_ANNOTATION.md](LA_SNP_GTEX_ANNOTATION.md).
+
 ### Manuscript figures
 
 Canonical renders live under **`scripts/figures/`** (flat `scripts/render_*.py` / `scripts/generate_*.py` are deprecation shims). Default output: **`figures/`**.

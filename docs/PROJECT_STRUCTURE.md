@@ -92,6 +92,7 @@ Run with `uv run pytest` after `uv sync --extra dev`. Imports use `rogen_aging.*
 | AlphaGenome plots (new runs) | `figures/alphagenome/` | `figures/alphagenome/alphagenome_impact_bar_plot.png` |
 | LA-SNP manifest / AF CSVs | `analysis/` | `analysis/ukb_snp_manifest_v0.1.csv` |
 | VEP annotation + cache | `analysis/` | `analysis/vep_annotation/`, `analysis/vep_cache/` |
+| GTEx eQTL annotation + cache | `analysis/` | `analysis/gtex_annotation/`, `analysis/gtex_cache/` |
 | Clock model + metrics | `analysis/` | `analysis/gse40279_elasticnet_clock.pkl` |
 
 ### Root script shims (deprecated paths)
@@ -101,6 +102,7 @@ These one-line forwards remain at the repo root for backward compatibility; cano
 | Shim | Canonical |
 |------|-----------|
 | `annotate_la_snps_vep.py` | `scripts/ukb/annotate_la_snps_vep.py` |
+| `annotate_la_snps_gtex.py` | `scripts/ukb/annotate_la_snps_gtex.py` |
 | `plot_clock_eval.py` | `scripts/figures/plot_clock_eval.py` |
 | `pipeline_validation.sh` | `scripts/dev/pipeline_validation.sh` |
 | `find_r.sh` | `scripts/dev/find_r.sh` |
