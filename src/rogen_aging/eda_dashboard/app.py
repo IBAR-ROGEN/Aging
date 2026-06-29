@@ -7,7 +7,11 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
-from rogen_aging.eda_dashboard.data import default_merged_parquet_path, load_merged_parquet, load_synthetic_cohort
+from rogen_aging.eda_dashboard.data import (
+    default_merged_parquet_path,
+    load_merged_parquet,
+    load_synthetic_cohort,
+)
 from rogen_aging.eda_dashboard.sidebar import apply_global_filters, render_global_sidebar
 from rogen_aging.eda_dashboard.tabs import (
     render_tab_clinical_overview,

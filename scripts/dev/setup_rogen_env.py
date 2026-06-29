@@ -9,8 +9,8 @@ per the rule: keep data and code strictly separated.
 See: https://github.com/IBAR-ROGEN/Aging
 """
 
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Sequence
 
 import typer
 

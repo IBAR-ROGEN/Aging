@@ -4,14 +4,14 @@ This module generates visualizations for the methylation calling pipeline,
 including workflow diagrams and example DMR analysis plots.
 """
 
-import matplotlib.pyplot as plt
+from pathlib import Path
+
 import matplotlib.patches as mpatches
-from matplotlib.patches import FancyBboxPatch, FancyArrowPatch
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from pathlib import Path
-from typing import Optional
+from matplotlib.patches import FancyArrowPatch, FancyBboxPatch
 
 # Set style
 sns.set_style("whitegrid")
@@ -20,7 +20,7 @@ plt.rcParams['savefig.dpi'] = 300
 plt.rcParams['font.size'] = 10
 
 
-def create_pipeline_workflow_diagram(output_path: Optional[str] = None) -> None:
+def create_pipeline_workflow_diagram(output_path: str | None = None) -> None:
     """Create a workflow diagram showing the methylation pipeline architecture.
     
     Args:
@@ -167,7 +167,7 @@ def create_pipeline_workflow_diagram(output_path: Optional[str] = None) -> None:
     plt.close()
 
 
-def create_example_dmr_visualizations(output_path: Optional[str] = None) -> None:
+def create_example_dmr_visualizations(output_path: str | None = None) -> None:
     """Create example DMR visualizations with simulated data.
     
     Args:
@@ -273,7 +273,7 @@ def create_example_dmr_visualizations(output_path: Optional[str] = None) -> None
     plt.close()
 
 
-def create_pipeline_summary_diagram(output_path: Optional[str] = None) -> None:
+def create_pipeline_summary_diagram(output_path: str | None = None) -> None:
     """Create a summary diagram showing pipeline components and outputs.
     
     Args:
@@ -391,7 +391,7 @@ def create_pipeline_summary_diagram(output_path: Optional[str] = None) -> None:
     plt.close()
 
 
-def create_bimodal_risk_heatmap(output_path: Optional[str] = None) -> None:
+def create_bimodal_risk_heatmap(output_path: str | None = None) -> None:
     """Create a bimodal risk heatmap showing protective vs. risk effects.
     
     This visualization shows genes with both protective (negative) and risk (positive)
@@ -462,7 +462,7 @@ def create_bimodal_risk_heatmap(output_path: Optional[str] = None) -> None:
     plt.close()
 
 
-def create_clock_validation_plot(output_path: Optional[str] = None) -> None:
+def create_clock_validation_plot(output_path: str | None = None) -> None:
     """Create Figure 3: Methylation Clock Accuracy scatter plot.
     
     This script generates the scatter plot for Activity 2.1.10, showing the

@@ -12,7 +12,6 @@ Outputs:
 import re
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -41,7 +40,7 @@ def parse_track_data(data_str):
         alt_score = float(alt_match.group(1)) if alt_match else 0.0
         
         return ref_score, alt_score
-    except Exception as e:
+    except Exception:
         return 0.0, 0.0
 
 def analyze_results():

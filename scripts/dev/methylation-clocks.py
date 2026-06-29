@@ -16,11 +16,9 @@ Coefficients: Use the official file from
 """
 
 from pathlib import Path
-from typing import Union
 
 import numpy as np
 import pandas as pd
-
 
 # Default path for coefficient file (same directory as this module)
 # horvath_353_coefficients.csv for an alternate title
@@ -29,7 +27,7 @@ import pandas as pd
 _DEFAULT_COEF_PATH = Path(__file__).resolve().parent / "test_data" / "gb-2013-14-10-r115-S3.csv"
 
 
-def _load_horvath_coefficients(path: Union[str, Path, None] = None) -> tuple[float, dict[str, float]]:
+def _load_horvath_coefficients(path: str | Path | None = None) -> tuple[float, dict[str, float]]:
     """
     Load intercept and per-probe coefficients from a CSV.
 
@@ -90,7 +88,7 @@ class HorvathClock:
     Missing CpGs are imputed with 0.5 (standard choice).
     """
 
-    def __init__(self, coefficient_path: Union[str, Path, None] = None):
+    def __init__(self, coefficient_path: str | Path | None = None):
         self.intercept, self.coefficients = _load_horvath_coefficients(coefficient_path)
         self.probe_ids = list(self.coefficients.keys())
 
@@ -107,9 +105,9 @@ class HorvathClock:
 
     def predict(
         self,
-        beta: Union[dict[str, float], pd.DataFrame],
+        beta: dict[str, float] | pd.DataFrame,
         missing_impute: float = 0.5,
-    ) -> Union[float, np.ndarray]:
+    ) -> float | np.ndarray:
         """
         Predict DNAm age (Horvath clock).
 
@@ -161,10 +159,10 @@ class HorvathClock:
 
 
 def horvath_clock(
-    beta: Union[dict[str, float], pd.DataFrame],
-    coefficient_path: Union[str, Path, None] = None,
+    beta: dict[str, float] | pd.DataFrame,
+    coefficient_path: str | Path | None = None,
     missing_impute: float = 0.5,
-) -> Union[float, np.ndarray]:
+) -> float | np.ndarray:
     """
     Convenience function: predict DNAm age using the Horvath 2013 clock.
 

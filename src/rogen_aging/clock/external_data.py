@@ -14,8 +14,9 @@ import re
 import shutil
 import urllib.error
 import urllib.request
+from collections.abc import Sequence
 from pathlib import Path
-from typing import IO, Annotated, Any, Sequence
+from typing import IO, Annotated, Any
 
 import pandas as pd
 import requests

@@ -3,8 +3,6 @@
 
 from __future__ import annotations
 
-import sys
-
 from rogen_aging.ukb.gnomad import summarize_main
 
 if __name__ == "__main__":

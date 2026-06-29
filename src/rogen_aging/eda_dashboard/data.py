@@ -10,7 +10,10 @@ import pandas as pd
 import polars as pl
 import streamlit as st
 
-from rogen_aging.eda_dashboard.schema import ensure_epigenetic_age_acceleration, normalize_column_names
+from rogen_aging.eda_dashboard.schema import (
+    ensure_epigenetic_age_acceleration,
+    normalize_column_names,
+)
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_MERGED_PATH = (REPO_ROOT / "data" / "merged_cohort.parquet").resolve()

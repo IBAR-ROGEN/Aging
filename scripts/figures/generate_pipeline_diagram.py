@@ -7,17 +7,17 @@ This script creates a visualization of a bioinformatics pipeline showing:
 - All orchestrated by Dagster
 """
 
-from diagrams import Diagram, Cluster, Edge
-from diagrams.generic.storage import Storage
-from diagrams.programming.language import Python
-from diagrams.onprem.database import Duckdb
-from diagrams.generic.database import SQL
-from pathlib import Path
-from typing import Optional
 import os
+from pathlib import Path
+
+from diagrams import Cluster, Diagram, Edge
+from diagrams.generic.database import SQL
+from diagrams.generic.storage import Storage
+from diagrams.onprem.database import Duckdb
+from diagrams.programming.language import Python
 
 
-def create_pipeline_diagram(output_path: Optional[str] = None) -> None:
+def create_pipeline_diagram(output_path: str | None = None) -> None:
     """Create a professional pipeline diagram for scientific reports.
     
     Args:

@@ -6,16 +6,14 @@ This script creates a visualization of the agent system architecture showing:
 - LongevityForest cluster with BioMART, AlphaFold, and STRING databases
 """
 
-from diagrams import Diagram, Cluster, Edge, Node
-from diagrams.onprem.client import User
-from pathlib import Path
-from typing import Optional
 import os
-import subprocess
 import shutil
 
+from diagrams import Cluster, Diagram, Edge, Node
+from diagrams.onprem.client import User
 
-def find_graphviz() -> Optional[str]:
+
+def find_graphviz() -> str | None:
     """Try to find Graphviz dot executable in common locations."""
     # Check if dot is already in PATH
     dot_path = shutil.which("dot")
@@ -38,7 +36,7 @@ def find_graphviz() -> Optional[str]:
     return None
 
 
-def create_agent_system_schema(output_path: Optional[str] = None) -> None:
+def create_agent_system_schema(output_path: str | None = None) -> None:
     """Create Figure 4: Agent System Schema architecture diagram.
     
     Args:
@@ -65,7 +63,6 @@ def create_agent_system_schema(output_path: Optional[str] = None) -> None:
             print("Warning: Graphviz not found. Using matplotlib fallback to generate PNG.")
             print("To use Graphviz (better quality), install with: brew install graphviz")
             # Use matplotlib fallback
-            import sys
             from pathlib import Path
             fallback_script = Path(__file__).parent / "generate_agent_system_schema_fallback.py"
             if fallback_script.exists():

@@ -1,13 +1,12 @@
 """Fallback version that uses matplotlib if Graphviz is not available."""
 
-import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
-from matplotlib.patches import FancyBboxPatch, FancyArrowPatch, Circle
 from pathlib import Path
-from typing import Optional
+
+import matplotlib.pyplot as plt
+from matplotlib.patches import FancyArrowPatch, FancyBboxPatch
 
 
-def create_agent_system_schema_matplotlib(output_path: Optional[str] = None) -> None:
+def create_agent_system_schema_matplotlib(output_path: str | None = None) -> None:
     """Create Figure 4 using matplotlib as fallback."""
     if output_path is None:
         output_dir = Path(__file__).parent.parent.parent / "figures"

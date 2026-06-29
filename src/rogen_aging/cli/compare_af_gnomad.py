@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import sys
-
 from rogen_aging.ukb.gnomad import main
 
 

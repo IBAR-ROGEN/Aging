@@ -9,16 +9,17 @@ Outputs:
     per gene/SNP pair (success, failed, or skipped).
 """
 
+import logging
 import os
-import pandas as pd
-import requests
 import time
 from pathlib import Path
-from typing import Dict, Any, List, Optional, Tuple
-from dotenv import load_dotenv
+from typing import Any
+
+import pandas as pd
+import requests
 from alphagenome.data import genome
 from alphagenome.models import dna_client
-import logging
+from dotenv import load_dotenv
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -45,7 +46,7 @@ CHROMOSOME_MAPPING = {
     'NC_000022.11': 'chr22', 'NC_000023.11': 'chrX', 'NC_000024.10': 'chrY',
 }
 
-def get_ensembl_sequence(chrom: str, start: int, end: int, strand: int = 1) -> Optional[str]:
+def get_ensembl_sequence(chrom: str, start: int, end: int, strand: int = 1) -> str | None:
     """Fetch reference sequence from Ensembl REST API (GRCh38)."""
     chrom_clean = CHROMOSOME_MAPPING.get(chrom, chrom)
     if chrom_clean.startswith('chr'):
@@ -69,7 +70,7 @@ def get_ensembl_sequence(chrom: str, start: int, end: int, strand: int = 1) -> O
         logger.error(f"Error fetching sequence for {chrom}:{start}-{end}: {e}")
         return None
 
-def get_snp_info_ensembl(rsid: str) -> Optional[Dict[str, Any]]:
+def get_snp_info_ensembl(rsid: str) -> dict[str, Any] | None:
     """Fetch detailed SNP info from Ensembl Variation API (GRCh38)."""
     url = f"{ENSEMBL_REST_URL}/variation/human/{rsid}?content-type=application/json"
     try:
@@ -92,7 +93,7 @@ def get_snp_info_ensembl(rsid: str) -> Optional[Dict[str, Any]]:
                         'strand': mapping['strand']
                     }
         return None
-    except Exception as e:
+    except Exception:
         return None
 
 def save_fasta(filename: str, header: str, sequence: str):

@@ -15,13 +15,13 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
-from typer import Option, Typer
 from scipy.stats import pearsonr
 from sklearn.linear_model import ElasticNetCV
 from sklearn.metrics import mean_absolute_error
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
+from typer import Option, Typer
 
 from rogen_aging.clock.data import load_romanian_cohort
 

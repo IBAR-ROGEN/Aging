@@ -3,8 +3,6 @@
 
 from __future__ import annotations
 
-import sys
-
 from rogen_aging.vcf.synthetic import main
 
 if __name__ == "__main__":

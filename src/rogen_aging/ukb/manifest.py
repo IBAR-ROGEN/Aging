@@ -39,9 +39,10 @@ import logging
 import re
 import sys
 import time
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterable, Sequence
+from typing import Any
 from urllib.parse import quote
 
 import cyvcf2

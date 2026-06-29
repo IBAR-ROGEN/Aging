@@ -178,7 +178,7 @@ as dosage; a **Kruskal–Wallis** test provides a non-parametric omnibus p-value
     trait_candidates = [
         c
         for c in df.select_dtypes(include=["number"]).columns.tolist()
-        if c not in (filt.col_age,) and not re.search(r"rs\d+", str(c), flags=re.IGNORECASE)
+        if c not in (_filt.col_age,) and not re.search(r"rs\d+", str(c), flags=re.IGNORECASE)
     ]
     trait_candidates = sorted(set(trait_candidates))
     if not trait_candidates:

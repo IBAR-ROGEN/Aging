@@ -6,9 +6,8 @@ import json
 from pathlib import Path
 
 import joblib
-import pytest
-import numpy as np
 import pandas as pd
+import pytest
 from scipy.stats import pearsonr
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import ElasticNetCV

@@ -70,7 +70,7 @@ Run with `uv run pytest` after `uv sync --extra dev`. Imports use `rogen_aging.*
 | `test_synthetic_vcf.py` / `test_mock_clinical_csv.py` | VCF generator and mock clinical CSV |
 | `test_af_comparison_summary.py` | gnomAD comparison summarizer |
 
-**CI:** `.github/workflows/ci.yml` runs `uv sync --extra dev`, `uv run pytest -q`, then `./scripts/dev/ukbb_ci_compliance_audit.sh` on every push/PR to `main`. There is no committed `uv.lock`; CI resolves the latest compatible dependency versions (including scikit-learn), so clock tests must track current sklearn APIs (for example `ElasticNetCV(alphas=20)` since 1.9).
+**CI:** `.github/workflows/ci.yml` runs `uv sync --extra dev`, `uv run ruff check src scripts tests`, `uv run pytest -q`, then `./scripts/dev/ukbb_ci_compliance_audit.sh` on every push/PR to `main`. Lockfile: `uv.lock` is committed for reproducible installs.
 
 ## `docs/`
 
