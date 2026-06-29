@@ -11,7 +11,7 @@ def make_clock_pipeline(
     *,
     random_state: int = 42,
     l1_ratio: list[float] | None = None,
-    n_alphas: int = 20,
+    alphas: int = 20,
     cv: int = 10,
     max_iter: int = 5000,
 ) -> Pipeline:
@@ -23,7 +23,7 @@ def make_clock_pipeline(
     ratios = l1_ratio if l1_ratio is not None else [0.1, 0.5, 0.7, 0.9, 0.95, 0.99, 1.0]
     enet = ElasticNetCV(
         l1_ratio=ratios,
-        n_alphas=n_alphas,
+        alphas=alphas,
         cv=cv,
         random_state=random_state,
         max_iter=max_iter,

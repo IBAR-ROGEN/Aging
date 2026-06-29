@@ -24,7 +24,7 @@ The script does **not** download GEO Series Matrix files, parse IDATs, or map pr
 ## Model and evaluation
 
 1. **Train/test split:** `sklearn.model_selection.train_test_split` with `--test_size` (default `0.2`) and `--random_state` (default `42`).
-2. **Pipeline:** `SimpleImputer(strategy="mean")` → **`ElasticNetCV`** with `cv=10`, `l1_ratio=[0.1, 0.5, 0.7, 0.9, 0.95, 0.99, 1.0]`, `n_alphas=20`, `max_iter=5000`.
+2. **Pipeline:** `SimpleImputer(strategy="mean")` → **`ElasticNetCV`** with `cv=10`, `l1_ratio=[0.1, 0.5, 0.7, 0.9, 0.95, 0.99, 1.0]`, `alphas=20`, `max_iter=5000`.
 3. **Held-out metrics:** MAE, RMSE (`root_mean_squared_error`), Pearson **r** (`scipy.stats.pearsonr`) on the test split.
 
 The saved object is the **fitted `Pipeline`**, written with **`joblib.dump`**. It exposes **`feature_names_in_`**, so **`rogen-clock evaluate`** can align probes and mean-impute missing expected CpGs on new cohorts.

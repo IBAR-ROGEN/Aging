@@ -44,7 +44,7 @@ def _legacy_train_metrics(
     )
     enet = ElasticNetCV(
         l1_ratio=[0.1, 0.5, 0.7, 0.9, 0.95, 0.99, 1.0],
-        n_alphas=20,
+        alphas=20,
         cv=10,
         random_state=random_state,
         max_iter=5000,
