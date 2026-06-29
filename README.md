@@ -32,7 +32,7 @@ Install the UK Biobank pre-commit security hook:
 | **Code reference** | [docs/CODE_MODULES_REFERENCE.md](docs/CODE_MODULES_REFERENCE.md) |
 | **Directory layout** | [docs/PROJECT_STRUCTURE.md](docs/PROJECT_STRUCTURE.md) |
 | **Manuscript figures** | [docs/FIGURES.md](docs/FIGURES.md) |
-| **Epigenetic clock** | [docs/CLOCK_LIBRARY.md](docs/CLOCK_LIBRARY.md) |
+| **Epigenetic clock** | [docs/CLOCK_LIBRARY.md](docs/CLOCK_LIBRARY.md) · [eval figure](docs/CLOCK_EVAL_FIGURES.md) |
 | **Synthetic UKB integration** | [docs/UKB_INTEGRATION_PIPELINE.md](docs/UKB_INTEGRATION_PIPELINE.md) |
 | **Methylation pipeline** | [docs/METHYLATION_PIPELINE_README.md](docs/METHYLATION_PIPELINE_README.md) |
 

@@ -71,6 +71,17 @@ uv run python scripts/figures/generate_clock_validation.py
 
 Clock **train/evaluate** figures (`Fig_Clock_Residuals.png`, etc.) come from **`rogen-clock evaluate`** — see [CLOCK_LIBRARY.md](CLOCK_LIBRARY.md) (Activity **2.1.10.1**).
 
+### Real-data external validation (GSE87571)
+
+Two-panel figure from a trained model and held-out cohort (predicted vs chronological scatter + top CpG weights):
+
+```bash
+uv run python plot_clock_eval.py
+# → analysis/validation_gse87571/figures/clock_eval_gse87571.png + .pdf
+```
+
+Full configuration and input options: [CLOCK_EVAL_FIGURES.md](CLOCK_EVAL_FIGURES.md).
+
 ## Architecture diagrams
 
 | Script | Output | Notes |

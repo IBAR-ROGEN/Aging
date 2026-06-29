@@ -50,6 +50,17 @@ uv run rogen-clock evaluate \
 
 Wide-table convention: `cg*` probe columns + `chronological_age` target.
 
+## Publication figure (external validation)
+
+After train + evaluate on GSE87571, generate a two-panel scatter (predicted vs chronological age) and top-CpG weight bar chart:
+
+```bash
+uv run python plot_clock_eval.py
+# → analysis/validation_gse87571/figures/clock_eval_gse87571.png + .pdf
+```
+
+See **[CLOCK_EVAL_FIGURES.md](CLOCK_EVAL_FIGURES.md)** for configuration constants, input options, and how this relates to `rogen-clock evaluate` outputs.
+
 ## Tests
 
 ```bash
@@ -59,9 +70,10 @@ uv run pytest tests/test_clock_regression.py tests/test_package_imports.py -q
 ## Related documentation
 
 - [GSE40279 Clock Training](GSE40279_CLOCK_TRAINING.md)
+- [Clock eval figure (`plot_clock_eval.py`)](CLOCK_EVAL_FIGURES.md)
 - [Romanian Epigenetic Clock](ROMANIAN_EPIGENETIC_CLOCK.md)
 - [WORKFLOWS.md](WORKFLOWS.md)
 
 ---
 
-**Last updated:** May 31, 2026
+**Last updated:** June 29, 2026

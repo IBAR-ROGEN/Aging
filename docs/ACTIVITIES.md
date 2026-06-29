@@ -104,8 +104,9 @@ uv run rogen-compare-af-gnomad \
 | **Console entry points** | `uv run rogen-clock train …` · `uv run rogen-clock evaluate …` · `uv run python -m rogen_aging.clock.external_data --output …` |
 | **Script equivalents** | `scripts/clock/run_clock.py` (same as `rogen-clock`) · deprecated: `scripts/clock/train_clock_on_gse40279.py`, `scripts/clock/validate_clock.py` |
 | **Source modules** | `src/rogen_aging/clock/data.py` (wide-table I/O) · `model.py` (`make_clock_pipeline`) · `train.py` (`train_clock`) · `evaluate.py` (`evaluate_clock`) · `external_data.py` (`load_gse87571`, GSE87571 Parquet builder) · CLI: `src/rogen_aging/cli/clock.py` |
-| **Output files** | **Train:** `--output_model` (`.pkl`/`.joblib` pipeline), `--output_metrics` (training JSON with `test_mae`, `selected_cpgs`, …) · **External data:** `--output` Parquet (e.g. `data/gse87571.parquet`) · **Evaluate:** `{output_dir}/validation_metrics.json`, `Fig_Clock_Residuals.png`, `Fig_Clock_MAE_by_decade.png` |
-| **Documentation** | [CLOCK_LIBRARY.md](CLOCK_LIBRARY.md) · [GSE40279_CLOCK_TRAINING.md](GSE40279_CLOCK_TRAINING.md) · [ROMANIAN_EPIGENETIC_CLOCK.md](ROMANIAN_EPIGENETIC_CLOCK.md) |
+| **Figure script** | [`plot_clock_eval.py`](../plot_clock_eval.py) — two-panel external-validation figure (scatter + top CpG weights); see [CLOCK_EVAL_FIGURES.md](CLOCK_EVAL_FIGURES.md) |
+| **Output files** | **Train:** `--output_model` (`.pkl`/`.joblib` pipeline), `--output_metrics` (training JSON with `test_mae`, `selected_cpgs`, …) · **External data:** `--output` Parquet (e.g. `data/gse87571.parquet`) · **Evaluate:** `{output_dir}/validation_metrics.json`, `Fig_Clock_Residuals.png`, `Fig_Clock_MAE_by_decade.png` · **Eval figure:** `{output_dir}/figures/clock_eval_gse87571.png` + `.pdf` from `plot_clock_eval.py` |
+| **Documentation** | [CLOCK_LIBRARY.md](CLOCK_LIBRARY.md) · [GSE40279_CLOCK_TRAINING.md](GSE40279_CLOCK_TRAINING.md) · [CLOCK_EVAL_FIGURES.md](CLOCK_EVAL_FIGURES.md) · [ROMANIAN_EPIGENETIC_CLOCK.md](ROMANIAN_EPIGENETIC_CLOCK.md) |
 
 Example (GSE40279 train → GSE87571 external validate):
 
@@ -126,6 +127,9 @@ uv run rogen-clock evaluate \
   --model_path analysis/gse40279_elasticnet_clock.pkl \
   --test_data data/gse87571.parquet \
   --output_dir analysis/validation_gse87571
+
+# Publication figure (predicted vs chronological + top CpG weights)
+uv run python plot_clock_eval.py
 ```
 
 ---

@@ -101,10 +101,16 @@ uv run rogen-clock evaluate \
   --model_path analysis/gse40279_elasticnet_clock.pkl \
   --test_data data/gse87571.parquet \
   --output_dir analysis/validation_gse87571
+
+# Optional: publication two-panel figure (scatter + top CpG weights)
+uv run python plot_clock_eval.py
 ```
+
+See **[docs/CLOCK_EVAL_FIGURES.md](CLOCK_EVAL_FIGURES.md)** for `plot_clock_eval.py` configuration, per-sample input options, and output paths.
 
 ## Related documentation
 
+- **[docs/CLOCK_EVAL_FIGURES.md](CLOCK_EVAL_FIGURES.md)** — External-validation scatter + top-CpG figure (`plot_clock_eval.py`).
 - **[docs/ROMANIAN_EPIGENETIC_CLOCK.md](ROMANIAN_EPIGENETIC_CLOCK.md)** — Romanian-style mock trainer and shared validation notes.
 - **[docs/WORKFLOWS.md](WORKFLOWS.md)** — Clock workflow index.
 - **`notebooks/02_methylation_pipeline/`** — Broader methylation and clock context.

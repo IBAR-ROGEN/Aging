@@ -40,8 +40,9 @@ Legacy script paths under `scripts/*.py` remain as **deprecation shims** forward
 - **Package:** `src/rogen_aging/clock/` (`data.py`, `model.py`, `train.py`, `evaluate.py`, `external_data.py`)
 - **Canonical CLI:** `uv run rogen-clock train|evaluate` or `scripts/clock/run_clock.py`
 - **GSE87571 external cohort:** `uv run python -m rogen_aging.clock.external_data --output data/gse87571.parquet`
+- **External-validation figure:** `uv run python plot_clock_eval.py` → [CLOCK_EVAL_FIGURES.md](CLOCK_EVAL_FIGURES.md)
 - **Romanian mock demo** (separate StandardScaler path): `scripts/clock/train_romanian_epigenetic_clock.py`
-- **Docs:** [CLOCK_LIBRARY.md](CLOCK_LIBRARY.md), [GSE40279_CLOCK_TRAINING.md](GSE40279_CLOCK_TRAINING.md), [ROMANIAN_EPIGENETIC_CLOCK.md](ROMANIAN_EPIGENETIC_CLOCK.md), [ACTIVITIES.md](ACTIVITIES.md#21101--methylation-aging-clock)
+- **Docs:** [CLOCK_LIBRARY.md](CLOCK_LIBRARY.md), [GSE40279_CLOCK_TRAINING.md](GSE40279_CLOCK_TRAINING.md), [CLOCK_EVAL_FIGURES.md](CLOCK_EVAL_FIGURES.md), [ROMANIAN_EPIGENETIC_CLOCK.md](ROMANIAN_EPIGENETIC_CLOCK.md), [ACTIVITIES.md](ACTIVITIES.md#21101--methylation-aging-clock)
 
 ### UK Biobank (synthetic + LA-SNP)
 
