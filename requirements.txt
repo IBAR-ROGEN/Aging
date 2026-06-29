@@ -1,7 +1,8 @@
-# Pin versions locally with `uv pip compile` or `uv lock` as your workflow matures.
+# Legacy convenience list — canonical dependencies are in pyproject.toml.
+# Install with: uv sync --extra dev
+
 numpy>=2.0
 pandas>=2.0
 scikit-learn>=1.5
 networkx>=3.0
-pysam>=0.22
 streamlit>=1.40
