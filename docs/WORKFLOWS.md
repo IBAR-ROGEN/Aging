@@ -74,6 +74,14 @@ uv run python scripts/alphagenome/visualize_alphagenome_results.py
 
 See [ALPHAGENOME_ANALYSIS_EXPLANATION.md](ALPHAGENOME_ANALYSIS_EXPLANATION.md).
 
+**VEP functional consequences (manuscript table):**
+
+```bash
+uv run python annotate_la_snps_vep.py
+```
+
+See [LA_SNP_VEP_ANNOTATION.md](LA_SNP_VEP_ANNOTATION.md).
+
 ### Manuscript figures
 
 Canonical renders live under **`scripts/figures/`** (flat `scripts/render_*.py` / `scripts/generate_*.py` are deprecation shims).
