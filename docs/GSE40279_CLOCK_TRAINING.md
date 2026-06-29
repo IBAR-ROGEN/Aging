@@ -27,7 +27,18 @@ The script does **not** download GEO Series Matrix files, parse IDATs, or map pr
 2. **Pipeline:** `SimpleImputer(strategy="mean")` → **`ElasticNetCV`** with `cv=10`, `l1_ratio=[0.1, 0.5, 0.7, 0.9, 0.95, 0.99, 1.0]`, `alphas=20`, `max_iter=5000`.
 3. **Held-out metrics:** MAE, RMSE (`root_mean_squared_error`), Pearson **r** (`scipy.stats.pearsonr`) on the test split.
 
+`alphas=20` means **20 automatically generated regularization strengths** on the log-spaced path (one grid per `l1_ratio` value). This is the scikit-learn **1.9+** spelling; older releases used the deprecated `n_alphas=20` alias for the same behaviour.
+
 The saved object is the **fitted `Pipeline`**, written with **`joblib.dump`**. It exposes **`feature_names_in_`**, so **`rogen-clock evaluate`** can align probes and mean-impute missing expected CpGs on new cohorts.
+
+### scikit-learn compatibility
+
+| Topic | Detail |
+|-------|--------|
+| Minimum version | `scikit-learn>=1.6.0` in `pyproject.toml` |
+| Hyperparameter | Use **`alphas=20`** in `make_clock_pipeline()` and tests — required from **1.9** onward (`n_alphas` was removed) |
+| Regression test | `tests/test_clock_regression.py` compares refactored `train_clock()` against inlined legacy training logic on `test_data/mock_clock_wide.csv` |
+| CI | GitHub Actions runs `uv sync --extra dev` then `uv run pytest -q` on `ubuntu-latest` (see `.github/workflows/ci.yml`) |
 
 ## CLI
 

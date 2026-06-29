@@ -23,6 +23,16 @@ Install the UK Biobank pre-commit security hook:
 ./scripts/dev/install_pre_commit_hook.sh
 ```
 
+## Continuous integration
+
+GitHub Actions (`.github/workflows/ci.yml`) on every push/PR to `main`:
+
+1. `uv sync --extra dev`
+2. `uv run pytest -q`
+3. `./scripts/dev/ukbb_ci_compliance_audit.sh`
+
+See [docs/UKBB_CI_COMPLIANCE_AUDIT.md](docs/UKBB_CI_COMPLIANCE_AUDIT.md) for the audit rules. Clock training uses `ElasticNetCV(alphas=20)` for scikit-learn 1.9+ compatibility — details in [docs/GSE40279_CLOCK_TRAINING.md](docs/GSE40279_CLOCK_TRAINING.md#scikit-learn-compatibility).
+
 ## Package map
 
 Installable code lives under `src/rogen_aging/`. Console entry points are registered in `pyproject.toml`.

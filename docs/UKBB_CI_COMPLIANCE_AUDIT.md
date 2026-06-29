@@ -92,24 +92,21 @@ Anything else that looks like an absolute path in a quoted string is a **violati
 
 The script prints a short banner, each check as a subsection, lines prefixed with `[ OK ]`, `[FAIL]`, or `[WARN]`, and a summary. ANSI colours are used so warnings and errors stand out in GitHub Actions logs.
 
-## GitHub Actions example
+## GitHub Actions (this repository)
+
+The workflow **`.github/workflows/ci.yml`** job `test-and-audit` runs on `ubuntu-latest` for every push/PR to `main`:
+
+1. `uv sync --extra dev`
+2. `uv run pytest -q` — full test suite under `tests/` (must pass before the audit runs)
+3. `./scripts/dev/ukbb_ci_compliance_audit.sh` — this script
+
+Ensure the audit step runs from the repository root (default for `actions/checkout`). Optional env for the audit step:
 
 ```yaml
-jobs:
-  ukb-repo-audit:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: UKB-oriented repository compliance audit
-        run: ./scripts/dev/ukbb_ci_compliance_audit.sh
-        env:
-          # Optional: allow literals under your isolated work filesystem
-          # WORK: ${{ vars.UKB_ISOLATED_WORK_ROOT }}
-          MIN_SENSITIVE_BYTES: '1048576'
+env:
+  # WORK: ${{ vars.UKB_ISOLATED_WORK_ROOT }}
+  MIN_SENSITIVE_BYTES: '1048576'
 ```
-
-Ensure the step runs from the repository root (default for `actions/checkout`).
 
 ## When the job fails
 

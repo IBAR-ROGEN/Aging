@@ -128,7 +128,8 @@ See [FIGURES.md](FIGURES.md) for React vs matplotlib assets and output paths.
 
 - Pre-commit: [UKB_PRE_COMMIT_HOOK.md](UKB_PRE_COMMIT_HOOK.md)
 - CI audit: [UKBB_CI_COMPLIANCE_AUDIT.md](UKBB_CI_COMPLIANCE_AUDIT.md) · `./scripts/dev/ukbb_ci_compliance_audit.sh`
-- GitHub Actions: `.github/workflows/ci.yml`
+- GitHub Actions: `.github/workflows/ci.yml` — `uv sync --extra dev` → `pytest -q` → UKB audit (see [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md#tests))
+- Clock tests: `tests/test_clock_regression.py` requires scikit-learn **1.9+** API (`alphas=20`, not removed `n_alphas`) — [GSE40279_CLOCK_TRAINING.md](GSE40279_CLOCK_TRAINING.md#scikit-learn-compatibility)
 
 ## Notebooks
 

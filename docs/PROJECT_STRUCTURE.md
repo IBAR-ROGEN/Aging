@@ -61,6 +61,16 @@ Shell wrappers at `scripts/security_check.sh` (etc.) delegate to `scripts/dev/`.
 
 Run with `uv run pytest` after `uv sync --extra dev`. Imports use `rogen_aging.*` only (no `scripts/` on `pythonpath`).
 
+| File | Role |
+|------|------|
+| `test_clock_regression.py` | Refactored clock vs legacy ElasticNet metrics on `test_data/mock_clock_wide.csv` |
+| `test_package_imports.py` | Smoke imports for installable subpackages |
+| `test_ukb_integration.py` / `test_ukb_mock_gen.py` | Synthetic UKB join and mock RAP layout |
+| `test_synthetic_vcf.py` / `test_mock_clinical_csv.py` | VCF generator and mock clinical CSV |
+| `test_af_comparison_summary.py` | gnomAD comparison summarizer |
+
+**CI:** `.github/workflows/ci.yml` runs `uv sync --extra dev`, `uv run pytest -q`, then `./scripts/dev/ukbb_ci_compliance_audit.sh` on every push/PR to `main`. There is no committed `uv.lock`; CI resolves the latest compatible dependency versions (including scikit-learn), so clock tests must track current sklearn APIs (for example `ElasticNetCV(alphas=20)` since 1.9).
+
 ## `docs/`
 
 | Document | Purpose |

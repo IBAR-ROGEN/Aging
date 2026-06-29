@@ -25,7 +25,7 @@ Flat paths `scripts/run_clock.py`, `scripts/validate_clock.py`, etc. are depreca
 | Module | Purpose |
 |--------|---------|
 | `data.py` | `load_wide_table`, Romanian mock cohort I/O |
-| `model.py` | `make_clock_pipeline()` — `SimpleImputer` + `ElasticNetCV` |
+| `model.py` | `make_clock_pipeline()` — `SimpleImputer` + `ElasticNetCV` (`alphas=20`, `cv=10`, fixed `l1_ratio` grid) |
 | `train.py` | `train_clock()` |
 | `evaluate.py` | `evaluate_clock()` |
 | `external_data.py` | GSE87571 → Parquet for external validation |
@@ -66,6 +66,8 @@ See **[CLOCK_EVAL_FIGURES.md](CLOCK_EVAL_FIGURES.md)** for configuration constan
 ```bash
 uv run pytest tests/test_clock_regression.py tests/test_package_imports.py -q
 ```
+
+`test_clock_regression.py` asserts that `train_clock()` reproduces the pre-refactor GSE40279 training metrics on `test_data/mock_clock_wide.csv`. Both code paths call the real `sklearn.linear_model.ElasticNetCV` with **`alphas=20`** (20-point alpha grid per `l1_ratio`). Use `alphas`, not the removed `n_alphas` keyword, so tests pass on scikit-learn **1.9+** in CI.
 
 ## Related documentation
 

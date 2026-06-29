@@ -85,7 +85,7 @@ See [ACTIVITIES.md](ACTIVITIES.md) for the full tree. Highlights:
 
 | File | Covers |
 |------|--------|
-| `test_clock_regression.py` | Clock refactor vs legacy metrics |
+| `test_clock_regression.py` | Clock refactor vs legacy metrics (`ElasticNetCV(alphas=20)`; sklearn 1.9+ compatible) |
 | `test_ukb_integration.py` | Synthetic join + association scan |
 | `test_ukb_mock_gen.py` | Mock RAP folder layout |
 | `test_synthetic_vcf.py` | `rogen_aging.vcf` |
