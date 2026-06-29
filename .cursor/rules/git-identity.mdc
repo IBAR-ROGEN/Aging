@@ -1,0 +1,14 @@
+---
+description: Commit and push as Dmitri Toren only; no Cursor attribution
+alwaysApply: true
+---
+
+# Git identity and attribution
+
+All commits in this repo must be authored by **Dmitri Toren** `<52277457+mitya-toren@users.noreply.github.com>`.
+
+When creating commits:
+- Never add `Co-authored-by: Cursor`, `Made-with: Cursor`, or any Cursor/agent attribution trailer.
+- Never use `git commit --trailer` for Cursor attribution.
+- Use plain `git commit -m "..."` (or `-F`) with subject/body only.
+- If a trailer was added by the environment, amend the commit to remove it before pushing.
