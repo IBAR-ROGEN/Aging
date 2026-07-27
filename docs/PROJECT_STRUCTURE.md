@@ -37,6 +37,7 @@ rogen_aging/
 | `ukb/` | LA-SNP manifest, gnomAD compare, mock clinical CSV ([LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md](LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md)) |
 | `vcf/` | Synthetic VCF utilities ([SYNTHETIC_ROMANIAN_VCF_GENERATOR.md](SYNTHETIC_ROMANIAN_VCF_GENERATOR.md)) |
 | `integration/` | Synthetic UKB join + associations ([UKB_INTEGRATION_PIPELINE.md](UKB_INTEGRATION_PIPELINE.md)) |
+| `integrative/` | Offline variant×tissue×phenotype joins + composite risk ([INTEGRATIVE_PIPELINE.md](INTEGRATIVE_PIPELINE.md)) |
 | `eda_dashboard/` | Streamlit merged-cohort EDA ([EDA_DASHBOARD.md](EDA_DASHBOARD.md)) |
 | `cli/` | Console entry points (`rogen-clock`, `rogen-ukb-manifest`, `rogen-ukb-integrate`, …) |
 | `methylation_visualizations.py`, `network_visualizer.py` | Shared visualization helpers |
@@ -53,6 +54,7 @@ Grouped by workflow. Flat `scripts/*.py` paths are **deprecation shims** that fo
 | `vcf/` | `generate_synthetic_romanian_vcf.py` |
 | `figures/` | `render_*`, `generate_*` manuscript figure scripts |
 | `alphagenome/` | Sequence comparer + analysis + visualize |
+| `integrative/` | `run_pipeline.py`, `map_variant_tissues.py`, `integrate_phenotypes.py` |
 | `eda/` | Mock epigenetic EDA |
 | `dev/` | `security_check.sh`, `install_pre_commit_hook.sh`, `summarize_af_comparison.py`, R bootstrap, utilities |
 
@@ -81,6 +83,7 @@ Run with `uv run pytest` after `uv sync --extra dev`. Imports use `rogen_aging.*
 | `test_ukb_integration.py` / `test_ukb_mock_gen.py` | Synthetic UKB join and mock RAP layout |
 | `test_synthetic_vcf.py` / `test_mock_clinical_csv.py` | VCF generator and mock clinical CSV |
 | `test_af_comparison_summary.py` | gnomAD comparison summarizer |
+| `test_integrative.py` | Variant×tissue×phenotype integrative pipeline |
 
 **CI:** `.github/workflows/ci.yml` runs `uv sync --extra dev`, `uv run ruff check src scripts tests`, `uv run pytest -q`, then `./scripts/dev/ukbb_ci_compliance_audit.sh` on every push/PR to `main`. Lockfile: `uv.lock` is committed for reproducible installs.
 
@@ -118,6 +121,7 @@ Run with `uv run pytest` after `uv sync --extra dev`. Imports use `rogen_aging.*
 | VEP annotation + cache | `analysis/` | `analysis/vep_annotation/`, `analysis/vep_cache/` |
 | GTEx eQTL annotation + cache | `analysis/` | `analysis/gtex_annotation/`, `analysis/gtex_cache/` |
 | July batch annotation | repo root + `data/` / `outputs/` | `run_july_annotation_pipeline.py` → [JULY_ANNOTATION_PIPELINE.md](JULY_ANNOTATION_PIPELINE.md) |
+| Integrative multi-omics | `analysis/integrative/` | `scripts/integrative/run_pipeline.py` → [INTEGRATIVE_PIPELINE.md](INTEGRATIVE_PIPELINE.md) |
 | Clock model + metrics | `analysis/` | `analysis/gse40279_elasticnet_clock.pkl` |
 
 ### Root script shims (deprecated paths)

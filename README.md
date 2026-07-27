@@ -44,6 +44,7 @@ Installable code lives under `src/rogen_aging/`. Console entry points are regist
 | **`rogen_aging.ukb`** | Build LA-SNP manifest CSVs, extract 1KG allele frequencies, compare to gnomAD, generate synthetic UKB-RAP mocks |
 | `rogen_aging.vcf` | Synthetic Romanian VCF generation for pipeline testing |
 | `rogen_aging.integration` | Join synthetic UKB phenotypes/genotypes and run LA-SNP association summaries |
+| `rogen_aging.integrative` | Offline variant×tissue×phenotype joins and composite risk scoring |
 | `rogen_aging.eda_dashboard` | Streamlit EDA on merged mock clinical / epigenetic-age tables |
 | `rogen_aging.cli` | Typer wrappers: `rogen-clock`, `rogen-ukb-manifest`, `rogen-ukb-integrate`, … |
 
@@ -127,6 +128,18 @@ uv run python run_july_annotation_pipeline.py
 
 See [docs/JULY_ANNOTATION_PIPELINE.md](docs/JULY_ANNOTATION_PIPELINE.md).
 
+### Integrative multi-omics (variant × tissue × phenotype)
+
+```bash
+uv run python scripts/integrative/run_pipeline.py \
+  --variants data/processed/prioritized_variants.csv \
+  --eqtls analysis/gtex_annotation/la_snp_gtex_eqtls.csv \
+  --output-dir analysis/integrative/
+# → analysis/integrative/{annotated,eqtl_summary,variant_risks}.parquet
+```
+
+See [docs/INTEGRATIVE_PIPELINE.md](docs/INTEGRATIVE_PIPELINE.md).
+
 ### Figures and annotation scripts
 
 ```bash
@@ -152,6 +165,7 @@ Flat paths such as `plot_clock_eval.py`, `plot_af_comparison.py`, `annotate_la_s
 | Nomenclature audit + AF/network figures | [docs/NOMENCLATURE_RECONCILE_FIGURES.md](docs/NOMENCLATURE_RECONCILE_FIGURES.md) |
 | Genomics validation pipeline | [docs/GENOMICS_ANALYSIS.md](docs/GENOMICS_ANALYSIS.md) |
 | July prioritized-variant annotation | [docs/JULY_ANNOTATION_PIPELINE.md](docs/JULY_ANNOTATION_PIPELINE.md) |
+| Integrative variant×tissue×phenotype | [docs/INTEGRATIVE_PIPELINE.md](docs/INTEGRATIVE_PIPELINE.md) |
 | LA-SNP VEP / GTEx annotation | [docs/LA_SNP_VEP_ANNOTATION.md](docs/LA_SNP_VEP_ANNOTATION.md) · [docs/LA_SNP_GTEX_ANNOTATION.md](docs/LA_SNP_GTEX_ANNOTATION.md) |
 | Epigenetic clock | [docs/CLOCK_LIBRARY.md](docs/CLOCK_LIBRARY.md) · [eval figure](docs/CLOCK_EVAL_FIGURES.md) · [GSE87571 validation script](docs/METHYLATION_CLOCK_VALIDATION.md) |
 | LA-SNP public AF validation | [docs/LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md](docs/LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md) · [comparison figure](docs/AF_COMPARISON_FIGURES.md) |

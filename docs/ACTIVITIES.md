@@ -19,6 +19,7 @@ Maps IBAR-ROGEN activity IDs to console entry points, source modules, outputs, a
 | **2.1.8.1** | Synthetic UKB-RAP mock folder | `rogen-ukb-mock-rap` | `rogen_aging.ukb.mock_rap`, `rogen_aging.vcf` | [SYNTHETIC_UKB_RAP_GENERATOR.md](SYNTHETIC_UKB_RAP_GENERATOR.md) |
 | **2.1.10.1** | Methylation aging clock (GSE40279 train, GSE87571 validate) | `rogen-clock`, `python -m rogen_aging.clock.external_data`, `evaluate_methylation_clock.py` | `rogen_aging.clock` | [CLOCK_LIBRARY.md](CLOCK_LIBRARY.md), [GSE40279_CLOCK_TRAINING.md](GSE40279_CLOCK_TRAINING.md), [METHYLATION_CLOCK_VALIDATION.md](METHYLATION_CLOCK_VALIDATION.md) |
 | **2.1.11.1** | Synthetic UKB integrative validation | `rogen-ukb-integrate` | `rogen_aging.integration` | [UKB_INTEGRATION_PIPELINE.md](UKB_INTEGRATION_PIPELINE.md) |
+| — | Integrative multi-omics (variant×tissue×phenotype) | `scripts/integrative/run_pipeline.py` | `rogen_aging.integrative` | [INTEGRATIVE_PIPELINE.md](INTEGRATIVE_PIPELINE.md) |
 | — | Multi-omics EDA dashboard | `streamlit run src/rogen_aging/eda_dashboard/app.py` | `rogen_aging.eda_dashboard` | [EDA_DASHBOARD.md](EDA_DASHBOARD.md) |
 
 ---

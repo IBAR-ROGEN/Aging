@@ -14,6 +14,7 @@ This document summarizes installable modules and CLI entry points. Per-file inve
 | `ukb/mock_clinical.py` | Synthetic clinical CSV generator |
 | `ukb/mock_rap.py` | Synthetic UKB-RAP phenotype + LA-SNP VCF folder |
 | `integration/ukb_joiner.py` | Mock phenotype–genotype join + LA-SNP associations |
+| `integrative/` | Offline variant×tissue×phenotype joins + composite risk — [INTEGRATIVE_PIPELINE.md](INTEGRATIVE_PIPELINE.md) |
 | `vcf/synthetic.py` | Streaming synthetic VCF (Hardy–Weinberg, GRCh38) |
 | `eda_dashboard/` | Streamlit multi-omics EDA — [EDA_DASHBOARD.md](EDA_DASHBOARD.md) |
 | `cli/` | Console entry points wired in `pyproject.toml` |
@@ -44,6 +45,7 @@ See [ACTIVITIES.md](ACTIVITIES.md) for the full tree. Highlights:
 - **`scripts/alphagenome/`** — AlphaGenome batch + analysis (tables → `analysis/alphagenome/`, plots → `figures/alphagenome/`)
 - **`analysis/validate_genomics_tables/`**, **`analysis/overlap_enrichment/`**, **`analysis/variant_functional_annotation/`** — GRCh38 genomics validation ([GENOMICS_ANALYSIS.md](GENOMICS_ANALYSIS.md); index: [analysis/genomics/README.md](../analysis/genomics/README.md))
 - **`run_july_annotation_pipeline.py`** (repo root) — July batch GTEx v8 + VEP + AlphaGenome/AlphaMissense Excel export ([JULY_ANNOTATION_PIPELINE.md](JULY_ANNOTATION_PIPELINE.md))
+- **`scripts/integrative/`** — variant×tissue map, phenotype risk, end-to-end pipeline ([INTEGRATIVE_PIPELINE.md](INTEGRATIVE_PIPELINE.md))
 - **`scripts/dev/`** — `security_check.sh`, CI audit, ONT pipeline validation, R bootstrap, `find_r.sh`
 
 ## Root-level shims (deprecated)
@@ -93,7 +95,8 @@ See [ACTIVITIES.md](ACTIVITIES.md) for the full tree. Highlights:
 | `test_synthetic_vcf.py` | `rogen_aging.vcf` |
 | `test_mock_clinical_csv.py` | `rogen_aging.ukb.mock_clinical` |
 | `test_package_imports.py` | Smoke imports |
+| `test_integrative.py` | `VariantTissueMapper` / `PhenotypeIntegrator` / `run_integrative_pipeline` |
 
 ---
 
-**Last updated:** June 29, 2026
+**Last updated:** July 27, 2026

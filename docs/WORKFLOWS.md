@@ -131,6 +131,23 @@ uv run python run_july_annotation_pipeline.py --cache-only
 
 See [JULY_ANNOTATION_PIPELINE.md](JULY_ANNOTATION_PIPELINE.md).
 
+### Integrative multi-omics (variant × tissue × phenotype)
+
+Offline joins of annotated variants with GTEx eQTL summaries, optional
+AlphaGenome / methylation links, and composite phenotypic risk. Package:
+`rogen_aging.integrative`. Outputs → `analysis/integrative/`.
+
+```bash
+uv run python scripts/integrative/run_pipeline.py \
+  --variants data/processed/prioritized_variants.csv \
+  --eqtls analysis/gtex_annotation/la_snp_gtex_eqtls.csv \
+  --output-dir analysis/integrative/
+uv run python scripts/integrative/map_variant_tissues.py --help
+uv run python scripts/integrative/integrate_phenotypes.py --help
+```
+
+See [INTEGRATIVE_PIPELINE.md](INTEGRATIVE_PIPELINE.md).
+
 ### Manuscript figures
 
 Canonical renders live under **`scripts/figures/`** (flat `scripts/render_*.py` / `scripts/generate_*.py` are deprecation shims). Default output: **`figures/`**.
