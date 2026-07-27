@@ -8,8 +8,10 @@
 # it does not replace legal review or UK Biobank's own guidance.
 #
 # Usage:
+#   ./scripts/dev/ukbb_ci_compliance_audit.sh
+#   MIN_SENSITIVE_BYTES=2097152 ./scripts/dev/ukbb_ci_compliance_audit.sh
+#   # legacy wrapper also works:
 #   ./scripts/ukbb_ci_compliance_audit.sh
-#   MIN_SENSITIVE_BYTES=2097152 ./scripts/ukbb_ci_compliance_audit.sh
 #
 # Exit codes: 0 = no violations, 1 = one or more violations (fail the pipeline).
 #
@@ -212,7 +214,15 @@ scan_hardcoded_paths() {
       fi
       # Skip non-path string fragments that the quoted-slash matcher can pick
       # up from replace() / format helpers (embedded escapes or whitespace).
+      # Also skip ultra-short tokens like "/\n" leftovers after quote stripping.
+      if [[ ${#candidate} -lt 2 ]]; then
+        continue
+      fi
       if [[ "$candidate" == *\\* || "$candidate" == *$'\n'* || "$candidate" == *$'\r'* || "$candidate" == *$'\t'* ]]; then
+        continue
+      fi
+      # Pure punctuation / wildcard stubs are not filesystem paths.
+      if [[ "$candidate" =~ ^/[\\nrt\"\'[:space:]\*\?\.\-]*$ ]]; then
         continue
       fi
       if is_allowed_abs_path "$candidate"; then

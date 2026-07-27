@@ -1,0 +1,9 @@
+# Optional microarray platform accessions for overlap enrichment universe (b).
+# Copy to data/ad_pd_gpl_ids.txt (one GEO GPL id per line; # comments allowed).
+#
+# Example:
+# GPL570
+# GPL96
+#
+# Without that file, run_overlap_enrichment.py falls back to the
+# meta_analysis_de_tested gene universe and records the skip in the report.
