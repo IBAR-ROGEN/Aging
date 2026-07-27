@@ -10,13 +10,14 @@ Maps IBAR-ROGEN activity IDs to console entry points, source modules, outputs, a
 | **2.1.7.1** | LA-SNP VEP functional consequences (manuscript) | `scripts/ukb/annotate_la_snps_vep.py` | — (repo script) | [LA_SNP_VEP_ANNOTATION.md](LA_SNP_VEP_ANNOTATION.md) |
 | **2.1.7.1** | LA-SNP GTEx eQTL annotation (manuscript) | `scripts/ukb/annotate_la_snps_gtex.py` | — (repo script) | [LA_SNP_GTEX_ANNOTATION.md](LA_SNP_GTEX_ANNOTATION.md) |
 | **2.1.7.1** | LA-SNP pathway network figure | `scripts/figures/generate_network_fig.py` | — | [FIGURES.md](FIGURES.md) |
+| **2.1.7.1** | Nomenclature audit + AF/network figures | `reconcile_and_generate_figures.py` | — | [NOMENCLATURE_RECONCILE_FIGURES.md](NOMENCLATURE_RECONCILE_FIGURES.md) |
 | **2.1.7.2** | Genomics table validation (GRCh38) | `analysis/validate_genomics_tables/validate_genomics_tables.py` | — (repo script) | [GENOMICS_ANALYSIS.md](GENOMICS_ANALYSIS.md) |
 | **2.1.7.3** | Cluster ∩ LongevityMap overlap enrichment | `analysis/overlap_enrichment/run_overlap_enrichment.py` | — (repo script) | [GENOMICS_ANALYSIS.md](GENOMICS_ANALYSIS.md) |
 | **2.1.7.4** | Variant functional annotation (coding vs regulatory) | `analysis/variant_functional_annotation/run_variant_functional_annotation.py` | — (repo script) | [GENOMICS_ANALYSIS.md](GENOMICS_ANALYSIS.md) |
 | **2.1.8.1** | Methylation calling pipeline (ONT) | `scripts/dev/pipeline_validation.sh`, `scripts/dev/downstream_analysis.R` | `rogen_aging.methylation_visualizations` | [METHYLATION_PIPELINE_README.md](METHYLATION_PIPELINE_README.md) |
 | **2.1.8.1** | LA-SNP manifest + public AF validation | `rogen-ukb-manifest`, `rogen-compare-af-gnomad` | `rogen_aging.ukb.manifest`, `rogen_aging.ukb.gnomad` | [LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md](LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md) |
 | **2.1.8.1** | Synthetic UKB-RAP mock folder | `rogen-ukb-mock-rap` | `rogen_aging.ukb.mock_rap`, `rogen_aging.vcf` | [SYNTHETIC_UKB_RAP_GENERATOR.md](SYNTHETIC_UKB_RAP_GENERATOR.md) |
-| **2.1.10.1** | Methylation aging clock (GSE40279 train, GSE87571 validate) | `rogen-clock`, `python -m rogen_aging.clock.external_data` | `rogen_aging.clock` | [CLOCK_LIBRARY.md](CLOCK_LIBRARY.md), [GSE40279_CLOCK_TRAINING.md](GSE40279_CLOCK_TRAINING.md) |
+| **2.1.10.1** | Methylation aging clock (GSE40279 train, GSE87571 validate) | `rogen-clock`, `python -m rogen_aging.clock.external_data`, `evaluate_methylation_clock.py` | `rogen_aging.clock` | [CLOCK_LIBRARY.md](CLOCK_LIBRARY.md), [GSE40279_CLOCK_TRAINING.md](GSE40279_CLOCK_TRAINING.md), [METHYLATION_CLOCK_VALIDATION.md](METHYLATION_CLOCK_VALIDATION.md) |
 | **2.1.11.1** | Synthetic UKB integrative validation | `rogen-ukb-integrate` | `rogen_aging.integration` | [UKB_INTEGRATION_PIPELINE.md](UKB_INTEGRATION_PIPELINE.md) |
 | — | Multi-omics EDA dashboard | `streamlit run src/rogen_aging/eda_dashboard/app.py` | `rogen_aging.eda_dashboard` | [EDA_DASHBOARD.md](EDA_DASHBOARD.md) |
 
@@ -174,8 +175,9 @@ uv run python scripts/figures/plot_af_comparison.py
 | **Script equivalents** | `scripts/clock/run_clock.py` (same as `rogen-clock`) · deprecated: `scripts/clock/train_clock_on_gse40279.py`, `scripts/clock/validate_clock.py` |
 | **Source modules** | `src/rogen_aging/clock/data.py` (wide-table I/O) · `model.py` (`make_clock_pipeline`) · `train.py` (`train_clock`) · `evaluate.py` (`evaluate_clock`) · `external_data.py` (`load_gse87571`, GSE87571 Parquet builder) · CLI: `src/rogen_aging/cli/clock.py` |
 | **Figure script** | [`scripts/figures/plot_clock_eval.py`](../scripts/figures/plot_clock_eval.py) — two-panel external-validation figure (scatter + top CpG weights); see [CLOCK_EVAL_FIGURES.md](CLOCK_EVAL_FIGURES.md) |
-| **Output files** | **Train:** `--output_model` (`.pkl`/`.joblib` pipeline), `--output_metrics` (training JSON with `test_mae`, `selected_cpgs`, …) · **External data:** `--output` Parquet (e.g. `data/gse87571.parquet`) · **Evaluate:** `{output_dir}/validation_metrics.json`, `Fig_Clock_Residuals.png`, `Fig_Clock_MAE_by_decade.png` · **Eval figure:** `figures/validation_gse87571/clock_eval_gse87571.png` + `.pdf` from `plot_clock_eval.py` |
-| **Documentation** | [CLOCK_LIBRARY.md](CLOCK_LIBRARY.md) · [GSE40279_CLOCK_TRAINING.md](GSE40279_CLOCK_TRAINING.md) · [CLOCK_EVAL_FIGURES.md](CLOCK_EVAL_FIGURES.md) · [ROMANIAN_EPIGENETIC_CLOCK.md](ROMANIAN_EPIGENETIC_CLOCK.md) |
+| **Final validation script** | [`evaluate_methylation_clock.py`](../evaluate_methylation_clock.py) — MAE / median AE / Pearson *r* / age-stratified MAE + three-panel figure under `outputs/`; see [METHYLATION_CLOCK_VALIDATION.md](METHYLATION_CLOCK_VALIDATION.md) |
+| **Output files** | **Train:** `--output_model` (`.pkl`/`.joblib` pipeline), `--output_metrics` (training JSON with `test_mae`, `selected_cpgs`, …) · **External data:** `--output` Parquet (e.g. `data/gse87571.parquet`) · **Evaluate:** `{output_dir}/validation_metrics.json`, `Fig_Clock_Residuals.png`, `Fig_Clock_MAE_by_decade.png` · **Eval figure:** `figures/validation_gse87571/clock_eval_gse87571.png` + `.pdf` from `plot_clock_eval.py` · **Final validation:** `outputs/clock_metrics.json`, `outputs/figures/Figure_Epigenetic_Clock_Panels.png/.pdf/.svg` |
+| **Documentation** | [CLOCK_LIBRARY.md](CLOCK_LIBRARY.md) · [GSE40279_CLOCK_TRAINING.md](GSE40279_CLOCK_TRAINING.md) · [CLOCK_EVAL_FIGURES.md](CLOCK_EVAL_FIGURES.md) · [METHYLATION_CLOCK_VALIDATION.md](METHYLATION_CLOCK_VALIDATION.md) · [ROMANIAN_EPIGENETIC_CLOCK.md](ROMANIAN_EPIGENETIC_CLOCK.md) |
 
 Example (GSE40279 train → GSE87571 external validate):
 
@@ -199,6 +201,9 @@ uv run rogen-clock evaluate \
 
 # Publication figure (predicted vs chronological + top CpG weights)
 uv run python scripts/figures/plot_clock_eval.py
+
+# Final metrics JSON + three-panel publication figure
+uv run python evaluate_methylation_clock.py
 ```
 
 ---

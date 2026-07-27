@@ -84,6 +84,11 @@ uv run rogen-clock evaluate \
 
 uv run python scripts/figures/plot_clock_eval.py
 # → figures/validation_gse87571/clock_eval_gse87571.png + .pdf
+
+# Final GSE87571 metrics + three-panel publication figure
+uv run python evaluate_methylation_clock.py
+# → outputs/clock_metrics.json
+# → outputs/figures/Figure_Epigenetic_Clock_Panels.png/.pdf/.svg
 ```
 
 ### UK Biobank LA-SNP pipeline (public data only)
@@ -116,6 +121,7 @@ See [docs/GENOMICS_ANALYSIS.md](docs/GENOMICS_ANALYSIS.md).
 ### Figures and annotation scripts
 
 ```bash
+uv run python reconcile_and_generate_figures.py            # nomenclature audit + AF/network figures
 uv run python scripts/figures/generate_network_fig.py      # → figures/Fig_LA_SNP_network.*
 uv run python scripts/ukb/annotate_la_snps_vep.py          # VEP table + cache under analysis/
 uv run python scripts/ukb/annotate_la_snps_gtex.py         # GTEx eQTL table + cache under analysis/
@@ -134,9 +140,10 @@ Flat paths such as `plot_clock_eval.py`, `plot_af_comparison.py`, `annotate_la_s
 | Code reference | [docs/CODE_MODULES_REFERENCE.md](docs/CODE_MODULES_REFERENCE.md) |
 | Directory layout | [docs/PROJECT_STRUCTURE.md](docs/PROJECT_STRUCTURE.md) |
 | Manuscript figures | [docs/FIGURES.md](docs/FIGURES.md) |
+| Nomenclature audit + AF/network figures | [docs/NOMENCLATURE_RECONCILE_FIGURES.md](docs/NOMENCLATURE_RECONCILE_FIGURES.md) |
 | Genomics validation pipeline | [docs/GENOMICS_ANALYSIS.md](docs/GENOMICS_ANALYSIS.md) |
 | LA-SNP VEP / GTEx annotation | [docs/LA_SNP_VEP_ANNOTATION.md](docs/LA_SNP_VEP_ANNOTATION.md) · [docs/LA_SNP_GTEX_ANNOTATION.md](docs/LA_SNP_GTEX_ANNOTATION.md) |
-| Epigenetic clock | [docs/CLOCK_LIBRARY.md](docs/CLOCK_LIBRARY.md) · [eval figure](docs/CLOCK_EVAL_FIGURES.md) |
+| Epigenetic clock | [docs/CLOCK_LIBRARY.md](docs/CLOCK_LIBRARY.md) · [eval figure](docs/CLOCK_EVAL_FIGURES.md) · [GSE87571 validation script](docs/METHYLATION_CLOCK_VALIDATION.md) |
 | LA-SNP public AF validation | [docs/LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md](docs/LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md) · [comparison figure](docs/AF_COMPARISON_FIGURES.md) |
 | Synthetic UKB integration | [docs/UKB_INTEGRATION_PIPELINE.md](docs/UKB_INTEGRATION_PIPELINE.md) |
 | Methylation pipeline | [docs/METHYLATION_PIPELINE_README.md](docs/METHYLATION_PIPELINE_README.md) |

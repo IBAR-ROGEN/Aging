@@ -59,6 +59,8 @@ ipython_config.py
 # Project outputs (placeholders stay in git)
 data/*
 !data/.gitkeep
+!data/network/
+!data/network/**
 results/*
 !results/.gitkeep
 outputs/*
@@ -97,6 +99,9 @@ docs/_build/
 !test_data/mock_epigenetic_clinical.csv
 !test_data/mock_clock_wide.csv
 !test_data/gb-2013-14-10-r115-S3.csv
+!analysis/rogen_vs_gnomad_af.csv
+!data/network/*.csv
+!manuscript/tables/*.csv
 *.tsv
 *.bed
 *.bed.gz

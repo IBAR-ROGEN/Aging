@@ -53,8 +53,9 @@ Legacy script paths under `scripts/*.py` and at the repo root remain as **deprec
 - **Canonical CLI:** `uv run rogen-clock train|evaluate` or `scripts/clock/run_clock.py`
 - **GSE87571 external cohort:** `uv run python -m rogen_aging.clock.external_data --output data/gse87571.parquet`
 - **External-validation figure:** `uv run python scripts/figures/plot_clock_eval.py` → [CLOCK_EVAL_FIGURES.md](CLOCK_EVAL_FIGURES.md)
+- **Final metrics + three-panel figure:** `uv run python evaluate_methylation_clock.py` → [METHYLATION_CLOCK_VALIDATION.md](METHYLATION_CLOCK_VALIDATION.md)
 - **Romanian mock demo** (separate StandardScaler path): `scripts/clock/train_romanian_epigenetic_clock.py`
-- **Docs:** [CLOCK_LIBRARY.md](CLOCK_LIBRARY.md), [GSE40279_CLOCK_TRAINING.md](GSE40279_CLOCK_TRAINING.md), [CLOCK_EVAL_FIGURES.md](CLOCK_EVAL_FIGURES.md), [ROMANIAN_EPIGENETIC_CLOCK.md](ROMANIAN_EPIGENETIC_CLOCK.md), [ACTIVITIES.md](ACTIVITIES.md#21101--methylation-aging-clock)
+- **Docs:** [CLOCK_LIBRARY.md](CLOCK_LIBRARY.md), [GSE40279_CLOCK_TRAINING.md](GSE40279_CLOCK_TRAINING.md), [CLOCK_EVAL_FIGURES.md](CLOCK_EVAL_FIGURES.md), [METHYLATION_CLOCK_VALIDATION.md](METHYLATION_CLOCK_VALIDATION.md), [ROMANIAN_EPIGENETIC_CLOCK.md](ROMANIAN_EPIGENETIC_CLOCK.md), [ACTIVITIES.md](ACTIVITIES.md#21101--methylation-aging-clock)
 
 ### UK Biobank (synthetic + LA-SNP)
 
@@ -133,11 +134,12 @@ uv run python scripts/figures/generate_bimodal_heatmap.py
 uv run python scripts/figures/generate_clock_validation.py
 uv run python scripts/figures/plot_clock_eval.py              # GSE87571 external validation
 uv run python scripts/figures/plot_af_comparison.py           # 1KG vs gnomAD AF comparison
+uv run python reconcile_and_generate_figures.py               # nomenclature audit + AF/network figures
 uv run python scripts/figures/generate_agent_system_schema.py
 uv run python scripts/figures/generate_pipeline_diagram.py   # requires Graphviz `dot` on PATH
 ```
 
-See [FIGURES.md](FIGURES.md) for React vs matplotlib assets and output paths.
+See [FIGURES.md](FIGURES.md) for React vs matplotlib assets and output paths. Nomenclature / ROGEN–gnomAD / 41-gene network: [NOMENCLATURE_RECONCILE_FIGURES.md](NOMENCLATURE_RECONCILE_FIGURES.md).
 
 ### Compliance & CI
 
