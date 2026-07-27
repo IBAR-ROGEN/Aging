@@ -87,10 +87,13 @@ uv run python scripts/figures/plot_clock_eval.py
 # → figures/validation_gse87571/clock_eval_gse87571.png + .pdf
 
 # Final GSE87571 metrics + three-panel publication figure
+# Requires INPUT_MANIFEST.md paths (or pass --skip-manifest-check with explicit flags)
 uv run python evaluate_methylation_clock.py
 # → outputs/clock_metrics.json
-# → outputs/figures/Figure_Epigenetic_Clock_Panels.png/.pdf/.svg
+# → outputs/figures/Figure_Epigenetic_Clock_Panels.png/.pdf
 ```
+
+See [INPUT_MANIFEST.md](INPUT_MANIFEST.md) and [docs/METHYLATION_CLOCK_VALIDATION.md](docs/METHYLATION_CLOCK_VALIDATION.md).
 
 ### UK Biobank LA-SNP pipeline (public data only)
 
@@ -167,7 +170,7 @@ Flat paths such as `plot_clock_eval.py`, `plot_af_comparison.py`, `annotate_la_s
 | July prioritized-variant annotation | [docs/JULY_ANNOTATION_PIPELINE.md](docs/JULY_ANNOTATION_PIPELINE.md) |
 | Integrative variant×tissue×phenotype | [docs/INTEGRATIVE_PIPELINE.md](docs/INTEGRATIVE_PIPELINE.md) |
 | LA-SNP VEP / GTEx annotation | [docs/LA_SNP_VEP_ANNOTATION.md](docs/LA_SNP_VEP_ANNOTATION.md) · [docs/LA_SNP_GTEX_ANNOTATION.md](docs/LA_SNP_GTEX_ANNOTATION.md) |
-| Epigenetic clock | [docs/CLOCK_LIBRARY.md](docs/CLOCK_LIBRARY.md) · [eval figure](docs/CLOCK_EVAL_FIGURES.md) · [GSE87571 validation script](docs/METHYLATION_CLOCK_VALIDATION.md) |
+| Epigenetic clock | [docs/CLOCK_LIBRARY.md](docs/CLOCK_LIBRARY.md) · [eval figure](docs/CLOCK_EVAL_FIGURES.md) · [GSE87571 validation script](docs/METHYLATION_CLOCK_VALIDATION.md) · [input manifest](INPUT_MANIFEST.md) |
 | LA-SNP public AF validation | [docs/LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md](docs/LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md) · [comparison figure](docs/AF_COMPARISON_FIGURES.md) |
 | Synthetic UKB integration | [docs/UKB_INTEGRATION_PIPELINE.md](docs/UKB_INTEGRATION_PIPELINE.md) |
 | Methylation pipeline | [docs/METHYLATION_PIPELINE_README.md](docs/METHYLATION_PIPELINE_README.md) |

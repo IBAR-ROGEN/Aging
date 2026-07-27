@@ -53,7 +53,7 @@ Legacy script paths under `scripts/*.py` and at the repo root remain as **deprec
 - **Canonical CLI:** `uv run rogen-clock train|evaluate` or `scripts/clock/run_clock.py`
 - **GSE87571 external cohort:** `uv run python -m rogen_aging.clock.external_data --output data/gse87571.parquet`
 - **External-validation figure:** `uv run python scripts/figures/plot_clock_eval.py` → [CLOCK_EVAL_FIGURES.md](CLOCK_EVAL_FIGURES.md)
-- **Final metrics + three-panel figure:** `uv run python evaluate_methylation_clock.py` → [METHYLATION_CLOCK_VALIDATION.md](METHYLATION_CLOCK_VALIDATION.md)
+- **Final metrics + three-panel figure:** `uv run python evaluate_methylation_clock.py` → [METHYLATION_CLOCK_VALIDATION.md](METHYLATION_CLOCK_VALIDATION.md) · [INPUT_MANIFEST.md](../INPUT_MANIFEST.md)
 - **Romanian mock demo** (separate StandardScaler path): `scripts/clock/train_romanian_epigenetic_clock.py`
 - **Docs:** [CLOCK_LIBRARY.md](CLOCK_LIBRARY.md), [GSE40279_CLOCK_TRAINING.md](GSE40279_CLOCK_TRAINING.md), [CLOCK_EVAL_FIGURES.md](CLOCK_EVAL_FIGURES.md), [METHYLATION_CLOCK_VALIDATION.md](METHYLATION_CLOCK_VALIDATION.md), [ROMANIAN_EPIGENETIC_CLOCK.md](ROMANIAN_EPIGENETIC_CLOCK.md), [ACTIVITIES.md](ACTIVITIES.md#21101--methylation-aging-clock)
 

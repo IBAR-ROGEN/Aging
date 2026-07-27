@@ -66,18 +66,22 @@ For final validation metrics (MAE, median AE, Pearson *r*, age-stratified MAE) a
 ```bash
 uv run python evaluate_methylation_clock.py
 # → outputs/clock_metrics.json
-# → outputs/figures/Figure_Epigenetic_Clock_Panels.png/.pdf/.svg
+# → outputs/figures/Figure_Epigenetic_Clock_Panels.png/.pdf
 ```
+
+Required inputs are listed in [`INPUT_MANIFEST.md`](../INPUT_MANIFEST.md) (bare ElasticNet pickle at `models/ro_clock_elasticnet_gse40279.pkl`). Override paths or pass `--skip-manifest-check` for ad-hoc runs.
 
 See **[METHYLATION_CLOCK_VALIDATION.md](METHYLATION_CLOCK_VALIDATION.md)**.
 
 ## Tests
 
 ```bash
-uv run pytest tests/test_clock_regression.py tests/test_package_imports.py -q
+uv run pytest tests/test_clock_regression.py tests/test_evaluate_methylation_clock.py tests/test_package_imports.py -q
 ```
 
 `test_clock_regression.py` asserts that `train_clock()` reproduces the pre-refactor GSE40279 training metrics on `test_data/mock_clock_wide.csv`. Both code paths call the real `sklearn.linear_model.ElasticNetCV` with **`alphas=20`** (20-point alpha grid per `l1_ratio`). Use `alphas`, not the removed `n_alphas` keyword, so tests pass on scikit-learn **1.9+** in CI.
+
+`test_evaluate_methylation_clock.py` covers manifest preflight, bare-ElasticNet loading (Pipeline / ElasticNetCV rejection), age-stratum metrics, cohort alignment edge cases, and end-to-end metric/figure writers.
 
 ## Related documentation
 

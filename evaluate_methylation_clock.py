@@ -2,22 +2,26 @@
 """Independent validation of a trained ElasticNet methylation clock (GSE87571).
 
 Loads a processed beta matrix plus phenotype table, predicts DNAm age with a
-saved ``rogen_aging.clock`` pipeline, writes validation metrics JSON, and
-saves a three-panel publication figure (scatter, residuals, top CpG weights).
+saved bare ``sklearn.linear_model.ElasticNet`` estimator, writes validation
+metrics JSON, and saves a three-panel publication figure (scatter, residuals,
+top CpG weights).
 
 Example:
     uv run python evaluate_methylation_clock.py
 
 See Also:
+    INPUT_MANIFEST.md: Required input paths.
     docs/METHYLATION_CLOCK_VALIDATION.md: Inputs, outputs, and CLI reference.
 """
 
 from __future__ import annotations
 
 import json
+import pickle
+import re
 import warnings
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -25,16 +29,17 @@ import pandas as pd
 import seaborn as sns
 import typer
 from scipy.stats import pearsonr
-from sklearn.base import BaseEstimator
+from sklearn.linear_model import ElasticNet
 from sklearn.metrics import mean_absolute_error, median_absolute_error
 
-from rogen_aging.clock.evaluate import build_feature_matrix, load_model
+from rogen_aging.clock.evaluate import build_feature_matrix
 
 REPO_ROOT = Path(__file__).resolve().parent
 
+INPUT_MANIFEST = REPO_ROOT / "INPUT_MANIFEST.md"
 DEFAULT_METHYLATION = REPO_ROOT / "data" / "methylation" / "GSE87571_processed.parquet"
 DEFAULT_META = REPO_ROOT / "data" / "methylation" / "GSE87571_meta.csv"
-DEFAULT_MODEL = REPO_ROOT / "models" / "methylation_clock_v1.joblib"
+DEFAULT_MODEL = REPO_ROOT / "models" / "ro_clock_elasticnet_gse40279.pkl"
 DEFAULT_METRICS = REPO_ROOT / "outputs" / "clock_metrics.json"
 DEFAULT_FIGURE_STEM = REPO_ROOT / "outputs" / "figures" / "Figure_Epigenetic_Clock_Panels"
 
@@ -47,6 +52,98 @@ POSITIVE_COLOR = "#2166ac"
 NEGATIVE_COLOR = "#b2182b"
 SCATTER_COLOR = "#404040"
 AGE_BINS = ("<30", "30-60", ">60")
+
+# Backtick-quoted paths marked required in INPUT_MANIFEST.md tables.
+_MANIFEST_REQUIRED_PATH_RE = re.compile(
+    r"^\|\s*`([^`]+)`\s*\|[^|]*\|\s*yes\s*\|",
+    re.IGNORECASE | re.MULTILINE,
+)
+
+
+def verify_input_manifest(
+    manifest_path: Path = INPUT_MANIFEST,
+    *,
+    repo_root: Path | None = None,
+) -> list[Path]:
+    """Read ``INPUT_MANIFEST.md`` and confirm every required input file exists.
+
+    Args:
+        manifest_path: Path to the markdown manifest listing required inputs.
+        repo_root: Directory used to resolve relative paths from the manifest.
+            Defaults to the repository root (``REPO_ROOT``).
+
+    Returns:
+        Absolute paths of required input files that were verified present.
+
+    Raises:
+        FileNotFoundError: If the manifest itself is missing, or any required
+            input path listed with ``yes`` does not exist on disk.
+        ValueError: If the manifest contains no parseable required paths.
+    """
+    root = REPO_ROOT if repo_root is None else Path(repo_root)
+    if not manifest_path.is_file():
+        raise FileNotFoundError(
+            f"INPUT_MANIFEST.md not found at {manifest_path}. "
+            "Cannot verify required inputs before evaluation."
+        )
+
+    text = manifest_path.read_text(encoding="utf-8")
+    relative_paths = _MANIFEST_REQUIRED_PATH_RE.findall(text)
+    if not relative_paths:
+        raise ValueError(
+            f"No required input paths (marked 'yes') were parsed from {manifest_path}."
+        )
+
+    resolved: list[Path] = []
+    missing: list[str] = []
+    for rel in relative_paths:
+        path = (root / rel).resolve()
+        if path.is_file():
+            resolved.append(path)
+        else:
+            missing.append(rel)
+
+    if missing:
+        raise FileNotFoundError(
+            "Required input file(s) listed in INPUT_MANIFEST.md are missing:\n  - "
+            + "\n  - ".join(missing)
+            + "\nHalt: fix paths or restore artifacts before running evaluation."
+        )
+    return resolved
+
+
+def load_elasticnet_clock(model_path: Path) -> ElasticNet:
+    """Load a bare ElasticNet clock from pickle; reject any other estimator class.
+
+    Args:
+        model_path: Path to ``models/ro_clock_elasticnet_gse40279.pkl``.
+
+    Returns:
+        Fitted ``sklearn.linear_model.ElasticNet`` instance.
+
+    Raises:
+        FileNotFoundError: If ``model_path`` does not exist.
+        TypeError: If the unpickled object is not exactly an ``ElasticNet``
+            (e.g. ``Pipeline``, ``ElasticNetCV``, or another regressor).
+    """
+    if not model_path.is_file():
+        raise FileNotFoundError(
+            f"Trained ElasticNet model not found: {model_path}. "
+            "Expected a pickled sklearn.linear_model.ElasticNet at "
+            "models/ro_clock_elasticnet_gse40279.pkl. "
+            "Halting — will not train or substitute another estimator."
+        )
+
+    with model_path.open("rb") as handle:
+        model = pickle.load(handle)
+
+    if type(model) is not ElasticNet:
+        raise TypeError(
+            f"Loaded object from {model_path} has type {type(model).__module__}."
+            f"{type(model).__name__}; expected exactly sklearn.linear_model.ElasticNet. "
+            "Halting — will not train or substitute another estimator."
+        )
+    return model
 
 
 def _cg_columns(df: pd.DataFrame) -> list[str]:
@@ -281,15 +378,11 @@ def format_metrics_markdown(metrics: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
-def extract_cpg_coefficients(model: Any) -> pd.Series:
+def extract_cpg_coefficients(model: ElasticNet) -> pd.Series:
     """Extract ElasticNet coefficients indexed by CpG probe ID.
 
-    Supports sklearn ``Pipeline`` objects written by ``train_clock`` (steps
-    named ``elasticnet`` / ``enet`` / ``model``) as well as bare estimators
-    exposing ``coef_`` and ``feature_names_in_``.
-
     Args:
-        model: Fitted clock estimator or imputer+ElasticNet pipeline.
+        model: Fitted bare ``ElasticNet`` with ``coef_`` and ``feature_names_in_``.
 
     Returns:
         Series of coefficients indexed by training feature names.
@@ -298,33 +391,13 @@ def extract_cpg_coefficients(model: Any) -> pd.Series:
         ValueError: If coefficients or feature names cannot be recovered, or
             if their lengths disagree.
     """
-    if hasattr(model, "named_steps"):
-        enet = None
-        for key in ("elasticnet", "enet", "model"):
-            if key in model.named_steps:
-                enet = model.named_steps[key]
-                break
-        if enet is None:
-            enet = list(model.named_steps.values())[-1]
-        coef = np.ravel(enet.coef_)
-    elif hasattr(model, "coef_"):
-        coef = np.ravel(model.coef_)
-    else:
-        raise ValueError("Model has no ElasticNet coefficients to extract.")
+    if not hasattr(model, "coef_"):
+        raise ValueError("ElasticNet has no coef_; model may be unfitted.")
+    coef = np.ravel(model.coef_)
 
-    if hasattr(model, "feature_names_in_"):
-        names = [str(x) for x in model.feature_names_in_]
-    elif hasattr(model, "named_steps"):
-        names = None
-        # Prefer the last step that recorded training feature names.
-        for step in reversed(list(model.named_steps.values())):
-            if hasattr(step, "feature_names_in_"):
-                names = [str(x) for x in step.feature_names_in_]
-                break
-        if names is None:
-            raise ValueError("Model has no feature_names_in_; cannot label CpG coefficients.")
-    else:
-        raise ValueError("Model has no feature_names_in_; cannot label CpG coefficients.")
+    if not hasattr(model, "feature_names_in_"):
+        raise ValueError("ElasticNet has no feature_names_in_; cannot label CpG coefficients.")
+    names = [str(x) for x in model.feature_names_in_]
 
     if len(names) != len(coef):
         raise ValueError(
@@ -575,25 +648,23 @@ def plot_panel_c(
     ax.set_title(f"C  Top {len(top)} CpG sites by |weight|")
 
 
-def save_figure(fig: plt.Figure, stem: Path) -> tuple[Path, Path, Path]:
-    """Write PNG (300 dpi), PDF, and SVG next to ``stem``.
+def save_figure(fig: plt.Figure, stem: Path) -> tuple[Path, Path]:
+    """Write PNG (300 dpi) and vector PDF next to ``stem``.
 
     Args:
         fig: Matplotlib figure to serialize.
         stem: Output path stem (suffixes are replaced per format).
 
     Returns:
-        Tuple of ``(png_path, pdf_path, svg_path)``.
+        Tuple of ``(png_path, pdf_path)``.
     """
     stem = Path(stem)
     stem.parent.mkdir(parents=True, exist_ok=True)
     png_path = stem.with_suffix(".png")
     pdf_path = stem.with_suffix(".pdf")
-    svg_path = stem.with_suffix(".svg")
     fig.savefig(png_path, dpi=FIGURE_DPI, bbox_inches="tight")
     fig.savefig(pdf_path, bbox_inches="tight")
-    fig.savefig(svg_path, bbox_inches="tight")
-    return png_path, pdf_path, svg_path
+    return png_path, pdf_path
 
 
 def run_validation(
@@ -604,28 +675,35 @@ def run_validation(
     figure_stem: Path,
     annotation_path: Path | None,
     top_n_cpgs: int,
+    *,
+    skip_manifest_check: bool = False,
 ) -> dict[str, Any]:
     """Run end-to-end GSE87571 validation: predict, score, plot, and persist.
 
-    Uses :func:`rogen_aging.clock.evaluate.build_feature_matrix` to align and
-    mean-impute CpGs expected by the trained pipeline, then predicts DNAm age
-    and writes metrics plus the three-panel publication figure.
+    Verifies ``INPUT_MANIFEST.md`` required files, loads a bare ElasticNet,
+    uses :func:`rogen_aging.clock.evaluate.build_feature_matrix` to align and
+    mean-impute CpGs, then writes metrics plus the three-panel figure.
 
     Args:
         methylation_path: Processed validation beta matrix (Parquet).
         meta_path: Phenotype CSV with sample IDs and chronological age.
-        model_path: Trained clock (``.joblib`` / ``.pkl``).
+        model_path: Pickled ``sklearn.linear_model.ElasticNet``.
         metrics_path: Destination for ``clock_metrics.json``.
         figure_stem: Output stem for ``Figure_Epigenetic_Clock_Panels.*``.
         annotation_path: Optional Illumina probe→gene annotation table.
         top_n_cpgs: Number of top ``|weight|`` CpGs for panel C.
+        skip_manifest_check: If True, skip ``INPUT_MANIFEST.md`` existence
+            checks (useful when paths are overridden via CLI).
 
     Returns:
         Metrics dictionary extended with output file paths
-        (``metrics_path``, ``figure_png``, ``figure_pdf``, ``figure_svg``).
+        (``metrics_path``, ``figure_png``, ``figure_pdf``).
     """
+    if not skip_manifest_check:
+        verify_input_manifest(INPUT_MANIFEST)
+
     wide = load_validation_cohort(methylation_path, meta_path)
-    model = load_model(model_path)
+    model = load_elasticnet_clock(model_path)
 
     y = pd.to_numeric(wide["chronological_age"], errors="coerce")
     valid = y.notna()
@@ -639,8 +717,7 @@ def run_validation(
 
     # Align validation CpGs to training features; mean-impute probes absent in GSE87571.
     x, imputed = build_feature_matrix(wide, model)
-    estimator = cast(BaseEstimator, model)
-    y_pred = np.asarray(estimator.predict(x), dtype=float)
+    y_pred = np.asarray(model.predict(x), dtype=float)
     y_true = y.to_numpy(dtype=float)
     residual = y_true - y_pred
 
@@ -671,14 +748,13 @@ def run_validation(
     plot_panel_c(ax_c, weights, gene_map, top_n_cpgs)
     sns.despine(fig=fig)
 
-    png_path, pdf_path, svg_path = save_figure(fig, figure_stem)
+    png_path, pdf_path = save_figure(fig, figure_stem)
     plt.close(fig)
 
     print(format_metrics_markdown(metrics))
     print(f"Metrics JSON: {metrics_path}")
     print(f"Figure PNG:   {png_path}")
     print(f"Figure PDF:   {pdf_path}")
-    print(f"Figure SVG:   {svg_path}")
     if imputed:
         print(
             f"Note: mean-imputed {len(imputed)} model CpGs absent from the validation matrix.",
@@ -690,7 +766,6 @@ def run_validation(
         "metrics_path": str(metrics_path),
         "figure_png": str(png_path),
         "figure_pdf": str(pdf_path),
-        "figure_svg": str(svg_path),
     }
 
 
@@ -708,7 +783,7 @@ def main(
     model: Path = typer.Option(
         DEFAULT_MODEL,
         "--model",
-        help="Trained ElasticNet clock (.joblib / .pkl).",
+        help="Pickled sklearn.linear_model.ElasticNet (.pkl).",
     ),
     metrics_out: Path = typer.Option(
         DEFAULT_METRICS,
@@ -718,7 +793,7 @@ def main(
     figure_stem: Path = typer.Option(
         DEFAULT_FIGURE_STEM,
         "--figure-stem",
-        help="Output stem for Figure_Epigenetic_Clock_Panels (.png / .pdf / .svg).",
+        help="Output stem for Figure_Epigenetic_Clock_Panels (.png / .pdf).",
     ),
     annotation: Path | None = typer.Option(
         None,
@@ -730,17 +805,23 @@ def main(
         "--top-n",
         help="Number of top |weight| CpGs for panel C.",
     ),
+    skip_manifest_check: bool = typer.Option(
+        False,
+        "--skip-manifest-check",
+        help="Skip INPUT_MANIFEST.md required-file verification.",
+    ),
 ) -> None:
-    """Validate ``methylation_clock_v1`` on GSE87571 and write metrics + figures.
+    """Validate bare ElasticNet clock on GSE87571 and write metrics + figures.
 
     Args:
         methylation: Processed GSE87571 methylation parquet (samples × cg*).
         meta: Phenotype CSV with sample IDs and chronological age.
-        model: Trained ElasticNet clock (``.joblib`` / ``.pkl``).
+        model: Pickled ``sklearn.linear_model.ElasticNet``.
         metrics_out: Output path for ``clock_metrics.json``.
         figure_stem: Output stem for ``Figure_Epigenetic_Clock_Panels.*``.
         annotation: Optional Illumina probe→gene annotation table.
         top_n: Number of top ``|weight|`` CpGs for panel C.
+        skip_manifest_check: Bypass ``INPUT_MANIFEST.md`` checks.
     """
     run_validation(
         methylation_path=methylation,
@@ -750,6 +831,7 @@ def main(
         figure_stem=figure_stem,
         annotation_path=annotation,
         top_n_cpgs=top_n,
+        skip_manifest_check=skip_manifest_check,
     )
 
 

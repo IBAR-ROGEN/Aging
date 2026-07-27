@@ -45,6 +45,7 @@ See [ACTIVITIES.md](ACTIVITIES.md) for the full tree. Highlights:
 - **`scripts/alphagenome/`** — AlphaGenome batch + analysis (tables → `analysis/alphagenome/`, plots → `figures/alphagenome/`)
 - **`analysis/validate_genomics_tables/`**, **`analysis/overlap_enrichment/`**, **`analysis/variant_functional_annotation/`** — GRCh38 genomics validation ([GENOMICS_ANALYSIS.md](GENOMICS_ANALYSIS.md); index: [analysis/genomics/README.md](../analysis/genomics/README.md))
 - **`run_july_annotation_pipeline.py`** (repo root) — July batch GTEx v8 + VEP + AlphaGenome/AlphaMissense Excel export ([JULY_ANNOTATION_PIPELINE.md](JULY_ANNOTATION_PIPELINE.md))
+- **`evaluate_methylation_clock.py`** (repo root) — GSE87571 external validation of a bare ElasticNet clock; writes `outputs/clock_metrics.json` + three-panel figure ([METHYLATION_CLOCK_VALIDATION.md](METHYLATION_CLOCK_VALIDATION.md), [INPUT_MANIFEST.md](../INPUT_MANIFEST.md))
 - **`scripts/integrative/`** — variant×tissue map, phenotype risk, end-to-end pipeline ([INTEGRATIVE_PIPELINE.md](INTEGRATIVE_PIPELINE.md))
 - **`scripts/dev/`** — `security_check.sh`, CI audit, ONT pipeline validation, R bootstrap, `find_r.sh`
 
