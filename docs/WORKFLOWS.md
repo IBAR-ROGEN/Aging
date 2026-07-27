@@ -53,13 +53,13 @@ Legacy script paths under `scripts/*.py` and at the repo root remain as **deprec
 - **Canonical CLI:** `uv run rogen-clock train|evaluate` or `scripts/clock/run_clock.py`
 - **GSE87571 external cohort:** `uv run python -m rogen_aging.clock.external_data --output data/gse87571.parquet`
 - **External-validation figure:** `uv run python scripts/figures/plot_clock_eval.py` → [CLOCK_EVAL_FIGURES.md](CLOCK_EVAL_FIGURES.md)
-- **Final metrics + three-panel figure:** `uv run python evaluate_methylation_clock.py` → [METHYLATION_CLOCK_VALIDATION.md](METHYLATION_CLOCK_VALIDATION.md)
+- **Final metrics + three-panel figure:** `uv run python scripts/clock/evaluate_methylation_clock.py` → [METHYLATION_CLOCK_VALIDATION.md](METHYLATION_CLOCK_VALIDATION.md) · [INPUT_MANIFEST.md](../INPUT_MANIFEST.md)
 - **Romanian mock demo** (separate StandardScaler path): `scripts/clock/train_romanian_epigenetic_clock.py`
 - **Docs:** [CLOCK_LIBRARY.md](CLOCK_LIBRARY.md), [GSE40279_CLOCK_TRAINING.md](GSE40279_CLOCK_TRAINING.md), [CLOCK_EVAL_FIGURES.md](CLOCK_EVAL_FIGURES.md), [METHYLATION_CLOCK_VALIDATION.md](METHYLATION_CLOCK_VALIDATION.md), [ROMANIAN_EPIGENETIC_CLOCK.md](ROMANIAN_EPIGENETIC_CLOCK.md), [ACTIVITIES.md](ACTIVITIES.md#21101--methylation-aging-clock)
 
 ### UK Biobank (synthetic + LA-SNP)
 
-- **Packages:** `src/rogen_aging/ukb/`, `src/rogen_aging/integration/`
+- **Packages:** `src/rogen_aging/ukb/`, `src/rogen_aging/ukb_integration/`
 - **Mock clinical CSV:** `scripts/ukb/mock_clinical_csv.py` · **Mock RAP folder:** `scripts/ukb/mock_rap_folder.py`
 - **Integration scan:** `uv run rogen-ukb-integrate` or `scripts/ukb/run_integration.py`
 - **Docs:** [SYNTHETIC_UKB_GENERATOR.md](SYNTHETIC_UKB_GENERATOR.md), [SYNTHETIC_UKB_RAP_GENERATOR.md](SYNTHETIC_UKB_RAP_GENERATOR.md), [UKB_INTEGRATION_PIPELINE.md](UKB_INTEGRATION_PIPELINE.md), [LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md](LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md), [AF_COMPARISON_FIGURES.md](AF_COMPARISON_FIGURES.md)
@@ -125,8 +125,8 @@ Combined GTEx v8 eQTL + Ensembl VEP + AlphaGenome/AlphaMissense Excel export
 for the prioritized variant CSV. Output → `outputs/Supplementary_Table_1_Annotated_Variants.xlsx`.
 
 ```bash
-uv run python run_july_annotation_pipeline.py
-uv run python run_july_annotation_pipeline.py --cache-only
+uv run python scripts/ukb/run_july_annotation_pipeline.py
+uv run python scripts/ukb/run_july_annotation_pipeline.py --cache-only
 ```
 
 See [JULY_ANNOTATION_PIPELINE.md](JULY_ANNOTATION_PIPELINE.md).
@@ -163,7 +163,7 @@ uv run python scripts/figures/generate_bimodal_heatmap.py
 uv run python scripts/figures/generate_clock_validation.py
 uv run python scripts/figures/plot_clock_eval.py              # GSE87571 external validation
 uv run python scripts/figures/plot_af_comparison.py           # 1KG vs gnomAD AF comparison
-uv run python reconcile_and_generate_figures.py               # nomenclature audit + AF/network figures
+uv run python scripts/figures/reconcile_and_generate_figures.py               # nomenclature audit + AF/network figures
 uv run python scripts/figures/generate_agent_system_schema.py
 uv run python scripts/figures/generate_pipeline_diagram.py   # requires Graphviz `dot` on PATH
 ```

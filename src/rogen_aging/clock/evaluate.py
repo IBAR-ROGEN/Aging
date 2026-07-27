@@ -21,7 +21,17 @@ from rogen_aging.clock.data import load_wide_table
 
 
 def load_model(model_path: Path) -> Any:
-    """Load a trained clock from ``.joblib``, ``.pkl``, or legacy pickle paths."""
+    """Load a trained clock from ``.joblib``, ``.pkl``, or legacy pickle paths.
+
+    Args:
+        model_path: Path to a serialized sklearn estimator or pipeline.
+
+    Returns:
+        The deserialized model object.
+
+    Raises:
+        FileNotFoundError: If ``model_path`` is not a file.
+    """
     if not model_path.is_file():
         raise FileNotFoundError(f"Model file not found: {model_path}")
     suffix = model_path.suffix.lower()
@@ -42,7 +52,15 @@ def _cg_feature_columns(df: pd.DataFrame) -> list[str]:
 
 
 def _extract_feature_names_in(model: Any) -> list[str] | None:
-    """Return feature names if the fitted estimator recorded them."""
+    """Return feature names if the fitted estimator recorded them.
+
+    Args:
+        model: Fitted estimator or pipeline that may expose
+            ``feature_names_in_``.
+
+    Returns:
+        Feature name strings, or ``None`` if unavailable.
+    """
     if hasattr(model, "feature_names_in_"):
         names = getattr(model, "feature_names_in_", None)
         if names is not None:
@@ -75,7 +93,22 @@ def build_feature_matrix(
     df: pd.DataFrame,
     model: Any,
 ) -> tuple[pd.DataFrame, list[str]]:
-    """Align test CpGs to training features; mean-impute missing model sites."""
+    """Align test CpGs to training features; mean-impute missing model sites.
+
+    Args:
+        df: Wide test table with ``chronological_age`` and ``cg*`` columns.
+        model: Fitted clock estimator or pipeline (preferably with
+            ``feature_names_in_``).
+
+    Returns:
+        A pair ``(X, imputed_names)`` where ``X`` is the aligned feature
+        matrix and ``imputed_names`` lists training sites absent from ``df``
+        that were filled with a global mean.
+
+    Raises:
+        ValueError: If ``chronological_age`` or ``cg*`` columns are missing,
+            or feature count cannot be reconciled without names.
+    """
     if "chronological_age" not in df.columns:
         raise ValueError("Test data must include a 'chronological_age' column.")
 
@@ -129,14 +162,27 @@ def build_feature_matrix(
 
 
 def assign_age_decade(ages: pd.Series) -> pd.Series:
-    """Bin chronological ages into labeled decade intervals."""
+    """Bin chronological ages into labeled decade intervals.
+
+    Args:
+        ages: Chronological ages in years.
+
+    Returns:
+        Categorical decade labels (``<20``, ``20-29``, …, ``90+``).
+    """
     bins = [-np.inf, 20, 30, 40, 50, 60, 70, 80, 90, np.inf]
     labels = ["<20", "20-29", "30-39", "40-49", "50-59", "60-69", "70-79", "80-89", "90+"]
     return pd.cut(ages.astype(float), bins=bins, labels=labels, right=False)
 
 
 def plot_residuals(age: np.ndarray, residual: np.ndarray, out_path: Path) -> None:
-    """Save a scatter of residuals vs chronological age."""
+    """Save a scatter of residuals vs chronological age.
+
+    Args:
+        age: Chronological ages (years).
+        residual: Predicted age minus chronological age (years).
+        out_path: Destination PNG path.
+    """
     fig, ax = plt.subplots(figsize=(7.0, 5.5))
     ax.scatter(age, residual, alpha=0.75, edgecolors="black", linewidths=0.25, s=36)
     ax.axhline(0.0, color="crimson", linewidth=1.2, linestyle="--", label="Zero residual")
@@ -151,7 +197,12 @@ def plot_residuals(age: np.ndarray, residual: np.ndarray, out_path: Path) -> Non
 
 
 def plot_mae_by_decade(decade_df: pd.DataFrame, out_path: Path) -> None:
-    """Save a bar chart of MAE by age decade."""
+    """Save a bar chart of MAE by age decade.
+
+    Args:
+        decade_df: Table with ``decade`` and ``mae`` columns.
+        out_path: Destination PNG path.
+    """
     label_order = ["<20", "20-29", "30-39", "40-49", "50-59", "60-69", "70-79", "80-89", "90+"]
     seen = set(decade_df["decade"].astype(str))
     plot_order = [lab for lab in label_order if lab in seen]
@@ -179,7 +230,22 @@ def evaluate_clock(
     test_data: Path,
     output_dir: Path,
 ) -> dict[str, Any]:
-    """Run held-out evaluation; write figures and ``validation_metrics.json``."""
+    """Run held-out evaluation; write figures and ``validation_metrics.json``.
+
+    Args:
+        model_path: Path to a saved clock (``.joblib`` / pickle).
+        test_data: Path to a wide test table with ages and ``cg*`` columns.
+        output_dir: Directory for metrics JSON and residual/MAE figures.
+
+    Returns:
+        Metrics dictionary including overall MAE, Pearson r, decade MAE, and
+        ``metrics_path`` pointing at the written JSON file.
+
+    Raises:
+        FileNotFoundError: If the model or test data path is missing.
+        ValueError: If ages are entirely non-numeric/missing or features
+            cannot be aligned.
+    """
     output_dir.mkdir(parents=True, exist_ok=True)
 
     model = load_model(model_path)

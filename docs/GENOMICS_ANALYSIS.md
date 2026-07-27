@@ -46,7 +46,7 @@ Related prior work (same LA-SNP set):
 | AlphaGenome regulatory predictions | `scripts/alphagenome/` | [ALPHAGENOME_ANALYSIS_EXPLANATION.md](ALPHAGENOME_ANALYSIS_EXPLANATION.md) |
 | VEP consequence table | `scripts/ukb/annotate_la_snps_vep.py` | [LA_SNP_VEP_ANNOTATION.md](LA_SNP_VEP_ANNOTATION.md) |
 | GTEx eQTL lookup | `scripts/ukb/annotate_la_snps_gtex.py` | [LA_SNP_GTEX_ANNOTATION.md](LA_SNP_GTEX_ANNOTATION.md) |
-| July batch annotation (GTEx v8 + VEP + Alpha) | `run_july_annotation_pipeline.py` | [JULY_ANNOTATION_PIPELINE.md](JULY_ANNOTATION_PIPELINE.md) |
+| July batch annotation (GTEx v8 + VEP + Alpha) | `scripts/ukb/run_july_annotation_pipeline.py` | [JULY_ANNOTATION_PIPELINE.md](JULY_ANNOTATION_PIPELINE.md) |
 
 ## Required inputs
 

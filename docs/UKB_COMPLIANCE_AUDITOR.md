@@ -1,6 +1,6 @@
 # UKB Compliance Auditor - Documentation
 
-**Project:** ROGEN Aging Research  
+**Project:** IBAR-ROGEN Aging
 **Activity:** 2.1.8.1 - UKB Compliance Auditing  
 **Tool:** `notebooks/03_validation_and_compliance/UKB_Compliance_Auditor.ipynb`
 

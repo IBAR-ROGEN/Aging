@@ -85,7 +85,7 @@ Full configuration and input options: [CLOCK_EVAL_FIGURES.md](CLOCK_EVAL_FIGURES
 Three-panel final validation figure (scatter + residuals + top CpG weights) with metrics JSON:
 
 ```bash
-uv run python evaluate_methylation_clock.py
+uv run python scripts/clock/evaluate_methylation_clock.py
 # → outputs/clock_metrics.json
 # → outputs/figures/Figure_Epigenetic_Clock_Panels.png/.pdf/.svg
 ```
@@ -108,7 +108,7 @@ Requires `analysis/la_snp_af_1kg_vs_gnomad.csv` and `analysis/ukb_snp_manifest_v
 Manuscript finalization script that reconciles legacy CETP/HLA names, audits the 41-gene table, and exports publication AF scatter + STRING network figures:
 
 ```bash
-uv run python reconcile_and_generate_figures.py
+uv run python scripts/figures/reconcile_and_generate_figures.py
 # → outputs/nomenclature_audit.log
 # → outputs/figures/Figure_AF_Scatter.{pdf,png}
 # → outputs/figures/Figure_41_Gene_Network.{pdf,png}

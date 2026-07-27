@@ -19,6 +19,18 @@ def make_clock_pipeline(
 
     The imputer is fit on the training split only when used inside
     :func:`rogen_aging.clock.train.train_clock`.
+
+    Args:
+        random_state: Seed passed to ``ElasticNetCV``.
+        l1_ratio: Candidate L1 ratios for ElasticNetCV. Defaults to a dense
+            grid from 0.1 to 1.0 when ``None``.
+        alphas: Number of alpha values along the regularization path.
+        cv: Number of cross-validation folds.
+        max_iter: Maximum coordinate-descent iterations per fit.
+
+    Returns:
+        An unfitted ``sklearn.pipeline.Pipeline`` with ``imputer`` and
+        ``elasticnet`` steps.
     """
     ratios = l1_ratio if l1_ratio is not None else [0.1, 0.5, 0.7, 0.9, 0.95, 0.99, 1.0]
     enet = ElasticNetCV(

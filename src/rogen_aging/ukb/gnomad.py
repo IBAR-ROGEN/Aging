@@ -21,7 +21,6 @@ Example:
 
 from __future__ import annotations
 
-import argparse
 import json
 import logging
 import sys
@@ -29,11 +28,13 @@ import time
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal, cast
 
+import click
 import matplotlib.pyplot as plt
 import pandas as pd
 import requests
+import typer
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_INPUT = REPO_ROOT / "analysis" / "la_snp_1kg_frequencies.csv"
@@ -55,6 +56,9 @@ DIFF_THRESHOLD = 0.05
 
 LOG = logging.getLogger(__name__)
 
+LogLevel = Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+_LOG_LEVEL_CHOICE = click.Choice(["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"])
+
 VARIANT_FIELDS = """
   variant_id
   rsids
@@ -67,72 +71,21 @@ VARIANT_FIELDS = """
   genome { populations { id ac an } }
 """
 
-
-def _add_log_level_argument(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument(
-        "--log-level",
-        default="INFO",
-        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-        help="Logging verbosity",
-    )
-
-
-def parse_compare_args(argv: list[str] | None = None) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        description="Fetch gnomAD v4 NFE AFs and compare to 1KG frequencies.",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-    )
-    parser.add_argument("--input", type=Path, default=DEFAULT_INPUT, help="1KG frequency CSV")
-    parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT, help="Comparison CSV")
-    parser.add_argument("--scatter", type=Path, default=DEFAULT_SCATTER, help="Scatter PNG path")
-    parser.add_argument("--cache", type=Path, default=DEFAULT_CACHE, help="JSON cache path")
-    parser.add_argument(
-        "--refresh-cache",
-        action="store_true",
-        help="Ignore cached rsIDs and re-query gnomAD",
-    )
-    parser.add_argument("--batch-size", type=int, default=DEFAULT_BATCH_SIZE, help="Variants per GraphQL request")
-    parser.add_argument(
-        "--min-interval",
-        type=float,
-        default=DEFAULT_MIN_INTERVAL_SEC,
-        help="Minimum seconds between gnomAD HTTP requests",
-    )
-    parser.add_argument("--timeout", type=float, default=DEFAULT_TIMEOUT_SEC, help="HTTP timeout in seconds")
-    parser.add_argument("--max-retries", type=int, default=DEFAULT_MAX_RETRIES, help="Retries per HTTP request")
-    _add_log_level_argument(parser)
-    return parser.parse_args(argv)
-
-
-def parse_summarize_args(argv: list[str] | None = None) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        description="Summarize a 1KG vs gnomAD comparison CSV for reporting.",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-    )
-    parser.add_argument(
-        "--input",
-        type=Path,
-        default=DEFAULT_OUTPUT,
-        help="Comparison CSV from the compare step",
-    )
-    parser.add_argument(
-        "--output",
-        type=Path,
-        default=DEFAULT_SUMMARY,
-        help="Markdown summary path",
-    )
-    parser.add_argument(
-        "--diff-threshold",
-        type=float,
-        default=DIFF_THRESHOLD,
-        help="Concordance cutoff; discordant when |ΔAF| is at or above this value",
-    )
-    _add_log_level_argument(parser)
-    return parser.parse_args(argv)
+app = typer.Typer(
+    add_completion=False,
+    help="Fetch gnomAD v4 NFE AFs and compare to 1KG frequencies, or summarize a comparison CSV.",
+)
 
 
 def normalize_chromosome_label(chromosome: str) -> str:
-    """Normalise a chromosome label for gnomAD variant IDs (strip ``chr``, map MT)."""
+    """Normalise a chromosome label for gnomAD variant IDs (strip ``chr``, map MT).
+
+    Args:
+        chromosome: Raw chromosome label.
+
+    Returns:
+        Compact label without a ``chr`` prefix (``MT`` for mitochondrial).
+    """
     label = str(chromosome).strip()
     if label.upper().startswith("CHR"):
         label = label[3:]
@@ -146,7 +99,14 @@ def normalize_chromosome_label(chromosome: str) -> str:
 
 
 def normalize_rsid(rsid: str) -> str:
-    """Ensure an rsID string has an ``rs`` prefix."""
+    """Ensure an rsID string has an ``rs`` prefix.
+
+    Args:
+        rsid: Candidate rs identifier (with or without ``rs``).
+
+    Returns:
+        Normalised rsID string, or ``""`` if ``rsid`` is blank.
+    """
     value = str(rsid).strip()
     if not value:
         return ""
@@ -154,12 +114,32 @@ def normalize_rsid(rsid: str) -> str:
 
 
 def to_gnomad_variant_id(chromosome: str, position: int, ref: str, alt: str) -> str:
-    """Build a gnomAD-style variant ID ``CHROM-POS-REF-ALT``."""
+    """Build a gnomAD-style variant ID ``CHROM-POS-REF-ALT``.
+
+    Args:
+        chromosome: Chromosome label.
+        position: One-based genomic position.
+        ref: Reference allele.
+        alt: Alternate allele.
+
+    Returns:
+        Variant ID string suitable for the gnomAD GraphQL ``variantId`` field.
+    """
     return f"{normalize_chromosome_label(chromosome)}-{position}-{ref}-{alt}"
 
 
 def read_1kg_frequencies(path: Path) -> pd.DataFrame:
-    """Load the 1KG allele-frequency table produced by ``rogen-ukb-manifest extract``."""
+    """Load the 1KG allele-frequency table produced by ``rogen-ukb-manifest extract``.
+
+    Args:
+        path: Path to the 1KG frequency CSV.
+
+    Returns:
+        DataFrame including at least ``rsID`` and ``AF``.
+
+    Raises:
+        ValueError: If required columns are missing.
+    """
     df = pd.read_csv(path)
     required = {"rsID", "AF"}
     missing = required - set(df.columns)
@@ -169,7 +149,17 @@ def read_1kg_frequencies(path: Path) -> pd.DataFrame:
 
 
 def load_cache(path: Path) -> dict[str, dict[str, Any]]:
-    """Load a gnomAD GraphQL response cache from JSON, or return an empty dict."""
+    """Load a gnomAD GraphQL response cache from JSON, or return an empty dict.
+
+    Args:
+        path: JSON cache file path.
+
+    Returns:
+        Mapping from rsID to cached lookup payloads.
+
+    Raises:
+        ValueError: If the file exists but is not a JSON object.
+    """
     if not path.is_file():
         return {}
     payload = json.loads(path.read_text(encoding="utf-8"))
@@ -179,13 +169,26 @@ def load_cache(path: Path) -> dict[str, dict[str, Any]]:
 
 
 def save_cache(path: Path, cache: dict[str, dict[str, Any]]) -> None:
-    """Persist the gnomAD GraphQL response cache as formatted JSON."""
+    """Persist the gnomAD GraphQL response cache as formatted JSON.
+
+    Args:
+        path: Destination JSON path; parent directories are created.
+        cache: Mapping from rsID to cached lookup payloads.
+    """
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(cache, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
 def population_nfe_af(variant: dict[str, Any] | None) -> float | None:
-    """Extract the non-Finnish European allele frequency from a gnomAD variant payload."""
+    """Extract the non-Finnish European allele frequency from a gnomAD variant payload.
+
+    Args:
+        variant: gnomAD GraphQL variant object, or ``None``.
+
+    Returns:
+        NFE allele frequency from joint/exome/genome populations, or ``None``
+        if unavailable.
+    """
     if not variant:
         return None
     for source in ("joint", "exome", "genome"):
@@ -210,6 +213,17 @@ def cache_entry_from_variant(
     *,
     lookup_method: str,
 ) -> dict[str, Any]:
+    """Build a cache record from a gnomAD variant payload.
+
+    Args:
+        variant: gnomAD GraphQL variant object, or ``None`` when unresolved.
+        lookup_method: Label for how the lookup was performed (e.g.
+            ``variant_id``, ``region_rsid``, ``unresolved``).
+
+    Returns:
+        Cache entry with ``af_gnomad_nfe``, ``variant_id``, ``lookup_method``,
+        and ``fetched_at``.
+    """
     return {
         "af_gnomad_nfe": population_nfe_af(variant),
         "variant_id": None if not variant else variant.get("variant_id"),
@@ -229,6 +243,14 @@ class GnomadClient:
         max_retries: int,
         session: requests.Session | None = None,
     ) -> None:
+        """Initialise the GraphQL client.
+
+        Args:
+            timeout_sec: Per-request socket timeout.
+            min_interval_sec: Minimum seconds between completed requests.
+            max_retries: Maximum retries for transient HTTP/network failures.
+            session: Optional :class:`requests.Session` for connection pooling.
+        """
         self.timeout_sec = timeout_sec
         self.min_interval_sec = min_interval_sec
         self.max_retries = max_retries
@@ -241,6 +263,7 @@ class GnomadClient:
         self._session.headers.setdefault("Content-Type", "application/json")
 
     def close(self) -> None:
+        """Close the underlying HTTP session."""
         self._session.close()
 
     def _pace(self) -> None:
@@ -289,6 +312,18 @@ class GnomadClient:
             return body
 
     def fetch_variants_by_id(self, variant_ids: list[str]) -> dict[str, dict[str, Any] | None]:
+        """Fetch gnomAD variants by ``chrom-pos-ref-alt`` IDs in one GraphQL query.
+
+        Args:
+            variant_ids: gnomAD variant ID strings.
+
+        Returns:
+            Mapping from requested variant ID to the GraphQL variant payload
+            (or ``None`` when not found).
+
+        Raises:
+            RuntimeError: On exhausted retries or GraphQL-level failures.
+        """
         if not variant_ids:
             return {}
 
@@ -313,6 +348,19 @@ class GnomadClient:
         position: int,
         rsid: str,
     ) -> dict[str, Any] | None:
+        """Look up a gnomAD variant by single-base region and match on rsID.
+
+        Args:
+            chromosome: Chromosome label.
+            position: One-based genomic position.
+            rsid: Expected rs identifier among region hits.
+
+        Returns:
+            Matching GraphQL variant payload, or ``None`` if not found.
+
+        Raises:
+            RuntimeError: On exhausted retries or GraphQL-level failures.
+        """
         chrom = normalize_chromosome_label(chromosome)
         query = """
         query RegionLookup($chrom: String!, $start: Int!, $stop: Int!, $referenceGenome: ReferenceGenomeId!) {
@@ -363,7 +411,15 @@ class LookupPlan:
 
 
 def build_lookup_plans(df: pd.DataFrame) -> list[LookupPlan]:
-    """Build gnomAD lookup plans from a 1KG frequency table with optional coordinates."""
+    """Build gnomAD lookup plans from a 1KG frequency table with optional coordinates.
+
+    Args:
+        df: 1KG frequency table with ``rsID``, ``AF``, and optionally
+            ``chrom``, ``pos``, ``ref``, ``alt``.
+
+    Returns:
+        One :class:`LookupPlan` per non-empty rsID row.
+    """
     plans: list[LookupPlan] = []
     for _, row in df.iterrows():
         rsid = normalize_rsid(row["rsID"]) if pd.notna(row["rsID"]) else ""
@@ -405,7 +461,18 @@ def fetch_gnomad_afs(
     batch_size: int,
     client: GnomadClient,
 ) -> dict[str, dict[str, Any]]:
-    """Fetch gnomAD allele frequencies for lookup plans, using and updating ``cache_path``."""
+    """Fetch gnomAD allele frequencies for lookup plans, using and updating ``cache_path``.
+
+    Args:
+        plans: Per-SNP lookup plans from :func:`build_lookup_plans`.
+        cache_path: JSON cache path for rsID → AF payloads.
+        refresh_cache: If true, ignore existing cache entries and re-query.
+        batch_size: Number of variant IDs per GraphQL request.
+        client: Configured :class:`GnomadClient`.
+
+    Returns:
+        Updated cache mapping from rsID to lookup payloads.
+    """
     cache = {} if refresh_cache else load_cache(cache_path)
     pending_variant_ids: dict[str, list[LookupPlan]] = {}
     pending_regions: dict[str, LookupPlan] = {}
@@ -457,7 +524,16 @@ def fetch_gnomad_afs(
 
 
 def build_comparison_table(plans: list[LookupPlan], cache: dict[str, dict[str, Any]]) -> pd.DataFrame:
-    """Merge lookup plans with cached gnomAD responses into a comparison table."""
+    """Merge lookup plans with cached gnomAD responses into a comparison table.
+
+    Args:
+        plans: Per-SNP lookup plans.
+        cache: rsID → cached gnomAD lookup payloads.
+
+    Returns:
+        Comparison DataFrame with ``rsID``, ``AF_1kg``, ``AF_gnomad_nfe``,
+        ``abs_diff``, and ``large_diff``.
+    """
     rows: list[dict[str, Any]] = []
     for plan in plans:
         cached = cache.get(plan.rsid, {})
@@ -482,7 +558,12 @@ def build_comparison_table(plans: list[LookupPlan], cache: dict[str, dict[str, A
 
 
 def plot_scatter(comparison: pd.DataFrame, output_path: Path) -> None:
-    """Write a 1KG vs gnomAD NFE allele-frequency scatter plot."""
+    """Write a 1KG vs gnomAD NFE allele-frequency scatter plot.
+
+    Args:
+        comparison: Output of :func:`build_comparison_table`.
+        output_path: Destination PNG path.
+    """
     plotted = comparison.dropna(subset=["AF_1kg", "AF_gnomad_nfe"])
     if plotted.empty:
         LOG.warning("No overlapping AF values to plot; skipping scatter.")
@@ -538,7 +619,18 @@ class AfComparisonSummary:
 
 
 def read_comparison_table(path: Path) -> pd.DataFrame:
-    """Load a comparison CSV written by ``compare_main``."""
+    """Load a comparison CSV written by ``compare_main``.
+
+    Args:
+        path: Path to the comparison CSV.
+
+    Returns:
+        DataFrame with at least ``rsID``, ``AF_1kg``, ``AF_gnomad_nfe``, and
+        ``abs_diff`` (computed if missing).
+
+    Raises:
+        ValueError: If required columns are missing.
+    """
     df = pd.read_csv(path)
     required = {"rsID", "AF_1kg", "AF_gnomad_nfe"}
     missing = required - set(df.columns)
@@ -557,7 +649,17 @@ def summarize_comparison(
     *,
     diff_threshold: float = DIFF_THRESHOLD,
 ) -> AfComparisonSummary:
-    """Compute headline concordance statistics for a 1KG vs gnomAD table."""
+    """Compute headline concordance statistics for a 1KG vs gnomAD table.
+
+    Args:
+        comparison: Comparison table from :func:`build_comparison_table` or
+            :func:`read_comparison_table`.
+        diff_threshold: Absolute AF difference cutoff; loci with
+            ``|ΔAF| < threshold`` are treated as concordant.
+
+    Returns:
+        :class:`AfComparisonSummary` with counts and top discordant loci.
+    """
     total_snps = len(comparison)
     has_1kg = comparison["AF_1kg"].notna()
     has_gnomad = comparison["AF_gnomad_nfe"].notna()
@@ -602,6 +704,14 @@ def _format_af(value: float | None) -> str:
 
 
 def format_summary_markdown(summary: AfComparisonSummary) -> str:
+    """Render an :class:`AfComparisonSummary` as Markdown prose plus a table.
+
+    Args:
+        summary: Output of :func:`summarize_comparison`.
+
+    Returns:
+        Markdown string with a summary paragraph and top-discordant table.
+    """
     threshold = summary.diff_threshold
     mean_part = (
         "N/A"
@@ -646,6 +756,11 @@ def format_summary_markdown(summary: AfComparisonSummary) -> str:
 
 
 def log_missing_gnomad(comparison: pd.DataFrame) -> None:
+    """Log rsIDs missing gnomAD NFE allele frequencies.
+
+    Args:
+        comparison: Comparison table with ``rsID`` and ``AF_gnomad_nfe``.
+    """
     missing = comparison.loc[comparison["AF_gnomad_nfe"].isna(), "rsID"].tolist()
     if not missing:
         LOG.info("All %s SNPs were found in gnomAD v4 with NFE frequencies.", len(comparison))
@@ -657,16 +772,42 @@ def log_missing_gnomad(comparison: pd.DataFrame) -> None:
     )
 
 
-def compare_main(argv: list[str] | None = None) -> int:
-    """CLI entry: fetch gnomAD AFs and write comparison CSV plus scatter plot."""
-    args = parse_compare_args(argv)
+def compare_main(
+    *,
+    input_path: Path = DEFAULT_INPUT,
+    output: Path = DEFAULT_OUTPUT,
+    scatter: Path = DEFAULT_SCATTER,
+    cache: Path = DEFAULT_CACHE,
+    refresh_cache: bool = False,
+    batch_size: int = DEFAULT_BATCH_SIZE,
+    min_interval: float = DEFAULT_MIN_INTERVAL_SEC,
+    timeout: float = DEFAULT_TIMEOUT_SEC,
+    max_retries: int = DEFAULT_MAX_RETRIES,
+    log_level: LogLevel = "INFO",
+) -> int:
+    """Fetch gnomAD AFs and write comparison CSV plus scatter plot.
+
+    Args:
+        input_path: 1KG frequency CSV path.
+        output: Destination comparison CSV path.
+        scatter: Destination scatter PNG path.
+        cache: JSON cache path for gnomAD responses.
+        refresh_cache: If true, ignore cached rsIDs and re-query.
+        batch_size: Variants per GraphQL request.
+        min_interval: Minimum seconds between gnomAD HTTP requests.
+        timeout: HTTP timeout in seconds.
+        max_retries: Retries per HTTP request.
+        log_level: Logging verbosity name.
+
+    Returns:
+        Process exit code (``0`` on success, ``1`` on failure).
+    """
     logging.basicConfig(
-        level=getattr(logging, str(args.log_level)),
+        level=getattr(logging, str(log_level)),
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
         datefmt="%Y-%m-%dT%H:%M:%S",
     )
 
-    input_path: Path = args.input
     if not input_path.is_file():
         LOG.error("Input CSV does not exist: %s", input_path.resolve())
         return 1
@@ -676,68 +817,175 @@ def compare_main(argv: list[str] | None = None) -> int:
     LOG.info("Loaded %s SNP rows from %s", len(plans), input_path.resolve())
 
     client = GnomadClient(
-        timeout_sec=float(args.timeout),
-        min_interval_sec=float(args.min_interval),
-        max_retries=int(args.max_retries),
+        timeout_sec=float(timeout),
+        min_interval_sec=float(min_interval),
+        max_retries=int(max_retries),
     )
     try:
-        cache = fetch_gnomad_afs(
+        cache_data = fetch_gnomad_afs(
             plans,
-            cache_path=args.cache,
-            refresh_cache=bool(args.refresh_cache),
-            batch_size=int(args.batch_size),
+            cache_path=cache,
+            refresh_cache=bool(refresh_cache),
+            batch_size=int(batch_size),
             client=client,
         )
     finally:
         client.close()
 
-    comparison = build_comparison_table(plans, cache)
+    comparison = build_comparison_table(plans, cache_data)
     log_missing_gnomad(comparison)
 
-    args.output.parent.mkdir(parents=True, exist_ok=True)
-    comparison.to_csv(args.output, index=False)
-    LOG.info("Wrote comparison table (%s rows) to %s", len(comparison), args.output.resolve())
+    output.parent.mkdir(parents=True, exist_ok=True)
+    comparison.to_csv(output, index=False)
+    LOG.info("Wrote comparison table (%s rows) to %s", len(comparison), output.resolve())
 
-    plot_scatter(comparison, args.scatter)
+    plot_scatter(comparison, scatter)
     return 0
 
 
-def summarize_main(argv: list[str] | None = None) -> int:
-    """CLI entry: summarize an existing comparison CSV as Markdown."""
-    args = parse_summarize_args(argv)
+def summarize_main(
+    *,
+    input_path: Path = DEFAULT_OUTPUT,
+    output: Path = DEFAULT_SUMMARY,
+    diff_threshold: float = DIFF_THRESHOLD,
+    log_level: LogLevel = "INFO",
+) -> int:
+    """Summarize an existing comparison CSV as Markdown.
+
+    Args:
+        input_path: Comparison CSV from the compare step.
+        output: Destination Markdown summary path.
+        diff_threshold: Concordance cutoff for ``|ΔAF|``.
+        log_level: Logging verbosity name.
+
+    Returns:
+        Process exit code (``0`` on success, ``1`` on failure).
+    """
     logging.basicConfig(
-        level=getattr(logging, str(args.log_level)),
+        level=getattr(logging, str(log_level)),
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
         datefmt="%Y-%m-%dT%H:%M:%S",
     )
 
-    input_path: Path = args.input
     if not input_path.is_file():
         LOG.error("Comparison CSV does not exist: %s", input_path.resolve())
         return 1
 
     comparison = read_comparison_table(input_path)
-    summary = summarize_comparison(comparison, diff_threshold=float(args.diff_threshold))
+    summary = summarize_comparison(comparison, diff_threshold=float(diff_threshold))
     markdown = format_summary_markdown(summary)
 
     print(markdown, end="")
 
-    args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(markdown, encoding="utf-8")
-    LOG.info("Wrote summary to %s", args.output.resolve())
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(markdown, encoding="utf-8")
+    LOG.info("Wrote summary to %s", output.resolve())
     return 0
 
 
+@app.command("compare")
+def compare_cmd(
+    input_path: Path = typer.Option(DEFAULT_INPUT, "--input", path_type=Path, help="1KG frequency CSV"),
+    output: Path = typer.Option(DEFAULT_OUTPUT, "--output", path_type=Path, help="Comparison CSV"),
+    scatter: Path = typer.Option(DEFAULT_SCATTER, "--scatter", path_type=Path, help="Scatter PNG path"),
+    cache: Path = typer.Option(DEFAULT_CACHE, "--cache", path_type=Path, help="JSON cache path"),
+    refresh_cache: bool = typer.Option(False, "--refresh-cache", help="Ignore cached rsIDs and re-query gnomAD"),
+    batch_size: int = typer.Option(DEFAULT_BATCH_SIZE, "--batch-size", help="Variants per GraphQL request"),
+    min_interval: float = typer.Option(
+        DEFAULT_MIN_INTERVAL_SEC,
+        "--min-interval",
+        help="Minimum seconds between gnomAD HTTP requests",
+    ),
+    timeout: float = typer.Option(DEFAULT_TIMEOUT_SEC, "--timeout", help="HTTP timeout in seconds"),
+    max_retries: int = typer.Option(DEFAULT_MAX_RETRIES, "--max-retries", help="Retries per HTTP request"),
+    log_level: str = typer.Option(
+        "INFO",
+        "--log-level",
+        click_type=_LOG_LEVEL_CHOICE,
+        help="Logging verbosity",
+    ),
+) -> int:
+    """Fetch gnomAD v4 NFE AFs and compare to 1KG frequencies."""
+    return compare_main(
+        input_path=input_path,
+        output=output,
+        scatter=scatter,
+        cache=cache,
+        refresh_cache=refresh_cache,
+        batch_size=batch_size,
+        min_interval=min_interval,
+        timeout=timeout,
+        max_retries=max_retries,
+        log_level=cast(LogLevel, log_level),
+    )
+
+
+@app.command("summarize")
+def summarize_cmd(
+    input_path: Path = typer.Option(
+        DEFAULT_OUTPUT,
+        "--input",
+        path_type=Path,
+        help="Comparison CSV from the compare step",
+    ),
+    output: Path = typer.Option(
+        DEFAULT_SUMMARY,
+        "--output",
+        path_type=Path,
+        help="Markdown summary path",
+    ),
+    diff_threshold: float = typer.Option(
+        DIFF_THRESHOLD,
+        "--diff-threshold",
+        help="Concordance cutoff; discordant when |ΔAF| is at or above this value",
+    ),
+    log_level: str = typer.Option(
+        "INFO",
+        "--log-level",
+        click_type=_LOG_LEVEL_CHOICE,
+        help="Logging verbosity",
+    ),
+) -> int:
+    """Summarize a 1KG vs gnomAD comparison CSV for reporting."""
+    return summarize_main(
+        input_path=input_path,
+        output=output,
+        diff_threshold=diff_threshold,
+        log_level=cast(LogLevel, log_level),
+    )
+
+
 def main(argv: list[str] | None = None) -> int:
+    """Dispatch to compare (default) or summarize subcommands.
+
+    Args:
+        argv: Argument vector without the program name. Defaults to
+            ``sys.argv[1:]``. Bare flags default to the ``compare`` command.
+
+    Returns:
+        Process exit code from the selected Typer command.
+    """
     if argv is None:
         argv = sys.argv[1:]
     if not argv or argv[0].startswith("-"):
-        return compare_main(argv)
-    if argv[0] == "summarize":
-        return summarize_main(argv[1:])
-    if argv[0] == "compare":
-        return compare_main(argv[1:])
-    return compare_main(argv)
+        dispatch = ["compare", *argv]
+    elif argv[0] in {"compare", "summarize"}:
+        dispatch = list(argv)
+    else:
+        dispatch = ["compare", *argv]
+
+    try:
+        result = app(args=dispatch, standalone_mode=False)
+    except typer.Exit as exc:
+        return int(exc.exit_code)
+    except SystemExit as exc:
+        code = exc.code
+        if code is None:
+            return 0
+        if isinstance(code, int):
+            return code
+        return 1
+    return 0 if result is None else int(result)
 
 
 if __name__ == "__main__":

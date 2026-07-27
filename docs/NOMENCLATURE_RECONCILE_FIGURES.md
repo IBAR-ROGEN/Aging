@@ -1,6 +1,6 @@
 # Nomenclature reconciliation & manuscript figures
 
-**Script:** [`reconcile_and_generate_figures.py`](../reconcile_and_generate_figures.py)  
+**Script:** [`scripts/figures/reconcile_and_generate_figures.py`](../scripts/figures/reconcile_and_generate_figures.py) (deprecated shim: [`reconcile_and_generate_figures.py`](../reconcile_and_generate_figures.py))  
 **Related:** [FIGURES.md](FIGURES.md) · [AF_COMPARISON_FIGURES.md](AF_COMPARISON_FIGURES.md) · [GENOMICS_ANALYSIS.md](GENOMICS_ANALYSIS.md)
 
 ## Purpose
@@ -37,13 +37,13 @@ Exit code `1` if any concordance **DISCREPANCY** remains after the audit.
 ```bash
 uv sync
 
-uv run python reconcile_and_generate_figures.py
+uv run python scripts/figures/reconcile_and_generate_figures.py
 ```
 
 Override paths when needed:
 
 ```bash
-uv run python reconcile_and_generate_figures.py \
+uv run python scripts/figures/reconcile_and_generate_figures.py \
   --supp-table manuscript/tables/Supplementary_Table_3.xlsx \
   --candidate-list manuscript/tables/41_gene_candidate_list.csv \
   --text-dir manuscript/text \
@@ -54,5 +54,5 @@ uv run python reconcile_and_generate_figures.py \
 ```
 
 ```bash
-uv run python reconcile_and_generate_figures.py --help
+uv run python scripts/figures/reconcile_and_generate_figures.py --help
 ```

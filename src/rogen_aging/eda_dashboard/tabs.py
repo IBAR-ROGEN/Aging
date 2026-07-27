@@ -18,7 +18,12 @@ from rogen_aging.eda_dashboard.sidebar import GlobalFilters
 
 
 def render_tab_clinical_overview(df: pd.DataFrame, filt: GlobalFilters) -> None:
-    """Tab 1 — clinical distributions and inter-correlation structure."""
+    """Tab 1 — clinical distributions and inter-correlation structure.
+
+    Args:
+        df: Filtered cohort frame for the current sidebar selections.
+        filt: Resolved column names and global filter selections.
+    """
     st.subheader("Clinical & phenotypic overview")
     st.markdown(
         """
@@ -72,7 +77,12 @@ heatmap surfaces redundant or orthogonal clinical signals prior to multi-omic mo
 
 
 def render_tab_epigenetic_clock_validation(df: pd.DataFrame, filt: GlobalFilters) -> None:
-    """Tab 2 — chronological vs epigenetic age with OLS fit and accuracy metrics."""
+    """Tab 2 — chronological vs epigenetic age with OLS fit and accuracy metrics.
+
+    Args:
+        df: Filtered cohort frame for the current sidebar selections.
+        filt: Resolved column names and global filter selections.
+    """
     st.subheader("Epigenetic clock validation")
     st.markdown(
         """
@@ -160,7 +170,12 @@ def _genotype_labels(series: pd.Series) -> pd.Series:
 
 
 def render_tab_la_snp_genotype_phenotype(df: pd.DataFrame, _filt: GlobalFilters) -> None:
-    """Tab 3 — local ancestry–informed SNP genotypes vs clinical traits."""
+    """Tab 3 — local ancestry–informed SNP genotypes vs clinical traits.
+
+    Args:
+        df: Filtered cohort frame for the current sidebar selections.
+        _filt: Global filters (age column used to exclude traits from candidates).
+    """
     st.subheader("Genotype–phenotype impact (LA-SNPs)")
     st.markdown(
         """

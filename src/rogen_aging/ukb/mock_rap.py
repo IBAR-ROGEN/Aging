@@ -63,7 +63,14 @@ class ManifestSnp:
 
 
 def normalize_chromosome(chrom: str) -> str:
-    """Map manifest chromosome labels to VCF ``#CHROM`` names (``chr1`` … ``chr22``)."""
+    """Map manifest chromosome labels to VCF ``#CHROM`` names (``chr1`` … ``chr22``).
+
+    Args:
+        chrom: Chromosome label from the SNP manifest.
+
+    Returns:
+        Contig name with a ``chr`` prefix suitable for VCF output.
+    """
     raw = chrom.strip()
     if raw.lower().startswith("chr"):
         return raw if raw.startswith("chr") else f"chr{raw[3:]}"
@@ -71,7 +78,14 @@ def normalize_chromosome(chrom: str) -> str:
 
 
 def chrom_sort_key(chrom: str) -> tuple[int, str]:
-    """Sort key for GRCh38 autosomes chr1–chr22."""
+    """Sort key for GRCh38 autosomes chr1–chr22.
+
+    Args:
+        chrom: Chromosome label (with or without ``chr``).
+
+    Returns:
+        A ``(numeric_order, normalized_label)`` pair for stable sorting.
+    """
     normalized = normalize_chromosome(chrom)
     if normalized.startswith("chr"):
         body = normalized[3:]
@@ -81,7 +95,19 @@ def chrom_sort_key(chrom: str) -> tuple[int, str]:
 
 
 def load_snp_manifest(path: Path) -> list[ManifestSnp]:
-    """Load and validate the UKB LA-SNP manifest CSV."""
+    """Load and validate the UKB LA-SNP manifest CSV.
+
+    Args:
+        path: Path to a manifest CSV with ``SNP_rsID``, ``Chromosome``, and
+            ``Position_GRCh38``.
+
+    Returns:
+        Sorted list of :class:`ManifestSnp` rows with usable coordinates.
+
+    Raises:
+        FileNotFoundError: If ``path`` does not exist.
+        ValueError: If required columns are missing or no usable rows remain.
+    """
     if not path.is_file():
         raise FileNotFoundError(f"SNP manifest not found: {path.resolve()}")
 
@@ -109,7 +135,15 @@ def load_snp_manifest(path: Path) -> list[ManifestSnp]:
 
 
 def synthetic_eids(n_samples: int, *, prefix: str = "SYN_EID") -> list[str]:
-    """Build synthetic participant IDs (not real UKB 7-digit EIDs)."""
+    """Build synthetic participant IDs (not real UKB 7-digit EIDs).
+
+    Args:
+        n_samples: Number of IDs to generate.
+        prefix: String prefix before the zero-padded index.
+
+    Returns:
+        List of synthetic EID strings of length ``n_samples``.
+    """
     width = max(8, len(str(n_samples)))
     return [f"{prefix}_{i:0{width}d}" for i in range(1, n_samples + 1)]
 
@@ -121,7 +155,17 @@ def generate_phenotype_table(
     min_age: int = 40,
     max_age: int = 80,
 ) -> pl.DataFrame:
-    """Simulate the v2 phenotype dictionary for ``eids``."""
+    """Simulate the v2 phenotype dictionary for ``eids``.
+
+    Args:
+        rng: NumPy random generator.
+        eids: Participant IDs (become the ``eid`` column).
+        min_age: Inclusive lower bound for simulated age (years).
+        max_age: Inclusive upper bound for simulated age (years).
+
+    Returns:
+        Polars DataFrame with ``eid`` plus ``PHENOTYPE_V2_FIELDS`` columns.
+    """
     n_samples = len(eids)
     age = rng.integers(min_age, max_age + 1, size=n_samples)
     sex = rng.integers(0, 2, size=n_samples)
@@ -166,7 +210,12 @@ def generate_phenotype_table(
 
 
 def write_phenotype_csv(path: Path, table: pl.DataFrame) -> None:
-    """Write phenotype table with an Activity 2.1.8.1 safety header comment."""
+    """Write phenotype table with an Activity 2.1.8.1 safety header comment.
+
+    Args:
+        path: Destination CSV path; parent directories are created.
+        table: Phenotype DataFrame to serialize.
+    """
     path.parent.mkdir(parents=True, exist_ok=True)
     csv_body = table.write_csv()
     path.write_text(f"# {ACTIVITY_HEADER}\n{csv_body}", encoding="utf-8")
@@ -178,7 +227,20 @@ def iter_manifest_variant_lines(
     sample_ids: Sequence[str],
     mean_depth: float,
 ) -> Iterator[str]:
-    """Yield VCF variant lines for manifest SNPs (one line per SNP)."""
+    """Yield VCF variant lines for manifest SNPs (one line per SNP).
+
+    Args:
+        rng: NumPy random generator for alleles, genotypes, and depths.
+        manifest: Ordered LA-SNP loci to emit.
+        sample_ids: Sample column IDs (same order as phenotype ``eid``).
+        mean_depth: Mean simulated read depth per sample per site.
+
+    Yields:
+        Complete VCF body lines (including trailing newline).
+
+    Raises:
+        ValueError: If a manifest chromosome is not in ``GRCH38_CHROM_LENGTHS``.
+    """
     n_samples = len(sample_ids)
     fmt = "GT:AD:DP:GQ"
     for snp in manifest:
@@ -219,7 +281,16 @@ def write_la_snp_vcf(
     mean_depth: float,
     cohort_label: str,
 ) -> None:
-    """Stream LA-SNP VCF with headers and manifest-ordered variant rows."""
+    """Stream LA-SNP VCF with headers and manifest-ordered variant rows.
+
+    Args:
+        path: Destination VCF path; parent directories are created.
+        sample_ids: Sample IDs written into the VCF header.
+        manifest: Ordered LA-SNP loci.
+        rng: NumPy random generator.
+        mean_depth: Mean simulated read depth per sample per site.
+        cohort_label: Cohort name recorded in VCF metadata.
+    """
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="ascii", newline="\n") as out:
         write_vcf_headers(
@@ -246,7 +317,23 @@ def generate_ukb_rap_mock(
     seed: int | None,
     mean_depth: float = 32.0,
 ) -> tuple[Path, Path]:
-    """Create phenotype CSV and matching LA-SNP VCF under ``output_dir``."""
+    """Create phenotype CSV and matching LA-SNP VCF under ``output_dir``.
+
+    Args:
+        n_samples: Number of synthetic participants.
+        snp_manifest: UKB LA-SNP manifest CSV path.
+        output_dir: Root directory for the UKB-RAP-style layout.
+        seed: Random seed; ``None`` leaves the generator unseeded.
+        mean_depth: Mean simulated read depth per sample per site.
+
+    Returns:
+        A pair ``(phenotype_path, genotype_path)`` written under
+        ``output_dir``.
+
+    Raises:
+        ValueError: If ``n_samples < 1`` or ``mean_depth`` is not positive.
+        FileNotFoundError: If ``snp_manifest`` does not exist.
+    """
     if n_samples < 1:
         raise ValueError("--n-samples must be >= 1")
     if mean_depth <= 0:

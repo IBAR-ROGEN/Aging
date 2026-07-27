@@ -32,7 +32,6 @@ Examples:
 
 from __future__ import annotations
 
-import argparse
 import glob
 import json
 import logging
@@ -45,9 +44,11 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import quote
 
+import click
 import cyvcf2
 import pandas as pd
 import requests
+import typer
 
 ENSEMBL_VARIATION_BASE = "https://rest.ensembl.org/variation/human"
 DEFAULT_ASSEMBLY = "GRCh38"
@@ -64,6 +65,16 @@ _CHROM_IN_FILENAME_RE = re.compile(
 )
 
 LOG = logging.getLogger(__name__)
+
+_LOG_LEVEL_CHOICE = click.Choice(["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"])
+
+app = typer.Typer(
+    add_completion=False,
+    help=(
+        "Build a GRCh38 SNP manifest from Ensembl (build) or extract 1000 "
+        "Genomes allele frequencies for manifest SNPs (extract)."
+    ),
+)
 
 
 @dataclass(frozen=True)
@@ -106,7 +117,15 @@ def _pick_grch38_chromosome_mapping(mappings: list[dict[str, Any]]) -> dict[str,
 
 
 def _mapping_to_locus(mapping: dict[str, Any]) -> Grch38Locus | None:
-    """Convert a single Ensembl mapping dict to :class:`Grch38Locus`."""
+    """Convert a single Ensembl mapping dict to :class:`Grch38Locus`.
+
+    Args:
+        mapping: One Ensembl ``mappings`` entry with ``seq_region_name`` and
+            ``start`` (optional ``end``).
+
+    Returns:
+        A :class:`Grch38Locus`, or ``None`` if coordinates are missing/invalid.
+    """
     chrom = mapping.get("seq_region_name")
     start = mapping.get("start")
     end = mapping.get("end")
@@ -394,7 +413,14 @@ def build_manifest(
 
 
 def normalize_chromosome_label(chromosome: str) -> str:
-    """Normalise a chromosome label to a compact form (no ``chr`` prefix)."""
+    """Normalise a chromosome label to a compact form (no ``chr`` prefix).
+
+    Args:
+        chromosome: Raw chromosome label (e.g. ``chr9``, ``9``, ``MT``).
+
+    Returns:
+        Compact label without a ``chr`` prefix (``MT`` for mitochondrial).
+    """
     label = str(chromosome).strip()
     if label.upper().startswith("CHR"):
         label = label[3:]
@@ -408,7 +434,14 @@ def normalize_chromosome_label(chromosome: str) -> str:
 
 
 def chromosome_query_aliases(chromosome: str) -> list[str]:
-    """Return plausible contig names for tabix region queries."""
+    """Return plausible contig names for tabix region queries.
+
+    Args:
+        chromosome: Chromosome label in any common form.
+
+    Returns:
+        Ordered unique aliases (bare and ``chr``-prefixed; MT/M variants).
+    """
     base = normalize_chromosome_label(chromosome)
     aliases = [base, f"chr{base}"]
     if base == "MT":
@@ -423,7 +456,17 @@ def chromosome_query_aliases(chromosome: str) -> list[str]:
 
 
 def expand_vcf_paths(vcf_glob: str) -> list[Path]:
-    """Expand a filesystem path or glob to indexed 1KG-style VCF paths."""
+    """Expand a filesystem path or glob to indexed 1KG-style VCF paths.
+
+    Args:
+        vcf_glob: Glob pattern, directory, or single VCF/BCF file path.
+
+    Returns:
+        Sorted list of matching paths.
+
+    Raises:
+        FileNotFoundError: If nothing matches.
+    """
     matches = sorted(Path(p) for p in glob.glob(vcf_glob))
     if matches:
         return matches
@@ -442,7 +485,15 @@ def expand_vcf_paths(vcf_glob: str) -> list[Path]:
 
 
 def infer_vcf_chromosomes(path: Path) -> set[str]:
-    """Infer chromosome labels encoded in a VCF filename, if any."""
+    """Infer chromosome labels encoded in a VCF filename, if any.
+
+    Args:
+        path: VCF/BCF path whose basename may encode chromosome (e.g.
+            ``ALL.chr9.vcf.gz``).
+
+    Returns:
+        Set of normalised chromosome labels found in the filename.
+    """
     labels: set[str] = set()
     for match in _CHROM_IN_FILENAME_RE.findall(path.name):
         labels.add(normalize_chromosome_label(match))
@@ -450,7 +501,16 @@ def infer_vcf_chromosomes(path: Path) -> set[str]:
 
 
 def build_chromosome_vcf_index(vcf_paths: Sequence[Path]) -> tuple[dict[str, Path], Path | None]:
-    """Map normalised chromosome labels to per-chromosome VCF paths."""
+    """Map normalised chromosome labels to per-chromosome VCF paths.
+
+    Args:
+        vcf_paths: Candidate indexed VCF paths.
+
+    Returns:
+        A pair ``(index, fallback)`` where ``index`` maps normalised chromosome
+        labels to paths, and ``fallback`` is an undesignated multi-chrom VCF
+        (or ``None``).
+    """
     index: dict[str, Path] = {}
     undesignated: list[Path] = []
 
@@ -476,7 +536,18 @@ def build_chromosome_vcf_index(vcf_paths: Sequence[Path]) -> tuple[dict[str, Pat
 
 
 def read_manifest_csv(path: Path) -> pd.DataFrame:
-    """Load the SNP manifest CSV produced by :func:`build_manifest`."""
+    """Load the SNP manifest CSV produced by :func:`build_manifest`.
+
+    Args:
+        path: Path to the manifest CSV.
+
+    Returns:
+        DataFrame including ``SNP_rsID``, ``Chromosome``, and
+        ``Position_GRCh38``.
+
+    Raises:
+        ValueError: If required columns are missing.
+    """
     df = pd.read_csv(path)
     required = {"SNP_rsID", "Chromosome", "Position_GRCh38"}
     missing = required - set(df.columns)
@@ -489,22 +560,41 @@ class VcfHandleCache:
     """Lazy cache of open :class:`cyvcf2.VCF` readers."""
 
     def __init__(self) -> None:
+        """Initialise an empty handle cache."""
         self._open: dict[str, cyvcf2.VCF] = {}
 
     def get(self, path: Path) -> cyvcf2.VCF:
+        """Return an open VCF reader for ``path``, creating it if needed.
+
+        Args:
+            path: Path to a bgzipped, tabix-indexed VCF.
+
+        Returns:
+            A :class:`cyvcf2.VCF` handle cached for the resolved path.
+        """
         key = str(path.resolve())
         if key not in self._open:
             self._open[key] = cyvcf2.VCF(key)
         return self._open[key]
 
     def close(self) -> None:
+        """Close all cached VCF handles and clear the cache."""
         for handle in self._open.values():
             handle.close()
         self._open.clear()
 
 
 def fetch_variant_at_locus(vcf: cyvcf2.VCF, chromosome: str, position: int) -> cyvcf2.Variant | None:
-    """Return the variant record at ``chromosome:position`` using tabix, if present."""
+    """Return the variant record at ``chromosome:position`` using tabix, if present.
+
+    Args:
+        vcf: Open :class:`cyvcf2.VCF` reader.
+        chromosome: Chromosome label (any common form).
+        position: One-based genomic position.
+
+    Returns:
+        The matching :class:`cyvcf2.Variant`, or ``None`` if not found.
+    """
     for alias in chromosome_query_aliases(chromosome):
         region = f"{alias}:{position}-{position}"
         try:
@@ -517,7 +607,16 @@ def fetch_variant_at_locus(vcf: cyvcf2.VCF, chromosome: str, position: int) -> c
 
 
 def compute_cohort_allele_frequency(record: cyvcf2.Variant) -> tuple[float | None, int]:
-    """Compute alternate-allele frequency and number of called samples."""
+    """Compute alternate-allele frequency and number of called samples.
+
+    Args:
+        record: A VCF variant with per-sample genotypes.
+
+    Returns:
+        A pair ``(af, n_called)`` where ``af`` is the alternate allele
+        frequency over called diploid samples (``None`` if none called) and
+        ``n_called`` is the count of samples with both alleles called.
+    """
     n_called = 0
     n_alt_alleles = 0
     for genotype in record.genotypes:
@@ -542,7 +641,16 @@ def resolve_vcf_for_chromosome(
     chromosome_index: dict[str, Path],
     fallback_vcf: Path | None,
 ) -> Path | None:
-    """Pick the VCF path that should contain variants on ``chromosome``."""
+    """Pick the VCF path that should contain variants on ``chromosome``.
+
+    Args:
+        chromosome: Chromosome label to look up.
+        chromosome_index: Mapping from normalised chromosome to VCF path.
+        fallback_vcf: Optional multi-chromosome VCF when the index has no hit.
+
+    Returns:
+        Chosen VCF path, or ``None`` if neither index nor fallback applies.
+    """
     normalised = normalize_chromosome_label(chromosome)
     if normalised in chromosome_index:
         return chromosome_index[normalised]
@@ -550,7 +658,17 @@ def resolve_vcf_for_chromosome(
 
 
 def extract_1kg_frequencies(manifest: pd.DataFrame, vcf_paths: Sequence[Path]) -> pd.DataFrame:
-    """Extract 1KG allele frequencies for manifest SNPs via indexed region queries."""
+    """Extract 1KG allele frequencies for manifest SNPs via indexed region queries.
+
+    Args:
+        manifest: Manifest rows with ``SNP_rsID``, ``Chromosome``, and
+            ``Position_GRCh38``.
+        vcf_paths: Indexed 1000 Genomes GRCh38 VCF paths.
+
+    Returns:
+        DataFrame with columns ``rsID``, ``chrom``, ``pos``, ``ref``, ``alt``,
+        ``AF``, and ``N_called``.
+    """
     chromosome_index, fallback_vcf = build_chromosome_vcf_index(vcf_paths)
     cache = VcfHandleCache()
 
@@ -645,114 +763,116 @@ def extract_1kg_frequencies(manifest: pd.DataFrame, vcf_paths: Sequence[Path]) -
     return pd.DataFrame(rows)
 
 
-def _add_build_arguments(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument(
+@app.command("build")
+def build_cmd(
+    input_path: Path = typer.Option(
+        Path("overlapping_genes_with_snps.xlsx"),
         "--input",
-        type=Path,
-        default=Path("overlapping_genes_with_snps.xlsx"),
+        path_type=Path,
         help="Path to overlapping_genes_with_snps.xlsx",
-    )
-    parser.add_argument(
+    ),
+    output: Path = typer.Option(
+        DEFAULT_MANIFEST_CSV,
         "--output",
-        type=Path,
-        default=DEFAULT_MANIFEST_CSV,
+        path_type=Path,
         help="Output CSV manifest path",
-    )
-    parser.add_argument(
+    ),
+    min_interval: float = typer.Option(
+        DEFAULT_MIN_INTERVAL_SEC,
         "--min-interval",
-        type=float,
-        default=DEFAULT_MIN_INTERVAL_SEC,
         help="Minimum seconds between Ensembl HTTP request completions",
-    )
-    parser.add_argument(
+    ),
+    timeout: float = typer.Option(
+        DEFAULT_TIMEOUT_SEC,
         "--timeout",
-        type=float,
-        default=DEFAULT_TIMEOUT_SEC,
         help="Per-request timeout in seconds",
-    )
-    parser.add_argument(
+    ),
+    max_retries: int = typer.Option(
+        DEFAULT_MAX_RETRIES,
         "--max-retries",
-        type=int,
-        default=DEFAULT_MAX_RETRIES,
         help="Maximum retries per rs ID for transient HTTP failures",
-    )
-
-
-def _add_extract_arguments(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument(
-        "--manifest",
-        type=Path,
-        default=DEFAULT_MANIFEST_CSV,
-        help="Manifest CSV from the build subcommand",
-    )
-    parser.add_argument(
-        "--vcf-glob",
-        required=True,
-        help="Path or glob to 1000 Genomes GRCh38 VCFs (bgzipped + tabix-indexed)",
-    )
-    parser.add_argument(
-        "--output",
-        type=Path,
-        default=DEFAULT_1KG_FREQ_CSV,
-        help="Output per-SNP allele-frequency table",
-    )
-
-
-def _add_log_level_argument(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument(
+    ),
+    log_level: str = typer.Option(
+        "INFO",
         "--log-level",
-        default="INFO",
-        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        click_type=_LOG_LEVEL_CHOICE,
         help="Logging verbosity",
+    ),
+) -> int:
+    """Resolve rsIDs via Ensembl and write a GRCh38 manifest CSV."""
+    logging.basicConfig(
+        level=getattr(logging, str(log_level)),
+        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+        datefmt="%Y-%m-%dT%H:%M:%S",
+    )
+    return run_build(
+        input_path=input_path,
+        output_path=output,
+        min_interval=min_interval,
+        timeout=timeout,
+        max_retries=max_retries,
     )
 
 
-def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
-    """Parse command-line arguments."""
-    argv = list(sys.argv[1:] if argv is None else argv)
-
-    root = argparse.ArgumentParser(
-        description=(
-            "Build a GRCh38 SNP manifest from Ensembl (build) or extract 1000 "
-            "Genomes allele frequencies for manifest SNPs (extract)."
-        ),
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+@app.command("extract")
+def extract_cmd(
+    manifest: Path = typer.Option(
+        DEFAULT_MANIFEST_CSV,
+        "--manifest",
+        path_type=Path,
+        help="Manifest CSV from the build subcommand",
+    ),
+    vcf_glob: str = typer.Option(
+        ...,
+        "--vcf-glob",
+        help="Path or glob to 1000 Genomes GRCh38 VCFs (bgzipped + tabix-indexed)",
+    ),
+    output: Path = typer.Option(
+        DEFAULT_1KG_FREQ_CSV,
+        "--output",
+        path_type=Path,
+        help="Output per-SNP allele-frequency table",
+    ),
+    log_level: str = typer.Option(
+        "INFO",
+        "--log-level",
+        click_type=_LOG_LEVEL_CHOICE,
+        help="Logging verbosity",
+    ),
+) -> int:
+    """Extract 1KG allele frequencies for manifest SNPs from indexed VCFs."""
+    logging.basicConfig(
+        level=getattr(logging, str(log_level)),
+        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+        datefmt="%Y-%m-%dT%H:%M:%S",
     )
-    subparsers = root.add_subparsers(dest="command")
-
-    build_parser = subparsers.add_parser(
-        "build",
-        help="Resolve rsIDs via Ensembl and write a GRCh38 manifest CSV",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    return run_extract(
+        manifest_path=manifest,
+        vcf_glob=vcf_glob,
+        output_path=output,
     )
-    _add_build_arguments(build_parser)
-    _add_log_level_argument(build_parser)
-
-    extract_parser = subparsers.add_parser(
-        "extract",
-        help="Extract 1KG allele frequencies for manifest SNPs from indexed VCFs",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-    )
-    _add_extract_arguments(extract_parser)
-    _add_log_level_argument(extract_parser)
-
-    if argv and argv[0] in {"build", "extract"}:
-        return root.parse_args(argv)
-
-    if not argv or argv[0] in {"-h", "--help"}:
-        root.print_help()
-        raise SystemExit(0)
-
-    args = build_parser.parse_args(argv)
-    args.command = "build"
-    return args
 
 
-def run_build(args: argparse.Namespace) -> int:
-    """Execute the manifest build workflow."""
-    input_path: Path = args.input
-    output_path: Path = args.output
+def run_build(
+    *,
+    input_path: Path,
+    output_path: Path,
+    min_interval: float,
+    timeout: float,
+    max_retries: int,
+) -> int:
+    """Execute the manifest build workflow.
 
+    Args:
+        input_path: Overlap Excel path.
+        output_path: Destination CSV for the GRCh38 manifest.
+        min_interval: Minimum seconds between Ensembl HTTP completions.
+        timeout: Per-request timeout in seconds.
+        max_retries: Maximum retries per rs ID for transient failures.
+
+    Returns:
+        Process exit code (0 on success, 1 on failure).
+    """
     if not input_path.is_file():
         LOG.error("Input file does not exist: %s", input_path.resolve())
         return 1
@@ -763,9 +883,9 @@ def run_build(args: argparse.Namespace) -> int:
 
     manifest = build_manifest(
         df,
-        min_interval_sec=float(args.min_interval),
-        timeout_sec=float(args.timeout),
-        max_retries=int(args.max_retries),
+        min_interval_sec=float(min_interval),
+        timeout_sec=float(timeout),
+        max_retries=int(max_retries),
     )
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -774,23 +894,34 @@ def run_build(args: argparse.Namespace) -> int:
     return 0
 
 
-def run_extract(args: argparse.Namespace) -> int:
-    """Execute the 1KG allele-frequency extraction workflow."""
-    manifest_path: Path = args.manifest
-    output_path: Path = args.output
+def run_extract(
+    *,
+    manifest_path: Path,
+    vcf_glob: str,
+    output_path: Path,
+) -> int:
+    """Execute the 1KG allele-frequency extraction workflow.
 
+    Args:
+        manifest_path: Manifest CSV from the build subcommand.
+        vcf_glob: Path or glob to indexed 1000 Genomes VCFs.
+        output_path: Destination CSV for per-SNP allele frequencies.
+
+    Returns:
+        Process exit code (0 on success, 1 on failure).
+    """
     if not manifest_path.is_file():
         LOG.error("Manifest CSV does not exist: %s", manifest_path.resolve())
         return 1
 
     try:
-        vcf_paths = expand_vcf_paths(str(args.vcf_glob))
+        vcf_paths = expand_vcf_paths(vcf_glob)
     except FileNotFoundError as exc:
         LOG.error("%s", exc)
         return 1
 
     if not vcf_paths:
-        LOG.error("No VCF files matched: %s", args.vcf_glob)
+        LOG.error("No VCF files matched: %s", vcf_glob)
         return 1
 
     LOG.info("Reading manifest from %s", manifest_path.resolve())
@@ -816,17 +947,46 @@ def run_extract(args: argparse.Namespace) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
-    """CLI entry point: build manifest CSV or extract 1KG allele frequencies."""
-    args = parse_args(argv)
-    logging.basicConfig(
-        level=getattr(logging, str(args.log_level)),
-        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
-        datefmt="%Y-%m-%dT%H:%M:%S",
-    )
+    """CLI entry point: build manifest CSV or extract 1KG allele frequencies.
 
-    if args.command == "extract":
-        return run_extract(args)
-    return run_build(args)
+    Args:
+        argv: Optional argument vector without the program name.
+
+    Returns:
+        Process exit code from :func:`run_build` or :func:`run_extract`.
+    """
+    if argv is None:
+        argv = sys.argv[1:]
+
+    # Empty / top-level help → root help (not default build), matching argparse.
+    if not argv or argv[0] in {"-h", "--help"}:
+        try:
+            app(args=["--help"], standalone_mode=False)
+        except typer.Exit as exc:
+            return int(exc.exit_code)
+        except SystemExit as exc:
+            code = exc.code
+            if code is None:
+                return 0
+            if isinstance(code, int):
+                return code
+            return 1
+        return 0
+
+    dispatch = list(argv) if argv[0] in {"build", "extract"} else ["build", *argv]
+
+    try:
+        result = app(args=dispatch, standalone_mode=False)
+    except typer.Exit as exc:
+        return int(exc.exit_code)
+    except SystemExit as exc:
+        code = exc.code
+        if code is None:
+            return 0
+        if isinstance(code, int):
+            return code
+        return 1
+    return 0 if result is None else int(result)
 
 
 if __name__ == "__main__":
