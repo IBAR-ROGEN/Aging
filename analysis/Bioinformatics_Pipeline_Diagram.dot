@@ -1,0 +1,27 @@
+digraph "Bioinformatics Pipeline Architecture" {
+	graph [bgcolor=white fontcolor="#2D3436" fontname=Arial fontsize=16 label="Bioinformatics Pipeline Architecture" labeljust=l nodesep=1.0 pad=1.5 rankdir=LR ranksep=1.5 splines=ortho]
+	node [fillcolor=lightblue fixedsize=true fontcolor="#2D3436" fontname=Arial fontsize=11 height=1.4 imagescale=true labelloc=b shape=box style="rounded,filled" width=1.4]
+	edge [color="#7B8894"]
+	"95fea84d86c04dd79c90816f94c37607" -> e17655f3bae24533abe85807790bc0be [label="Raw reads" color="#2C3E50" dir=forward fontcolor="#2D3436" fontname="Sans-Serif" fontsize=13 penwidth=2.5 style=bold]
+	e17655f3bae24533abe85807790bc0be -> a5d2ff83b62d45c08cfdaabbecf23b25 [label="BAM files" color="#27AE60" dir=forward fontcolor="#2D3436" fontname="Sans-Serif" fontsize=13 penwidth=2.5 style=bold]
+	a5d2ff83b62d45c08cfdaabbecf23b25 -> "0b01e7ed9566419a932457e4ffc21084" [label="Methylation calls" color="#E74C3C" dir=forward fontcolor="#2D3436" fontname="Sans-Serif" fontsize=13 penwidth=2.5 style=bold]
+	"0b01e7ed9566419a932457e4ffc21084" -> da8ff7ac70234c0cb3b03b65a4060e30 [label=Query color="#7F8C8D" dir=forward fontcolor="#2D3436" fontname="Sans-Serif" fontsize=13 penwidth=2.0 style=dashed]
+	"0b01e7ed9566419a932457e4ffc21084" -> a76f3625e30b4ac59653f6c208810e5d [label=Query color="#7F8C8D" dir=forward fontcolor="#2D3436" fontname="Sans-Serif" fontsize=13 penwidth=2.0 style=dashed]
+	subgraph "cluster_Dagster Orchestration" {
+		graph [bgcolor=lightgray fontname="Arial Bold" fontsize=14 label="Dagster Orchestration" labeljust=l pencolor="#AEB6BE" rankdir=LR shape=box style="rounded,filled"]
+		"95fea84d86c04dd79c90816f94c37607" [label="Nanopore
+pod5" fillcolor="#E8F4F8" height=2.3 image="/Users/mityatoren/code/rogen_aging/.venv/lib/python3.12/site-packages/resources/generic/storage/storage.png" shape=none style="rounded,filled"]
+		e17655f3bae24533abe85807790bc0be [label="Dorado
+Basecalling" fillcolor="#4ECDC4" height=2.3 image="/Users/mityatoren/code/rogen_aging/.venv/lib/python3.12/site-packages/resources/programming/language/python.png" shape=none style="rounded,filled"]
+		a5d2ff83b62d45c08cfdaabbecf23b25 [label="Modkit
+Methylation
+Calling" fillcolor="#4ECDC4" height=2.7 image="/Users/mityatoren/code/rogen_aging/.venv/lib/python3.12/site-packages/resources/programming/language/python.png" shape=none style="rounded,filled"]
+		"0b01e7ed9566419a932457e4ffc21084" [label="Apache
+Parquet
+Storage" fillcolor="#FFE66D" height=2.7 image="/Users/mityatoren/code/rogen_aging/.venv/lib/python3.12/site-packages/resources/generic/storage/storage.png" shape=none style="rounded,filled"]
+		da8ff7ac70234c0cb3b03b65a4060e30 [label="Polars
+Query Engine" fillcolor="#95E1D3" height=2.3 image="/Users/mityatoren/code/rogen_aging/.venv/lib/python3.12/site-packages/resources/generic/database/sql.png" shape=none style="rounded,filled"]
+		a76f3625e30b4ac59653f6c208810e5d [label="DuckDB
+Query Engine" fillcolor="#95E1D3" height=2.3 image="/Users/mityatoren/code/rogen_aging/.venv/lib/python3.12/site-packages/resources/onprem/database/duckdb.png" shape=none style="rounded,filled"]
+	}
+}

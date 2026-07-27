@@ -1,12 +1,12 @@
 """Network Hub Visualizer for Protein Interaction Topology."""
 
-import networkx as nx
-import matplotlib.pyplot as plt
-import numpy as np
 from pathlib import Path
 
+import matplotlib.pyplot as plt
+import networkx as nx
 
-def create_network_visualization(output_path: str = "Network_Analysis_Nov.png") -> None:
+
+def create_network_visualization(output_path: str = "analysis/Network_Analysis_Nov.png") -> None:
     """
     Create and save a network visualization of protein interactions.
     

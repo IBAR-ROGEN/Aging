@@ -433,7 +433,7 @@ echo "Analysis complete!"
 
 ## Additional Resources
 
-- See `METHYLATION_PIPELINE_README.md` for overview
+- See [METHYLATION_PIPELINE_README.md](METHYLATION_PIPELINE_README.md) for overview
 - Check tool-specific documentation for advanced options
 - Review example outputs in `analysis/` directory
 

@@ -1,335 +1,102 @@
-# ROGEN Aging Project — Code Modules Reference
-
-This document describes each code file and module in the IBAR-ROGEN Aging project and what it is responsible for.
-
----
-
-## Directory structure (overview)
-
-```
-Aging/
-├── downstream_analysis.R          # Root R script
-├── find_r.sh
-├── pipeline_validation.sh
-├── pyproject.toml
-├── src/rogen_aging/               # Python package
-│   ├── __init__.py
-│   ├── methylation_visualizations.py
-│   └── network_visualizer.py
-├── scripts/                       # Entry-point scripts
-│   ├── generate_agent_system_schema.py
-│   ├── generate_agent_system_schema_fallback.py
-│   ├── generate_bimodal_heatmap.py
-│   ├── generate_clock_validation.py
-│   ├── generate_methylation_visualizations.py
-│   ├── generate_pipeline_diagram.py
-│   ├── install_graphviz.sh
-│   └── README_GRAPHVIZ.md
-├── notebooks/                     # Notebooks by functional area
-│   ├── 01_genomics_analysis/
-│   ├── 02_methylation_pipeline/
-│   ├── 03_validation_and_compliance/
-│   ├── 04_exploratory_visualizations/
-│   └── README.md
-├── docs/                          # Documentation
-├── analysis/                      # Generated figures and reports
-└── .vscode/, .env.example, ...
-```
-
----
-
-## 1. Project root (Aging/)
-
-### 1.1 downstream_analysis.R
-
-**Purpose:** Downstream methylation analysis with DMRcaller (Activity 2.1.8.1).
-
-**Responsibilities:**
-- Imports bedMethyl files produced by Modkit (from the methylation pipeline).
-- Prepares methylation data for the DMRcaller Bioconductor package.
-- Identifies Differentially Methylated Regions (DMRs) between groups (e.g., Old vs Young).
-- Provides a full workflow: data import → preparation → DMR calling → (optional) export.
-
-**Main functions:**
-- `import_bedmethyl()` — Reads bedMethyl (BED 9+3) via rtracklayer into GRanges.
-- `prepare_dmrcaller_data()` — Converts bedMethyl data into coverage and methylation matrices for DMRcaller.
-- `calculate_dmrs()` — Calls DMRs between two groups with configurable coverage, p-value, and min CpG options.
-- `run_dmrcaller_workflow()` — Runs the end-to-end analysis workflow.
-
-**Dependencies:** DMRcaller, GenomicRanges, rtracklayer (R/Bioconductor).
-
-**Input:** bedMethyl files from Modkit.  
-**Output:** DMRs (GRanges) and optional BED/CSV exports.
-
----
-
-### 1.2 find_r.sh
-
-**Purpose:** Locate the R installation on macOS for IDE/VS Code configuration.
-
-**Responsibilities:**
-- Searches common paths for the R executable (e.g. `/Library/Frameworks/R.framework`, `/opt/homebrew/bin/R`, `/usr/local/bin/R`).
-- Prints the path and version of the first R binary found.
-- Suggests the exact `r.rpath.mac` setting for `.vscode/settings.json`.
-- If R is not found, suggests how to install R (CRAN or Homebrew).
-
-**Usage:** Run from the project root; use the printed path in VS Code/Cursor R extension settings.
-
----
-
-### 1.3 pipeline_validation.sh
-
-**Purpose:** Validate the Oxford Nanopore methylation calling pipeline (Activity 2.1.8.1).
-
-**Responsibilities:**
-- **Step 1:** Checks that Dorado and Modkit are installed and reports versions.
-- **Step 2:** Downloads the official ONT/Epi2Me Labs test dataset (wf-basecalling-demo).
-- **Step 3:** Runs (or documents) Dorado basecalling with a methylation-aware model (5mC/5hmC), producing BAM with MM/ML tags. GPU (CUDA) or CPU.
-- **Step 4:** Documents/runs Modkit to convert BAM to bedMethyl; notes that a reference FASTA is required.
-- **Step 5:** Prints a validation summary and next steps (uncomment Dorado/Modkit when ready, then run `downstream_analysis.R`).
-
-**Output:** Test data in `wf-basecalling-demo/`, optional `basecalled_methylation.bam`, optional `methylation_calls.bedMethyl`, or placeholder files when steps are commented out.
-
----
-
-## 2. Python package: src/rogen_aging/
-
-### 2.1 __init__.py
-
-**Purpose:** Package initializer for `rogen_aging`.
-
-**Responsibilities:** Declares the package and its public API (currently `__all__ = []`). Visualization and network code live in the other modules and are run via scripts or notebooks.
-
----
-
-### 2.2 methylation_visualizations.py
-
-**Purpose:** Central module for all methylation-related figures and pipeline diagrams.
-
-**Responsibilities:**
-- **Pipeline workflow diagram** — Draws the flow: POD5 → Dorado → BAM → Modkit → bedMethyl → DMRcaller → DMR results (with arrows and legend).
-- **Example DMR visualizations** — Simulated DMR data: Manhattan plot, DMR width distribution, methylation difference distribution, p-value distribution, CpG sites per DMR.
-- **Pipeline summary diagram** — High-level overview of tools (Dorado, Modkit, DMRcaller) and their roles.
-- **Bimodal risk heatmap (Figure 2)** — Protective vs risk effects of longevity genes across conditions (Activity 2.1.7).
-- **Clock validation plot (Figure 3)** — Scatter of chronological age vs DNAm predicted age with MAE ~2.1 years (Activity 2.1.10).
-- **generate_all_visualizations()** — Runs pipeline workflow, example DMR, and pipeline summary in one call.
-
-**Main functions:**
-- `create_pipeline_workflow_diagram()`
-- `create_example_dmr_visualizations()`
-- `create_pipeline_summary_diagram()`
-- `create_bimodal_risk_heatmap()`
-- `create_clock_validation_plot()`
-- `generate_all_visualizations()`
-
-**Dependencies:** matplotlib, seaborn, numpy, pandas.  
-**Output:** PNGs under `analysis/` (or paths passed in).
-
----
-
-### 2.3 network_visualizer.py
-
-**Purpose:** Protein interaction network visualization (“Resilience Core”).
-
-**Responsibilities:**
-- Builds a NetworkX graph of longevity/neuro genes (Hubs, Longevity, Neuro categories).
-- Adds edges representing interactions (e.g. APOE–MAPT, TP53–SIRT1).
-- Sizes nodes by degree centrality.
-- Draws the graph with category-based colors and saves as PNG.
-
-**Main function:** `create_network_visualization(output_path="Network_Analysis_Nov.png")`
-
-**Dependencies:** networkx, matplotlib, numpy.  
-**Output:** Single PNG (default `Network_Analysis_Nov.png`).
-
----
-
-## 3. Scripts (scripts/)
-
-Scripts are entry points that call into `src/rogen_aging` or external tools. Run them from the `Aging/` directory (e.g. `python scripts/generate_*.py` or `uv run python scripts/...`).
-
-### 3.1 generate_agent_system_schema.py
-
-**Purpose:** Generate Figure 4 — LongevityForest agent system architecture diagram.
-
-**Responsibilities:**
-- Uses the `diagrams` library (Graphviz) to draw: Researcher → Cursor IDE → MCP → LongevityForest cluster (BioMART, AlphaFold, STRING).
-- Locates the Graphviz `dot` executable (PATH or common install paths).
-- If Graphviz is missing, delegates to `generate_agent_system_schema_fallback.py` (matplotlib version).
-
-**Output:** `analysis/Fig4_Agent_System_Schema.png` (or Graphviz source in `analysis/`).
-
----
-
-### 3.2 generate_agent_system_schema_fallback.py
-
-**Purpose:** Fallback for Figure 4 when Graphviz is not installed.
-
-**Responsibilities:**
-- Draws the same agent system schema using matplotlib (boxes, arrows, labels): Researcher, Cursor IDE, MCP, BioMART, AlphaFold, STRING, cluster.
-
-**Output:** `analysis/Fig4_Agent_System_Schema.png`.
-
----
-
-### 3.3 generate_bimodal_heatmap.py
-
-**Purpose:** Generate the bimodal risk heatmap (Figure 2).
-
-**Responsibilities:** Adds project root to `sys.path`, then calls `create_bimodal_risk_heatmap()` from `methylation_visualizations.py`.
-
-**Output:** Figure 2 PNG in `analysis/` (e.g. `Fig2_Risk_Heatmap.png`).
-
----
-
-### 3.4 generate_clock_validation.py
-
-**Purpose:** Generate the methylation clock validation plot (Figure 3).
-
-**Responsibilities:** Adds project root to `sys.path`, then calls `create_clock_validation_plot()` from `methylation_visualizations.py`.
-
-**Output:** Figure 3 PNG in `analysis/` (e.g. `Fig3_Clock_Validation.png`).
-
----
-
-### 3.5 generate_methylation_visualizations.py
-
-**Purpose:** Generate the main methylation pipeline visualizations.
-
-**Responsibilities:** Calls `generate_all_visualizations()` from `methylation_visualizations.py`, which produces:
-1. Pipeline workflow diagram  
-2. Example DMR visualizations  
-3. Pipeline summary diagram  
-
-**Output:** Multiple PNGs in `analysis/` (workflow, example DMR, summary).
-
----
-
-### 3.6 generate_pipeline_diagram.py
-
-**Purpose:** Generate the bioinformatics pipeline architecture diagram (diagrams library).
-
-**Responsibilities:**
-- Uses the `diagrams` library (Graphviz) to draw: Nanopore pod5 → Dorado/Modkit-style flow, Parquet storage, Polars/DuckDB, Dagster orchestration.
-- Saves diagram in `analysis/` (e.g. `Bioinformatics_Pipeline_Diagram.png`).
-
-**Output:** Pipeline diagram PNG (and optional Graphviz source) in `analysis/`.
-
----
-
-### 3.7 install_graphviz.sh
-
-**Purpose:** Install Graphviz on macOS for diagram generation.
-
-**Responsibilities:**
-- Detects Homebrew (`brew`, or `/opt/homebrew/bin/brew`, `/usr/local/bin/brew`).
-- Runs `brew install graphviz`.
-- If Homebrew is missing, prints install instructions and exits with an error.
-
-**Usage:** Run once on macOS when Graphviz is needed for `generate_agent_system_schema.py` or `generate_pipeline_diagram.py`.
-
----
-
-### 3.8 README_GRAPHVIZ.md
-
-**Purpose:** Short documentation for Graphviz setup and diagram scripts (location and usage).
-
----
-
-## 4. Jupyter notebooks (notebooks/)
-
-Notebooks are grouped by functional area in numbered subfolders. Run with `uv run jupyter lab` from the project root. Large data should live in the root `data/` directory (git-ignored).
-
-### 4.1 notebooks/01_genomics_analysis/
-
-Notebooks for genomic data analysis, gene-list exploration, and network analysis.
+# ROGEN Aging — Code Modules Reference
+
+**Navigation:** [WORKFLOWS.md](WORKFLOWS.md) · [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md) · [ACTIVITIES.md](ACTIVITIES.md)
+
+This document summarizes installable modules and CLI entry points. Per-file inventories live in source docstrings; avoid duplicating README content here.
+
+## Installable package (`src/rogen_aging/`)
+
+| Module | Responsibility |
+|--------|----------------|
+| `clock/` | `train_clock`, `evaluate_clock`, `load_wide_table`, `external_data.load_gse87571` (Activity **2.1.10.1**) — [CLOCK_LIBRARY.md](CLOCK_LIBRARY.md) |
+| `ukb/manifest.py` | Ensembl manifest build + 1KG VCF extract |
+| `ukb/gnomad.py` | 1KG vs gnomAD v4 NFE comparison |
+| `ukb/mock_clinical.py` | Synthetic clinical CSV generator |
+| `ukb/mock_rap.py` | Synthetic UKB-RAP phenotype + LA-SNP VCF folder |
+| `integration/ukb_joiner.py` | Mock phenotype–genotype join + LA-SNP associations |
+| `integrative/` | Offline variant×tissue×phenotype joins + composite risk — [INTEGRATIVE_PIPELINE.md](INTEGRATIVE_PIPELINE.md) |
+| `vcf/synthetic.py` | Streaming synthetic VCF (Hardy–Weinberg, GRCh38) |
+| `eda_dashboard/` | Streamlit multi-omics EDA — [EDA_DASHBOARD.md](EDA_DASHBOARD.md) |
+| `cli/` | Console entry points wired in `pyproject.toml` |
+| `methylation_visualizations.py` | Pipeline / DMR / clock validation plots (default output: `figures/`) |
+| `network_visualizer.py` | Protein interaction networks |
+
+## Console entry points
+
+| Command | Module |
+|---------|--------|
+| `rogen-clock` | `rogen_aging.cli.clock` |
+| `rogen-ukb-manifest` | `rogen_aging.cli.ukb_manifest` → `ukb.manifest` |
+| `rogen-compare-af-gnomad` | `rogen_aging.cli.compare_af_gnomad` → `ukb.gnomad` (`compare` + `summarize` subcommands) |
+| `rogen-ukb-mock-clinical` | `rogen_aging.cli.ukb_mock_clinical` |
+| `rogen-ukb-mock-rap` | `rogen_aging.cli.ukb_mock_rap` |
+| `rogen-ukb-integrate` | `rogen_aging.cli.ukb_integrate` → `integration.run_cli` |
+| `rogen-vcf-synthetic` | `rogen_aging.cli.vcf_synthetic` |
+
+**Canonical clock CLI:** `uv run rogen-clock train|evaluate` or `scripts/clock/run_clock.py`.  
+`scripts/clock/validate_clock.py` and `scripts/clock/train_clock_on_gse40279.py` are deprecated Typer wrappers.
+
+## Scripts by folder
+
+See [ACTIVITIES.md](ACTIVITIES.md) for the full tree. Highlights:
+
+- **`scripts/ukb/`** — manifest, gnomAD, VEP + GTEx annotation, mock generators, integration
+- **`scripts/figures/`** — matplotlib/networkx renders + `plot_clock_eval.py` ([FIGURES.md](FIGURES.md)); flat `scripts/generate_*.py` shims forward here
+- **`scripts/alphagenome/`** — AlphaGenome batch + analysis (tables → `analysis/alphagenome/`, plots → `figures/alphagenome/`)
+- **`analysis/validate_genomics_tables/`**, **`analysis/overlap_enrichment/`**, **`analysis/variant_functional_annotation/`** — GRCh38 genomics validation ([GENOMICS_ANALYSIS.md](GENOMICS_ANALYSIS.md); index: [analysis/genomics/README.md](../analysis/genomics/README.md))
+- **`run_july_annotation_pipeline.py`** (repo root) — July batch GTEx v8 + VEP + AlphaGenome/AlphaMissense Excel export ([JULY_ANNOTATION_PIPELINE.md](JULY_ANNOTATION_PIPELINE.md))
+- **`scripts/integrative/`** — variant×tissue map, phenotype risk, end-to-end pipeline ([INTEGRATIVE_PIPELINE.md](INTEGRATIVE_PIPELINE.md))
+- **`scripts/dev/`** — `security_check.sh`, CI audit, ONT pipeline validation, R bootstrap, `find_r.sh`
+
+## Root-level shims (deprecated)
+
+| Shim | Forwards to |
+|------|-------------|
+| `annotate_la_snps_vep.py` | `scripts/ukb/annotate_la_snps_vep.py` |
+| `annotate_la_snps_gtex.py` | `scripts/ukb/annotate_la_snps_gtex.py` |
+| `plot_clock_eval.py` | `scripts/figures/plot_clock_eval.py` |
+| `plot_af_comparison.py` | `scripts/figures/plot_af_comparison.py` |
+| `pipeline_validation.sh` | `scripts/dev/pipeline_validation.sh` |
+| `find_r.sh` | `scripts/dev/find_r.sh` |
+
+## Root-level non-Python (canonical under `scripts/dev/`)
 
 | File | Purpose |
+|------|---------|
+| `scripts/dev/pipeline_validation.sh` | ONT methylation pipeline validation |
+| `scripts/dev/downstream_analysis.R` | DMRcaller downstream workflow |
+| `scripts/dev/find_r.sh` | Locate R for IDE setup |
+
+## Notebooks
+
+| Folder | Focus |
+|--------|-------|
+| `01_genomics_analysis/` | AlphaGenome, gene lists, GRCh38 validation pipelines |
+| `02_methylation_pipeline/` | Methylation downstream |
+| `03_validation_and_compliance/` | UKB compliance |
+| `04_exploratory_visualizations/` | Publication figures |
+| `05_ukb_exploration/` | LA-SNP manifest QA |
+
+## TypeScript figure apps
+
+| Path | Role |
+|------|------|
+| `components/DashboardFigureMockup.tsx` | Dashboard manuscript mockup |
+| `components/dashboard-figure-render/` | Vite + Playwright capture → `figures/dashboard_figure_mockup.png` |
+| `frontend/` | Longevity network diagram + capture → `figures/longevity_network_diagram.png` |
+
+## Tests
+
+| File | Covers |
 |------|--------|
-| **AlphaGenome.ipynb** | Comprehensive analysis of AD/PD gene lists using the AlphaGenome API; longevity genes, network analysis, and visualization. |
-| **AlphaGenome_updated.ipynb** | Updated version with enhanced network visualizations and AlphaGenome API usage. |
+| `test_clock_regression.py` | Clock refactor vs legacy metrics (`ElasticNetCV(alphas=20)`; sklearn 1.9+ compatible) |
+| `test_ukb_integration.py` | Synthetic join + association scan |
+| `test_ukb_mock_gen.py` | Mock RAP folder layout |
+| `test_synthetic_vcf.py` | `rogen_aging.vcf` |
+| `test_mock_clinical_csv.py` | `rogen_aging.ukb.mock_clinical` |
+| `test_package_imports.py` | Smoke imports |
+| `test_integrative.py` | `VariantTissueMapper` / `PhenotypeIntegrator` / `run_integrative_pipeline` |
 
 ---
 
-### 4.2 notebooks/02_methylation_pipeline/
-
-Notebooks for processing and analyzing DNA methylation data from Oxford Nanopore sequencing.
-
-| File | Purpose |
-|------|--------|
-| **DownstreamMethylationAnalysis.ipynb** | Interactive downstream analysis and DMR calling; complements `downstream_analysis.R`. |
-| **MethylationClocks.ipynb** | Epigenetic clock exploration and validation: chronological vs DNAm age, MAE/RMSE/R²; overview of Horvath, Hannum, PhenoAge, GrimAge, DunedinPACE; foundation for 450K/EPIC array data. |
-
----
-
-### 4.3 notebooks/03_validation_and_compliance/
-
-Tools for data quality, code correctness, and regulatory compliance.
-
-| File | Purpose |
-|------|--------|
-| **UKB_Compliance_Auditor.ipynb** | Scanner for restricted UK Biobank identifiers (EIDs) before public sharing; run before pushing analysis to public portals. |
-| **Validations.ipynb** | General pipeline validation and quality-control checks. |
-
-**Related doc:** `docs/UKB_COMPLIANCE_AUDITOR.md` — Documentation for the UKB compliance auditor.
-
----
-
-### 4.4 notebooks/04_exploratory_visualizations/
-
-Notebooks for project-wide visualizations and heatmaps.
-
-| File | Purpose |
-|------|--------|
-| **Visualizations.ipynb** | Centralized notebook for generating publication-ready figures and exploratory plots. |
-
----
-
-### 4.5 notebooks/README.md
-
-**Purpose:** Describes the notebook directory structure, the role of each subfolder, guidelines (data locality, environment, compliance), and a short summary of each notebook.
-
----
-
-## 5. Documentation (docs/)
-
-| File | Purpose |
-|------|--------|
-| **CODE_MODULES_REFERENCE.md** | This document — reference for all code files and modules. |
-| **METHYLATION_PIPELINE_QUICK_REFERENCE.md** | Quick reference for the methylation pipeline. |
-| **METHYLATION_PIPELINE_USAGE.md** | Detailed usage and workflow for the methylation pipeline. |
-| **UKB_COMPLIANCE_AUDITOR.md** | Documentation for the UK Biobank compliance auditor (used with `03_validation_and_compliance/UKB_Compliance_Auditor.ipynb`). |
-
----
-
-## 6. Configuration and environment
-
-| File | Purpose |
-|------|--------|
-| **pyproject.toml** | Python project config (uv): package name `rogen-aging`, dependencies (alphagenome, pandas, matplotlib, requests, polars, python-dotenv, networkx, numpy, scipy, scikit-learn, seaborn, diagrams), dev deps (ipykernel, jupyterlab), Python ≥3.12. |
-| **.env.example** | Example environment variables (e.g. API keys or paths) for local runs. |
-| **.vscode/settings.json** | Editor settings (e.g. R path, Python interpreter) for the workspace. |
-
----
-
-## 7. Summary: module vs responsibility
-
-| Module / File | Main responsibility |
-|---------------|---------------------|
-| `downstream_analysis.R` | DMR calling from bedMethyl (DMRcaller workflow). |
-| `find_r.sh` | Find R on macOS for IDE. |
-| `pipeline_validation.sh` | Validate ONT pipeline (Dorado + Modkit + test data). |
-| `src/rogen_aging/methylation_visualizations.py` | All methylation pipeline and clock figures. |
-| `src/rogen_aging/network_visualizer.py` | Protein interaction network figure. |
-| `scripts/generate_agent_system_schema*.py` | Figure 4 — agent system architecture. |
-| `scripts/generate_bimodal_heatmap.py` | Figure 2 — bimodal risk heatmap. |
-| `scripts/generate_clock_validation.py` | Figure 3 — clock validation. |
-| `scripts/generate_methylation_visualizations.py` | Pipeline workflow + example DMR + summary diagrams. |
-| `scripts/generate_pipeline_diagram.py` | Bioinformatics pipeline (diagrams/Graphviz). |
-| `scripts/install_graphviz.sh` | Install Graphviz on macOS. |
-| `notebooks/01_genomics_analysis/` | AlphaGenome AD/PD gene analysis and networks. |
-| `notebooks/02_methylation_pipeline/` | Methylation downstream analysis and epigenetic clocks. |
-| `notebooks/03_validation_and_compliance/` | UKB compliance auditor and pipeline validations. |
-| `notebooks/04_exploratory_visualizations/` | Publication-ready and exploratory figures. |
-
-For pipeline usage and quick commands, see **docs/METHYLATION_PIPELINE_QUICK_REFERENCE.md** and **docs/METHYLATION_PIPELINE_USAGE.md**.
+**Last updated:** July 27, 2026

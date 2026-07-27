@@ -1,3 +1,7 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "rogen-aging"
 version = "0.1.0"
@@ -20,13 +24,54 @@ dependencies = [
     "diagrams>=0.23.0",
     "ipykernel",
     "jupyterlab",
+    "openpyxl>=3.1.5",
+    "typer>=0.24.1",
+    "streamlit>=1.40",
+    "plotly>=6.6.0",
+    "pyarrow>=22.0.0",
+    "adjusttext>=1.3.0",
+    "geoparse>=2.0.4",
+    "GEOparse>=2.0.4",
+    "cyvcf2>=0.33.0",
+    "loguru>=0.7.3",
+    "tqdm>=4.67.0",
 ]
 requires-python = ">=3.12"
 readme = "README.md"
 license = {text = "MIT"}
 
 [project.optional-dependencies]
+dev = ["pytest>=8.0", "ruff>=0.9.0"]
 genomics = []
+
+[project.scripts]
+rogen-clock = "rogen_aging.cli.clock:main"
+rogen-ukb-manifest = "rogen_aging.cli.ukb_manifest:entry"
+rogen-compare-af-gnomad = "rogen_aging.cli.compare_af_gnomad:entry"
+rogen-ukb-mock-clinical = "rogen_aging.cli.ukb_mock_clinical:entry"
+rogen-ukb-mock-rap = "rogen_aging.cli.ukb_mock_rap:entry"
+rogen-ukb-integrate = "rogen_aging.cli.ukb_integrate:entry"
+rogen-vcf-synthetic = "rogen_aging.cli.vcf_synthetic:entry"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "scripts", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
+ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+"scripts/dev/methylation-clocks.py" = ["F841"]
+"scripts/alphagenome/*.py" = ["E701"]
 
 [tool.uv.sources]
 rogen-aging = { path = "." }

@@ -12,6 +12,8 @@ This tool ensures adherence to the UK Biobank Data Usage Agreement (DUA) and the
 
 ## Key Features
 
+- **Pre-Commit Security Hook** (`scripts/dev/security_check.sh`; wrapper at `scripts/security_check.sh`): Runs automatically before every Git commit. Install with `./scripts/dev/install_pre_commit_hook.sh`. Whitelisted paths include `scripts/ukb/` and `src/rogen_aging/ukb/` — see [UKB_PRE_COMMIT_HOOK.md](UKB_PRE_COMMIT_HOOK.md).
+- **CI repository audit** (`scripts/dev/ukbb_ci_compliance_audit.sh`): Runs in GitHub Actions and locally against the full tree. See [UKBB_CI_COMPLIANCE_AUDIT.md](UKBB_CI_COMPLIANCE_AUDIT.md).
 - **Pattern-Based Scanning**: Detects 7-digit integers (the standard format for UKB EIDs) and sensitive keywords (`participant_id`, `eid`, `patient_name`).
 - **File Type Enforcement**: Identifies restricted genomic and data formats (`.bam`, `.pod5`, `.sqlite`, `.xlsx`, etc.).
 - **Automated Exclusion**: Skips non-relevant files like `uv.lock`, `.git/`, and dependency directories to reduce false positives.
