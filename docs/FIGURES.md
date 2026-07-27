@@ -103,6 +103,19 @@ uv run python scripts/figures/plot_af_comparison.py
 
 Requires `analysis/la_snp_af_1kg_vs_gnomad.csv` and `analysis/ukb_snp_manifest_v0.1.csv`. Full configuration: [AF_COMPARISON_FIGURES.md](AF_COMPARISON_FIGURES.md).
 
+## Nomenclature audit + ROGEN vs gnomAD AF / 41-gene network
+
+Manuscript finalization script that reconciles legacy CETP/HLA names, audits the 41-gene table, and exports publication AF scatter + STRING network figures:
+
+```bash
+uv run python reconcile_and_generate_figures.py
+# → outputs/nomenclature_audit.log
+# → outputs/figures/Figure_AF_Scatter.{pdf,png}
+# → outputs/figures/Figure_41_Gene_Network.{pdf,png}
+```
+
+Full inputs/outputs and CLI flags: [NOMENCLATURE_RECONCILE_FIGURES.md](NOMENCLATURE_RECONCILE_FIGURES.md).
+
 ## Architecture diagrams
 
 | Script | Output | Notes |
