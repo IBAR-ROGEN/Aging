@@ -82,6 +82,16 @@ uv run python scripts/figures/plot_clock_eval.py
 
 Full configuration and input options: [CLOCK_EVAL_FIGURES.md](CLOCK_EVAL_FIGURES.md).
 
+Three-panel final validation figure (scatter + residuals + top CpG weights) with metrics JSON:
+
+```bash
+uv run python evaluate_methylation_clock.py
+# → outputs/clock_metrics.json
+# → outputs/figures/Figure_Epigenetic_Clock_Panels.png/.pdf/.svg
+```
+
+Details: [METHYLATION_CLOCK_VALIDATION.md](METHYLATION_CLOCK_VALIDATION.md).
+
 ## LA-SNP public AF comparison (1KG vs gnomAD v4 NFE)
 
 Two-panel figure from `rogen-compare-af-gnomad` output, with gene names merged from the LA-SNP manifest:

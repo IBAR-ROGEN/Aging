@@ -61,6 +61,16 @@ uv run python scripts/figures/plot_clock_eval.py
 
 See **[CLOCK_EVAL_FIGURES.md](CLOCK_EVAL_FIGURES.md)** for configuration constants, input options, and how this relates to `rogen-clock evaluate` outputs.
 
+For final validation metrics (MAE, median AE, Pearson *r*, age-stratified MAE) and a three-panel publication figure written under `outputs/`:
+
+```bash
+uv run python evaluate_methylation_clock.py
+# → outputs/clock_metrics.json
+# → outputs/figures/Figure_Epigenetic_Clock_Panels.png/.pdf/.svg
+```
+
+See **[METHYLATION_CLOCK_VALIDATION.md](METHYLATION_CLOCK_VALIDATION.md)**.
+
 ## Tests
 
 ```bash
@@ -73,9 +83,10 @@ uv run pytest tests/test_clock_regression.py tests/test_package_imports.py -q
 
 - [GSE40279 Clock Training](GSE40279_CLOCK_TRAINING.md)
 - [Clock eval figure (`plot_clock_eval.py`)](CLOCK_EVAL_FIGURES.md)
+- [Methylation clock validation (`evaluate_methylation_clock.py`)](METHYLATION_CLOCK_VALIDATION.md)
 - [Romanian Epigenetic Clock](ROMANIAN_EPIGENETIC_CLOCK.md)
 - [WORKFLOWS.md](WORKFLOWS.md)
 
 ---
 
-**Last updated:** June 29, 2026
+**Last updated:** July 27, 2026
