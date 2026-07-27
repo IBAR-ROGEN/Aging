@@ -233,13 +233,16 @@ def _build_gene_consequence_matrix(
     df: pd.DataFrame,
 ) -> tuple[np.ndarray, list[tuple[str, str]], list[str]]:
     row_order = _heatmap_row_order(df)
-    col_labels = [_consequence_label(c) for c in CONSEQUENCE_ORDER]
-    matrix = np.zeros((len(row_order), len(CONSEQUENCE_ORDER)), dtype=int)
+    present = set(df["consequence"])
+    consequences = [c for c in CONSEQUENCE_ORDER if c in present]
+    extras = sorted(present - set(consequences))
+    consequences.extend(extras)
+    matrix = np.zeros((len(row_order), len(consequences)), dtype=int)
     for row_idx, (gene, class_label) in enumerate(row_order):
         subset = df.loc[(df["gene"] == gene) & (df["class"] == class_label)]
-        for col_idx, consequence in enumerate(CONSEQUENCE_ORDER):
+        for col_idx, consequence in enumerate(consequences):
             matrix[row_idx, col_idx] = int((subset["consequence"] == consequence).sum())
-    return matrix, row_order, col_labels
+    return matrix, row_order, consequences
 
 
 def _plot_class_donut(ax: plt.Axes, df: pd.DataFrame) -> None:
@@ -331,7 +334,8 @@ def _plot_consequence_bars(ax: plt.Axes, df: pd.DataFrame) -> None:
 
 
 def _plot_gene_consequence_matrix(ax: plt.Axes, df: pd.DataFrame) -> None:
-    matrix, row_order, col_labels = _build_gene_consequence_matrix(df)
+    matrix, row_order, consequences = _build_gene_consequence_matrix(df)
+    col_labels = [_consequence_label(c) for c in consequences]
     n_rows, n_cols = matrix.shape
 
     ax.set_xlim(-0.5, n_cols - 0.5)
@@ -367,7 +371,7 @@ def _plot_gene_consequence_matrix(ax: plt.Axes, df: pd.DataFrame) -> None:
     size_scale = 220 if max_count <= 3 else 180
 
     for row_idx, (_, class_label) in enumerate(row_order):
-        for col_idx, consequence in enumerate(CONSEQUENCE_ORDER):
+        for col_idx, consequence in enumerate(consequences):
             count = int(matrix[row_idx, col_idx])
             if count == 0:
                 continue

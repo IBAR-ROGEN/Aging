@@ -1254,13 +1254,22 @@ def main(
         "--cache-only",
         help="Use disk cache only; do not call live APIs on cache miss.",
     ),
+    demo: bool = typer.Option(
+        False,
+        "--demo",
+        help=(
+            "Write offline fixtures under data/ and run cache-only with local VEP "
+            "(no live APIs)."
+        ),
+    ),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Debug logging."),
 ) -> None:
     """Execute the July functional annotation pipeline.
 
     Orchestrates score joins, GTEx/VEP annotation, high-impact filtering, and
     Excel export. Network access is required on first run unless ``--cache-only``
-    is used with a warm cache (or ``--local-vep`` covers VEP).
+    is used with a warm cache (or ``--local-vep`` covers VEP). Pass ``--demo`` to
+    materialize synthetic fixtures and run fully offline.
 
     Args:
         variants: Prioritized variant CSV path.
@@ -1270,9 +1279,24 @@ def main(
         cache_dir: Directory for cached GTEx/VEP JSON responses.
         local_vep: Optional local VEP JSONL.
         cache_only: Do not call live APIs on cache miss.
+        demo: Write fixtures and force an offline demo run.
         verbose: Enable DEBUG logging.
     """
     configure_logging(verbose)
+    if demo:
+        from rogen_aging.pipeline_fixtures import write_july_fixtures
+
+        fixtures = write_july_fixtures(repo_root=REPO_ROOT)
+        variants = fixtures["variants"]
+        alphagenome = fixtures["alphagenome"]
+        alphamissense = fixtures["alphamissense"]
+        local_vep = fixtures["local_vep"]
+        cache_dir = fixtures["cache_dir"]
+        cache_only = True
+        if output == DEFAULT_OUTPUT:
+            output = REPO_ROOT / "outputs" / "demo" / "Supplementary_Table_1_Annotated_Variants.xlsx"
+        logger.info("Demo mode: fixtures written; running cache-only")
+
     logger.info("Starting July annotation pipeline")
     logger.info("GTEx dataset: {} | tissues: {}", GTEX_DATASET_ID, len(TARGET_TISSUES))
 

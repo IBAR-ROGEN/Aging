@@ -1,6 +1,10 @@
 # Multi-Omics Aging EDA Dashboard (Streamlit)
 
-Interactive exploratory data analysis (EDA) for the **merged cohort Parquet** produced by the ROGEN multi-omics integration pipeline. The app is implemented as the `rogen_aging.eda_dashboard` package and launched with Streamlit.
+Interactive exploratory data analysis (EDA) for the **merged multi-omics cohort Parquet**
+(typically `data/merged_cohort.parquet`) — a clinical / epigenetic-age / LA-SNP table for
+dashboard QA. This is **not** UKB RAP integration (`rogen_aging.ukb_integration`) and **not**
+the offline variant×tissue×phenotype integrative pipeline (`rogen_aging.integrative`). The app
+is implemented as the `rogen_aging.eda_dashboard` package and launched with Streamlit.
 
 ## Prerequisites
 
@@ -58,6 +62,7 @@ All tabs use the same filtered cohort:
 - **Age range** — slider on chronological age (numeric).
 - **Sex** — multiselect (all unique values in the column).
 - **Disease status** — multiselect.
+- **Random seed** — used only when loading the in-memory synthetic cohort (default `42`).
 
 A caption under the title reports filtered **N** versus total **N**.
 

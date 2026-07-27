@@ -14,7 +14,8 @@ Usage:
 Requires: requests (in pyproject.toml). Optional: NCBI_API_KEY in .env for higher rate limits.
 """
 
-import argparse
+from __future__ import annotations
+
 import csv
 import os
 import sys
@@ -23,6 +24,7 @@ from pathlib import Path
 from xml.etree import ElementTree as ET
 
 import requests
+import typer
 
 # NCBI E-utilities base URL
 EUTILS_BASE = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils"
@@ -47,6 +49,10 @@ OXFORD_NANOPORE_INDICATORS = (
     "gridion",
     "flongle",
 )
+
+DEFAULT_OUTPUT = Path(__file__).resolve().parent / "aging_ngs_datasets.csv"
+
+app = typer.Typer(add_completion=False, help=__doc__)
 
 
 def get_ncbi_api_key() -> str | None:
@@ -223,41 +229,40 @@ def build_search_query(
     return query
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(
-        description="Search NCBI SRA for aging-related NGS datasets and mark Oxford Nanopore."
-    )
-    parser.add_argument(
+@app.command()
+def main(
+    max_results: int = typer.Option(
+        100,
         "--max-results",
-        type=int,
-        default=100,
         help="Maximum number of SRA runs/experiments to fetch (default: 100)",
-    )
-    parser.add_argument(
+    ),
+    output: Path = typer.Option(
+        DEFAULT_OUTPUT,
         "--output",
         "-o",
-        type=Path,
-        default=Path(__file__).resolve().parent / "aging_ngs_datasets.csv",
         help="Output CSV path for all datasets (default: aging_ngs_datasets.csv)",
-    )
-    parser.add_argument(
+        path_type=Path,
+    ),
+    nanopore_output: Path | None = typer.Option(
+        None,
         "--nanopore-output",
-        type=Path,
-        default=None,
-        help="Output CSV path for Oxford Nanopore–only datasets (default: same dir as -o, suffix _nanopore_only.csv)",
-    )
-    parser.add_argument(
+        help=(
+            "Output CSV path for Oxford Nanopore–only datasets "
+            "(default: same dir as -o, suffix _nanopore_only.csv)"
+        ),
+        path_type=Path,
+    ),
+    query: str | None = typer.Option(
+        None,
         "--query",
-        type=str,
-        default=None,
         help="Override search query (default: built-in aging + sequencing terms)",
-    )
-    args = parser.parse_args()
-
+    ),
+) -> None:
+    """Search NCBI SRA for aging-related NGS datasets and mark Oxford Nanopore."""
     # Default nanopore-only path: e.g. aging_ngs_datasets.csv -> aging_ngs_datasets_nanopore_only.csv
-    if args.nanopore_output is None:
-        stem = args.output.stem
-        args.nanopore_output = args.output.parent / f"{stem}_nanopore_only.csv"
+    if nanopore_output is None:
+        stem = output.stem
+        nanopore_output = output.parent / f"{stem}_nanopore_only.csv"
 
     api_key = get_ncbi_api_key()
     if not api_key:
@@ -268,82 +273,81 @@ def main() -> int:
         "platform", "platform_raw", "is_oxford_nanopore", "organism", "study_accession",
     ]
     header_line = ",".join(fieldnames) + "\n"
-    args.output.parent.mkdir(parents=True, exist_ok=True)
+    output.parent.mkdir(parents=True, exist_ok=True)
 
     # Search 1: all aging-related NGS datasets (no platform filter)
-    query_all = args.query or build_search_query(nanopore_only=False)
+    query_all = query or build_search_query(nanopore_only=False)
     print(f"Query (all): {query_all[:100]}...", file=sys.stderr)
     print("Searching SRA (all datasets)...", file=sys.stderr)
     try:
-        uid_list_all = search_sra(query_all, max_results=args.max_results, api_key=api_key)
+        uid_list_all = search_sra(query_all, max_results=max_results, api_key=api_key)
     except requests.RequestException as e:
         print(f"ERROR: SRA search failed: {e}", file=sys.stderr)
-        return 1
+        raise typer.Exit(code=1) from e
 
     # Search 2: same aging terms but restrict to Oxford Nanopore at search time
-    if args.query:
-        query_nanopore = args.query + ' AND (nanopore OR "Oxford Nanopore")'
+    if query:
+        query_nanopore = query + ' AND (nanopore OR "Oxford Nanopore")'
     else:
         query_nanopore = build_search_query(nanopore_only=True)
     print(f"Query (Nanopore only): {query_nanopore[:100]}...", file=sys.stderr)
     print("Searching SRA (Oxford Nanopore filter)...", file=sys.stderr)
     time.sleep(0.35)
     try:
-        uid_list_nanopore = search_sra(query_nanopore, max_results=args.max_results, api_key=api_key)
+        uid_list_nanopore = search_sra(query_nanopore, max_results=max_results, api_key=api_key)
     except requests.RequestException as e:
         print(f"ERROR: SRA search (nanopore) failed: {e}", file=sys.stderr)
-        return 1
+        raise typer.Exit(code=1) from e
 
     if not uid_list_all and not uid_list_nanopore:
         print("No results found for either search.", file=sys.stderr)
-        with open(args.output, "w", newline="", encoding="utf-8") as f:
+        with open(output, "w", newline="", encoding="utf-8") as f:
             f.write(header_line)
-        with open(args.nanopore_output, "w", newline="", encoding="utf-8") as f:
+        with open(nanopore_output, "w", newline="", encoding="utf-8") as f:
             f.write(header_line)
-        return 0
+        raise typer.Exit(code=0)
 
     # Fetch summaries and write CSV for all datasets
-    rows_all = []
+    rows_all: list[dict] = []
     if uid_list_all:
         print(f"Found {len(uid_list_all)} IDs (all). Fetching summaries...", file=sys.stderr)
         time.sleep(0.35)
         try:
             rows_all = fetch_sra_summaries(uid_list_all, api_key=api_key)
-        except requests.RequestException as e:
-            print(f"ERROR: Fetch summaries failed: {e}", file=sys.stderr)
-            return 1
-        except ET.ParseError as e:
-            print(f"ERROR: Failed to parse SRA response: {e}", file=sys.stderr)
-            return 1
+        except (requests.RequestException, ET.ParseError) as e:
+            kind = "Fetch summaries failed" if isinstance(e, requests.RequestException) else "Failed to parse SRA response"
+            print(f"ERROR: {kind}: {e}", file=sys.stderr)
+            raise typer.Exit(code=1) from e
 
-    with open(args.output, "w", newline="", encoding="utf-8") as f:
+    with open(output, "w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=fieldnames, extrasaction="ignore")
         w.writeheader()
         w.writerows(rows_all)
 
     # Fetch summaries and write CSV for Nanopore-only (from second search, not filtered in memory)
-    rows_nanopore = []
+    rows_nanopore: list[dict] = []
     if uid_list_nanopore:
         print(f"Found {len(uid_list_nanopore)} IDs (Nanopore). Fetching summaries...", file=sys.stderr)
         time.sleep(0.35)
         try:
             rows_nanopore = fetch_sra_summaries(uid_list_nanopore, api_key=api_key)
-        except requests.RequestException as e:
-            print(f"ERROR: Fetch summaries (nanopore) failed: {e}", file=sys.stderr)
-            return 1
-        except ET.ParseError as e:
-            print(f"ERROR: Failed to parse SRA response (nanopore): {e}", file=sys.stderr)
-            return 1
+        except (requests.RequestException, ET.ParseError) as e:
+            kind = (
+                "Fetch summaries (nanopore) failed"
+                if isinstance(e, requests.RequestException)
+                else "Failed to parse SRA response (nanopore)"
+            )
+            print(f"ERROR: {kind}: {e}", file=sys.stderr)
+            raise typer.Exit(code=1) from e
 
-    with open(args.nanopore_output, "w", newline="", encoding="utf-8") as f:
+    with open(nanopore_output, "w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=fieldnames, extrasaction="ignore")
         w.writeheader()
         w.writerows(rows_nanopore)
 
-    print(f"Wrote {len(rows_all)} records to {args.output}", file=sys.stderr)
-    print(f"Wrote {len(rows_nanopore)} records (Nanopore search) to {args.nanopore_output}", file=sys.stderr)
-    return 0
+    print(f"Wrote {len(rows_all)} records to {output}", file=sys.stderr)
+    print(f"Wrote {len(rows_nanopore)} records (Nanopore search) to {nanopore_output}", file=sys.stderr)
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    app()

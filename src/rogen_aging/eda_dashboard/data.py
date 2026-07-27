@@ -36,7 +36,7 @@ def default_merged_parquet_path() -> Path:
 
 @st.cache_data(show_spinner="Loading merged cohort (Parquet)…")
 def load_merged_parquet(path_str: str) -> pd.DataFrame:
-    """Load the integration pipeline merged table from Parquet via Polars.
+    """Load the merged multi-omics cohort Parquet via Polars.
 
     Args:
         path_str: Filesystem path to the merged cohort Parquet.

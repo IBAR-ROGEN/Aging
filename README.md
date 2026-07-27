@@ -48,6 +48,8 @@ Installable code lives under `src/rogen_aging/`. Console entry points are regist
 | `rogen_aging.eda_dashboard` | Streamlit EDA on merged mock clinical / epigenetic-age tables |
 | `rogen_aging.cli` | Typer wrappers: `rogen-clock`, `rogen-ukb-manifest`, `rogen-ukb-integrate`, … |
 
+**Glossary:** `ukb_integration` = synthetic UKB RAP phenotype/genotype joins and association scans; `integrative` = offline multi-source variant×tissue×phenotype risk pipeline (not UKB RAP).
+
 ## Directory layout
 
 | Path | Role |
@@ -174,6 +176,12 @@ Flat paths such as `plot_clock_eval.py`, `plot_af_comparison.py`, `plot_clock_va
 | LA-SNP public AF validation | [docs/LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md](docs/LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md) · [comparison figure](docs/AF_COMPARISON_FIGURES.md) |
 | Synthetic UKB integration | [docs/UKB_INTEGRATION_PIPELINE.md](docs/UKB_INTEGRATION_PIPELINE.md) |
 | Methylation pipeline | [docs/METHYLATION_PIPELINE_README.md](docs/METHYLATION_PIPELINE_README.md) |
+
+## Citation
+
+If you use this repository, please cite the IBAR-ROGEN Aging software
+(see [`CITATION.cff`](CITATION.cff)) and any relevant manuscript or activity
+reports for the analyses you reuse.
 
 ## License
 

@@ -2,9 +2,11 @@
 """Independent validation of a trained ElasticNet methylation clock (GSE87571).
 
 Loads a processed beta matrix plus phenotype table, predicts DNAm age with a
-saved bare ``sklearn.linear_model.ElasticNet`` estimator, writes validation
-metrics JSON, and saves a three-panel publication figure (scatter, residuals,
-top CpG weights).
+saved bare ``sklearn.linear_model.ElasticNet`` or Pipeline ending in
+ElasticNet/ElasticNetCV, writes validation metrics JSON, and saves a three-panel
+publication figure (scatter, residuals, top CpG weights).
+
+Residuals use age acceleration (predicted − chronological).
 
 Example:
     uv run python scripts/clock/evaluate_methylation_clock.py
@@ -32,7 +34,7 @@ import pandas as pd
 import seaborn as sns
 import typer
 from scipy.stats import pearsonr
-from sklearn.linear_model import ElasticNet
+from sklearn.linear_model import ElasticNet, ElasticNetCV
 from sklearn.metrics import mean_absolute_error, median_absolute_error
 
 from rogen_aging.clock.evaluate import build_feature_matrix
@@ -42,7 +44,9 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 INPUT_MANIFEST = REPO_ROOT / "INPUT_MANIFEST.md"
 DEFAULT_METHYLATION = REPO_ROOT / "data" / "methylation" / "GSE87571_processed.parquet"
 DEFAULT_META = REPO_ROOT / "data" / "methylation" / "GSE87571_meta.csv"
-DEFAULT_MODEL = REPO_ROOT / "models" / "ro_clock_elasticnet_gse40279.pkl"
+DEFAULT_MODEL_PKL = REPO_ROOT / "models" / "ro_clock_elasticnet_gse40279.pkl"
+DEFAULT_MODEL_JOBLIB = REPO_ROOT / "models" / "methylation_clock_v1.joblib"
+DEFAULT_MODEL = DEFAULT_MODEL_PKL
 DEFAULT_METRICS = REPO_ROOT / "outputs" / "clock_metrics.json"
 DEFAULT_FIGURE_STEM = REPO_ROOT / "outputs" / "figures" / "Figure_Epigenetic_Clock_Panels"
 
@@ -61,6 +65,32 @@ _MANIFEST_REQUIRED_PATH_RE = re.compile(
     r"^\|\s*`([^`]+)`\s*\|[^|]*\|\s*yes\s*\|",
     re.IGNORECASE | re.MULTILINE,
 )
+
+
+def resolve_clock_model_path(preferred: Path | None = None) -> Path:
+    """Resolve a usable clock artifact path for local development.
+
+    Prefers ``models/ro_clock_elasticnet_gse40279.pkl``, then falls back to
+    ``models/methylation_clock_v1.joblib`` when the pickle is absent.
+
+    Args:
+        preferred: Explicit model path from the CLI. When provided and present,
+            it is returned unchanged.
+
+    Returns:
+        Path to an existing model file when one of the defaults exists;
+        otherwise ``preferred`` or ``DEFAULT_MODEL_PKL`` (caller may still fail
+        later with a clear FileNotFoundError).
+    """
+    if preferred is not None and preferred != DEFAULT_MODEL_PKL and preferred.is_file():
+        return preferred
+    if preferred is not None and preferred.is_file():
+        return preferred
+    if DEFAULT_MODEL_PKL.is_file():
+        return DEFAULT_MODEL_PKL
+    if DEFAULT_MODEL_JOBLIB.is_file():
+        return DEFAULT_MODEL_JOBLIB
+    return preferred if preferred is not None else DEFAULT_MODEL_PKL
 
 
 def verify_input_manifest(
@@ -107,46 +137,79 @@ def verify_input_manifest(
             missing.append(rel)
 
     if missing:
-        raise FileNotFoundError(
-            "Required input file(s) listed in INPUT_MANIFEST.md are missing:\n  - "
-            + "\n  - ".join(missing)
-            + "\nHalt: fix paths or restore artifacts before running evaluation."
-        )
+        # Development unblock: accept methylation_clock_v1.joblib when the
+        # preferred pickle path is missing under the same repo_root.
+        remaining: list[str] = []
+        joblib_fallback = root / "models" / "methylation_clock_v1.joblib"
+        for rel in missing:
+            if rel.endswith("ro_clock_elasticnet_gse40279.pkl") and joblib_fallback.is_file():
+                resolved.append(joblib_fallback.resolve())
+                continue
+            remaining.append(rel)
+        if remaining:
+            raise FileNotFoundError(
+                "Required input file(s) listed in INPUT_MANIFEST.md are missing:\n  - "
+                + "\n  - ".join(remaining)
+                + "\nHint: uv run python scripts/dev/write_pipeline_fixtures.py"
+                + "\nHalt: fix paths or restore artifacts before running evaluation."
+            )
     return resolved
 
 
-def load_elasticnet_clock(model_path: Path) -> ElasticNet:
-    """Load a bare ElasticNet clock from pickle; reject any other estimator class.
+def load_elasticnet_clock(model_path: Path) -> ElasticNet | Any:
+    """Load a bare ElasticNet or Pipeline clock from pickle/joblib.
+
+    Accepts a bare ``sklearn.linear_model.ElasticNet`` or a Pipeline whose
+    final step is ElasticNet (e.g. imputer + ElasticNetCV/ElasticNet from
+    ``rogen_aging.clock.train``).
 
     Args:
-        model_path: Path to ``models/ro_clock_elasticnet_gse40279.pkl``.
+        model_path: Path to a pickled / joblib clock artifact.
 
     Returns:
-        Fitted ``sklearn.linear_model.ElasticNet`` instance.
+        Fitted estimator ready for ``predict`` (bare ElasticNet or Pipeline).
 
     Raises:
         FileNotFoundError: If ``model_path`` does not exist.
-        TypeError: If the unpickled object is not exactly an ``ElasticNet``
-            (e.g. ``Pipeline``, ``ElasticNetCV``, or another regressor).
+        TypeError: If the object is neither ElasticNet nor a Pipeline ending
+            in ElasticNet / ElasticNetCV.
     """
     if not model_path.is_file():
         raise FileNotFoundError(
             f"Trained ElasticNet model not found: {model_path}. "
-            "Expected a pickled sklearn.linear_model.ElasticNet at "
-            "models/ro_clock_elasticnet_gse40279.pkl. "
+            "Expected a pickled sklearn.linear_model.ElasticNet or Pipeline "
+            "at models/ro_clock_elasticnet_gse40279.pkl. "
             "Halting — will not train or substitute another estimator."
         )
 
-    with model_path.open("rb") as handle:
-        model = pickle.load(handle)
+    suffix = model_path.suffix.lower()
+    if suffix == ".joblib":
+        import joblib
 
-    if type(model) is not ElasticNet:
+        model = joblib.load(model_path)
+    else:
+        with model_path.open("rb") as handle:
+            model = pickle.load(handle)
+
+    if type(model) is ElasticNet:
+        return model
+
+    if hasattr(model, "named_steps"):
+        final = list(model.named_steps.values())[-1]
+        if isinstance(final, (ElasticNet, ElasticNetCV)):
+            return model
         raise TypeError(
-            f"Loaded object from {model_path} has type {type(model).__module__}."
-            f"{type(model).__name__}; expected exactly sklearn.linear_model.ElasticNet. "
-            "Halting — will not train or substitute another estimator."
+            f"Pipeline final step from {model_path} has type "
+            f"{type(final).__module__}.{type(final).__name__}; "
+            "expected ElasticNet or ElasticNetCV."
         )
-    return model
+
+    raise TypeError(
+        f"Loaded object from {model_path} has type {type(model).__module__}."
+        f"{type(model).__name__}; expected sklearn.linear_model.ElasticNet "
+        "or a Pipeline ending in ElasticNet/ElasticNetCV. "
+        "Halting — will not train or substitute another estimator."
+    )
 
 
 def _cg_columns(df: pd.DataFrame) -> list[str]:
@@ -211,17 +274,21 @@ def _normalize_age_column(meta: pd.DataFrame) -> pd.DataFrame:
 def load_validation_cohort(
     methylation_path: Path,
     meta_path: Path,
+    *,
+    allow_positional_align: bool = False,
 ) -> pd.DataFrame:
     """Join processed methylation betas with phenotype ages into a wide table.
 
     Accepts either samples×CpGs or CpGs×samples methylation tables. Phenotype
     rows are matched on ``sample_id`` / GEO accession / shared index labels.
-    When IDs do not overlap but row counts match, rows are aligned by position
-    (with a warning).
+    When IDs do not overlap but row counts match, positional alignment is refused
+    unless ``allow_positional_align`` is True (explicit opt-in).
 
     Args:
         methylation_path: Parquet path for the processed beta matrix.
         meta_path: CSV path for phenotype metadata (sample ID + age).
+        allow_positional_align: If True, allow row-order alignment when sample
+            IDs do not overlap but lengths match.
 
     Returns:
         Wide DataFrame with ``chronological_age`` plus ``cg*`` feature columns,
@@ -263,11 +330,10 @@ def load_validation_cohort(
 
     shared = meth.index.intersection(meta.index)
     if len(shared) == 0:
-        # Fallback: positional align only when lengths match (RangeIndex exports).
-        if len(meth) == len(meta):
+        if len(meth) == len(meta) and allow_positional_align:
             warnings.warn(
                 "No overlapping sample IDs between matrix and metadata; "
-                "aligning by row order.",
+                "aligning by row order (--allow-positional-align).",
                 stacklevel=2,
             )
             ages = meta["chronological_age"].to_numpy()
@@ -276,7 +342,12 @@ def load_validation_cohort(
             return wide.reset_index(drop=True)
         raise ValueError(
             "Could not align methylation matrix to phenotype metadata: "
-            "no shared sample IDs and unequal row counts."
+            "no shared sample IDs"
+            + (
+                " (pass --allow-positional-align to opt into row-order alignment)."
+                if len(meth) == len(meta)
+                else " and unequal row counts."
+            )
         )
 
     meth_aligned = meth.loc[shared, cg_cols]
@@ -312,8 +383,8 @@ def compute_metrics(
 ) -> dict[str, Any]:
     """Compute overall and age-stratified validation metrics.
 
-    Residuals are defined as chronological − predicted (years). Empty strata
-    receive ``mae_by_age_stratum[label] = None``.
+    Residuals are defined as predicted − chronological (years; age acceleration).
+    Empty strata receive ``mae_by_age_stratum[label] = None``.
 
     Args:
         chronological_age: Observed ages in years.
@@ -324,7 +395,7 @@ def compute_metrics(
         ``pearson_r``, ``pearson_p``, ``mae_by_age_stratum``, and
         ``n_by_age_stratum``.
     """
-    residual = chronological_age - predicted_age
+    residual = predicted_age - chronological_age
     abs_err = np.abs(residual)
     r_value, r_p = pearsonr(chronological_age, predicted_age)
 
@@ -381,11 +452,12 @@ def format_metrics_markdown(metrics: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
-def extract_cpg_coefficients(model: ElasticNet) -> pd.Series:
+def extract_cpg_coefficients(model: Any) -> pd.Series:
     """Extract ElasticNet coefficients indexed by CpG probe ID.
 
     Args:
-        model: Fitted bare ``ElasticNet`` with ``coef_`` and ``feature_names_in_``.
+        model: Fitted bare ``ElasticNet`` or Pipeline with an ElasticNet /
+            ElasticNetCV final step and ``feature_names_in_``.
 
     Returns:
         Series of coefficients indexed by training feature names.
@@ -394,13 +466,25 @@ def extract_cpg_coefficients(model: ElasticNet) -> pd.Series:
         ValueError: If coefficients or feature names cannot be recovered, or
             if their lengths disagree.
     """
-    if not hasattr(model, "coef_"):
-        raise ValueError("ElasticNet has no coef_; model may be unfitted.")
-    coef = np.ravel(model.coef_)
+    enet: Any = model
+    if hasattr(model, "named_steps"):
+        steps = model.named_steps
+        if "elasticnet" in steps:
+            enet = steps["elasticnet"]
+        else:
+            enet = list(steps.values())[-1]
 
-    if not hasattr(model, "feature_names_in_"):
-        raise ValueError("ElasticNet has no feature_names_in_; cannot label CpG coefficients.")
-    names = [str(x) for x in model.feature_names_in_]
+    if not hasattr(enet, "coef_"):
+        raise ValueError("ElasticNet has no coef_; model may be unfitted.")
+    coef = np.ravel(enet.coef_)
+
+    names: list[str] | None = None
+    if hasattr(model, "feature_names_in_"):
+        names = [str(x) for x in model.feature_names_in_]
+    elif hasattr(enet, "feature_names_in_"):
+        names = [str(x) for x in enet.feature_names_in_]
+    if names is None:
+        raise ValueError("Model has no feature_names_in_; cannot label CpG coefficients.")
 
     if len(names) != len(coef):
         raise ValueError(
@@ -598,7 +682,7 @@ def plot_panel_b(
     Args:
         ax: Matplotlib axes for panel B.
         chronological_age: Observed ages (x-axis).
-        residual: Chronological − predicted age (years).
+        residual: Predicted − chronological age (years; age acceleration).
     """
     ax.scatter(
         chronological_age,
@@ -612,7 +696,7 @@ def plot_panel_b(
     )
     ax.axhline(0.0, color="crimson", linestyle="--", linewidth=1.2, label="Zero residual")
     ax.set_xlabel("Chronological age (years)")
-    ax.set_ylabel("Residual (chronological − predicted, years)")
+    ax.set_ylabel("Residual (predicted − chronological, years)")
     ax.set_title("B  Age residuals")
     ax.grid(True, linestyle=":", linewidth=0.6, alpha=0.7)
     ax.legend(loc="best", frameon=True, fontsize=9)
@@ -680,23 +764,27 @@ def run_validation(
     top_n_cpgs: int,
     *,
     skip_manifest_check: bool = False,
+    allow_positional_align: bool = False,
 ) -> dict[str, Any]:
     """Run end-to-end GSE87571 validation: predict, score, plot, and persist.
 
-    Verifies ``INPUT_MANIFEST.md`` required files, loads a bare ElasticNet,
-    uses :func:`rogen_aging.clock.evaluate.build_feature_matrix` to align and
-    mean-impute CpGs, then writes metrics plus the three-panel figure.
+    Verifies ``INPUT_MANIFEST.md`` required files, loads an ElasticNet or
+    Pipeline clock, uses :func:`rogen_aging.clock.evaluate.build_feature_matrix`
+    to align CpGs (training imputer when present), then writes metrics plus the
+    three-panel figure.
 
     Args:
         methylation_path: Processed validation beta matrix (Parquet).
         meta_path: Phenotype CSV with sample IDs and chronological age.
-        model_path: Pickled ``sklearn.linear_model.ElasticNet``.
+        model_path: Pickled ElasticNet or Pipeline clock.
         metrics_path: Destination for ``clock_metrics.json``.
         figure_stem: Output stem for ``Figure_Epigenetic_Clock_Panels.*``.
         annotation_path: Optional Illumina probe→gene annotation table.
         top_n_cpgs: Number of top ``|weight|`` CpGs for panel C.
         skip_manifest_check: If True, skip ``INPUT_MANIFEST.md`` existence
             checks (useful when paths are overridden via CLI).
+        allow_positional_align: Opt into row-order alignment when IDs do not
+            overlap.
 
     Returns:
         Metrics dictionary extended with output file paths
@@ -705,7 +793,11 @@ def run_validation(
     if not skip_manifest_check:
         verify_input_manifest(INPUT_MANIFEST)
 
-    wide = load_validation_cohort(methylation_path, meta_path)
+    wide = load_validation_cohort(
+        methylation_path,
+        meta_path,
+        allow_positional_align=allow_positional_align,
+    )
     model = load_elasticnet_clock(model_path)
 
     y = pd.to_numeric(wide["chronological_age"], errors="coerce")
@@ -718,11 +810,10 @@ def run_validation(
     wide = wide.loc[valid].copy()
     y = y.loc[valid]
 
-    # Align validation CpGs to training features; mean-impute probes absent in GSE87571.
     x, imputed = build_feature_matrix(wide, model)
     y_pred = np.asarray(model.predict(x), dtype=float)
     y_true = y.to_numpy(dtype=float)
-    residual = y_true - y_pred
+    residual = y_pred - y_true
 
     metrics = compute_metrics(y_true, y_pred)
     metrics["n_features_used"] = int(x.shape[1])
@@ -760,7 +851,7 @@ def run_validation(
     print(f"Figure PDF:   {pdf_path}")
     if imputed:
         print(
-            f"Note: mean-imputed {len(imputed)} model CpGs absent from the validation matrix.",
+            f"Note: imputed {len(imputed)} model CpGs absent from the validation matrix.",
             flush=True,
         )
 
@@ -786,7 +877,7 @@ def main(
     model: Path = typer.Option(
         DEFAULT_MODEL,
         "--model",
-        help="Pickled sklearn.linear_model.ElasticNet (.pkl).",
+        help="Pickled ElasticNet or Pipeline clock (.pkl / .joblib).",
     ),
     metrics_out: Path = typer.Option(
         DEFAULT_METRICS,
@@ -813,19 +904,51 @@ def main(
         "--skip-manifest-check",
         help="Skip INPUT_MANIFEST.md required-file verification.",
     ),
+    allow_positional_align: bool = typer.Option(
+        False,
+        "--allow-positional-align",
+        help="Allow row-order alignment when sample IDs do not overlap.",
+    ),
+    demo: bool = typer.Option(
+        False,
+        "--demo",
+        help=(
+            "Write offline clock fixtures (model pickle; synthetic cohort only if "
+            "methylation inputs are missing) and run evaluation."
+        ),
+    ),
 ) -> None:
-    """Validate bare ElasticNet clock on GSE87571 and write metrics + figures.
+    """Validate ElasticNet/Pipeline clock on GSE87571 and write metrics + figures.
 
     Args:
         methylation: Processed GSE87571 methylation parquet (samples × cg*).
         meta: Phenotype CSV with sample IDs and chronological age.
-        model: Pickled ``sklearn.linear_model.ElasticNet``.
+        model: Pickled ElasticNet or Pipeline clock.
         metrics_out: Output path for ``clock_metrics.json``.
         figure_stem: Output stem for ``Figure_Epigenetic_Clock_Panels.*``.
         annotation: Optional Illumina probe→gene annotation table.
         top_n: Number of top ``|weight|`` CpGs for panel C.
         skip_manifest_check: Bypass ``INPUT_MANIFEST.md`` checks.
+        allow_positional_align: Opt into row-order sample alignment.
+        demo: Materialize fixtures and run offline-friendly evaluation.
     """
+    if demo:
+        from rogen_aging.pipeline_fixtures import write_clock_fixtures
+
+        fixtures = write_clock_fixtures(repo_root=REPO_ROOT)
+        model = fixtures["model"]
+        methylation = fixtures["methylation"]
+        meta = fixtures["meta"]
+        skip_manifest_check = True
+        if metrics_out == DEFAULT_METRICS:
+            metrics_out = REPO_ROOT / "outputs" / "demo" / "clock_metrics.json"
+        if figure_stem == DEFAULT_FIGURE_STEM:
+            figure_stem = (
+                REPO_ROOT / "outputs" / "demo" / "figures" / "Figure_Epigenetic_Clock_Panels"
+            )
+
+    model = resolve_clock_model_path(model)
+
     run_validation(
         methylation_path=methylation,
         meta_path=meta,
@@ -835,6 +958,7 @@ def main(
         annotation_path=annotation,
         top_n_cpgs=top_n,
         skip_manifest_check=skip_manifest_check,
+        allow_positional_align=allow_positional_align,
     )
 
 

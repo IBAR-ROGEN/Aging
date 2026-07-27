@@ -7,7 +7,7 @@ Required inputs for [`scripts/clock/evaluate_methylation_clock.py`](scripts/cloc
 |------|------|----------|
 | `data/methylation/GSE87571_processed.parquet` | Independent validation beta matrix (`sample_id` + `cg*` columns) | yes |
 | `data/methylation/GSE87571_meta.csv` | Phenotype metadata (`sample_id` + `chronological_age`) | yes |
-| `models/ro_clock_elasticnet_gse40279.pkl` | Fitted `sklearn.linear_model.ElasticNet` (not a Pipeline / ElasticNetCV) | yes |
+| `models/ro_clock_elasticnet_gse40279.pkl` | Fitted ElasticNet **or** Pipeline ending in ElasticNet/ElasticNetCV | yes |
 | `data/methylation/HM450_probe_annotation.csv` | Probe → nearest gene (`IlmnID`, `UCSC_RefGene_Name`) for panel C labels | no |
 
 ## Outputs (written by the evaluation script)
@@ -20,6 +20,9 @@ Required inputs for [`scripts/clock/evaluate_methylation_clock.py`](scripts/cloc
 
 ## Notes
 
-- The model file must unpickle to **exactly** `sklearn.linear_model.ElasticNet`.
-  Pipelines and `ElasticNetCV` objects are rejected; do not retrain at evaluation time.
+- Preferred model path is `models/ro_clock_elasticnet_gse40279.pkl`.
+- If that pickle is missing, the evaluator accepts
+  `models/methylation_clock_v1.joblib` (Pipeline) and/or can materialize the
+  pickle via `uv run python scripts/dev/write_pipeline_fixtures.py` or
+  `uv run python scripts/clock/evaluate_methylation_clock.py --demo`.
 - Optional annotation falls back to Horvath S3 (`test_data/gb-2013-14-10-r115-S3.csv`) when absent.

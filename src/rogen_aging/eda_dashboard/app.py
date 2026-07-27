@@ -44,9 +44,9 @@ def main() -> None:
     st.title("ROGEN multi-omics aging cohort — exploratory data analysis")
     st.markdown(
         """
-This dashboard is the **primary interactive QA layer** for the merged integration Parquet produced
-by the ROGEN multi-omics pipeline. Use the **sidebar** to define a global analytic subset; every
-visualization below respects those filters.
+This dashboard is the **primary interactive QA layer** for the merged multi-omics
+cohort Parquet (clinical / epigenetic-age / LA-SNP table). Use the **sidebar** to
+define a global analytic subset; every visualization below respects those filters.
         """.strip()
     )
 
@@ -58,13 +58,24 @@ visualization below respects those filters.
     )
     st.session_state[_CUSTOM_PATH] = path_input.strip() or str(default_path)
 
+    random_seed = int(
+        st.sidebar.number_input(
+            "Random seed",
+            min_value=0,
+            max_value=2_147_483_647,
+            value=42,
+            step=1,
+            help="Seed for the in-memory synthetic cohort generator.",
+        )
+    )
+
     cohort_path = Path(st.session_state[_CUSTOM_PATH]).expanduser()
     parquet_exists = cohort_path.is_file()
 
     df: pd.DataFrame | None = None
 
     if st.session_state[_USE_SYNTHETIC]:
-        df = load_synthetic_cohort()
+        df = load_synthetic_cohort(random_seed=random_seed)
     elif parquet_exists:
         df = load_merged_parquet(str(cohort_path.resolve()))
     else:
