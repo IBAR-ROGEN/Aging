@@ -33,6 +33,8 @@ dependencies = [
     "geoparse>=2.0.4",
     "GEOparse>=2.0.4",
     "cyvcf2>=0.33.0",
+    "loguru>=0.7.3",
+    "tqdm>=4.67.0",
 ]
 requires-python = ">=3.12"
 readme = "README.md"

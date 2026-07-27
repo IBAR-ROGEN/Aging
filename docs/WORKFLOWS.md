@@ -119,6 +119,18 @@ uv run python analysis/variant_functional_annotation/run_variant_functional_anno
 
 See [GENOMICS_ANALYSIS.md](GENOMICS_ANALYSIS.md) · module index: [analysis/genomics/README.md](../analysis/genomics/README.md).
 
+### July prioritized-variant annotation
+
+Combined GTEx v8 eQTL + Ensembl VEP + AlphaGenome/AlphaMissense Excel export
+for the prioritized variant CSV. Output → `outputs/Supplementary_Table_1_Annotated_Variants.xlsx`.
+
+```bash
+uv run python run_july_annotation_pipeline.py
+uv run python run_july_annotation_pipeline.py --cache-only
+```
+
+See [JULY_ANNOTATION_PIPELINE.md](JULY_ANNOTATION_PIPELINE.md).
+
 ### Manuscript figures
 
 Canonical renders live under **`scripts/figures/`** (flat `scripts/render_*.py` / `scripts/generate_*.py` are deprecation shims). Default output: **`figures/`**.

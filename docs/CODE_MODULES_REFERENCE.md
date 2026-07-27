@@ -43,6 +43,7 @@ See [ACTIVITIES.md](ACTIVITIES.md) for the full tree. Highlights:
 - **`scripts/figures/`** — matplotlib/networkx renders + `plot_clock_eval.py` ([FIGURES.md](FIGURES.md)); flat `scripts/generate_*.py` shims forward here
 - **`scripts/alphagenome/`** — AlphaGenome batch + analysis (tables → `analysis/alphagenome/`, plots → `figures/alphagenome/`)
 - **`analysis/validate_genomics_tables/`**, **`analysis/overlap_enrichment/`**, **`analysis/variant_functional_annotation/`** — GRCh38 genomics validation ([GENOMICS_ANALYSIS.md](GENOMICS_ANALYSIS.md); index: [analysis/genomics/README.md](../analysis/genomics/README.md))
+- **`run_july_annotation_pipeline.py`** (repo root) — July batch GTEx v8 + VEP + AlphaGenome/AlphaMissense Excel export ([JULY_ANNOTATION_PIPELINE.md](JULY_ANNOTATION_PIPELINE.md))
 - **`scripts/dev/`** — `security_check.sh`, CI audit, ONT pipeline validation, R bootstrap, `find_r.sh`
 
 ## Root-level shims (deprecated)

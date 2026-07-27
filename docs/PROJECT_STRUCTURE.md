@@ -117,6 +117,7 @@ Run with `uv run pytest` after `uv sync --extra dev`. Imports use `rogen_aging.*
 | LA-SNP manifest / AF CSVs | `analysis/` | `analysis/ukb_snp_manifest_v0.1.csv` |
 | VEP annotation + cache | `analysis/` | `analysis/vep_annotation/`, `analysis/vep_cache/` |
 | GTEx eQTL annotation + cache | `analysis/` | `analysis/gtex_annotation/`, `analysis/gtex_cache/` |
+| July batch annotation | repo root + `data/` / `outputs/` | `run_july_annotation_pipeline.py` → [JULY_ANNOTATION_PIPELINE.md](JULY_ANNOTATION_PIPELINE.md) |
 | Clock model + metrics | `analysis/` | `analysis/gse40279_elasticnet_clock.pkl` |
 
 ### Root script shims (deprecated paths)

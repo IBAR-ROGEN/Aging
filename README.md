@@ -118,6 +118,15 @@ uv run python analysis/variant_functional_annotation/run_variant_functional_anno
 
 See [docs/GENOMICS_ANALYSIS.md](docs/GENOMICS_ANALYSIS.md).
 
+### July prioritized-variant annotation (GTEx v8 + VEP + Alpha scores)
+
+```bash
+uv run python run_july_annotation_pipeline.py
+# → outputs/Supplementary_Table_1_Annotated_Variants.xlsx
+```
+
+See [docs/JULY_ANNOTATION_PIPELINE.md](docs/JULY_ANNOTATION_PIPELINE.md).
+
 ### Figures and annotation scripts
 
 ```bash
@@ -142,6 +151,7 @@ Flat paths such as `plot_clock_eval.py`, `plot_af_comparison.py`, `annotate_la_s
 | Manuscript figures | [docs/FIGURES.md](docs/FIGURES.md) |
 | Nomenclature audit + AF/network figures | [docs/NOMENCLATURE_RECONCILE_FIGURES.md](docs/NOMENCLATURE_RECONCILE_FIGURES.md) |
 | Genomics validation pipeline | [docs/GENOMICS_ANALYSIS.md](docs/GENOMICS_ANALYSIS.md) |
+| July prioritized-variant annotation | [docs/JULY_ANNOTATION_PIPELINE.md](docs/JULY_ANNOTATION_PIPELINE.md) |
 | LA-SNP VEP / GTEx annotation | [docs/LA_SNP_VEP_ANNOTATION.md](docs/LA_SNP_VEP_ANNOTATION.md) · [docs/LA_SNP_GTEX_ANNOTATION.md](docs/LA_SNP_GTEX_ANNOTATION.md) |
 | Epigenetic clock | [docs/CLOCK_LIBRARY.md](docs/CLOCK_LIBRARY.md) · [eval figure](docs/CLOCK_EVAL_FIGURES.md) · [GSE87571 validation script](docs/METHYLATION_CLOCK_VALIDATION.md) |
 | LA-SNP public AF validation | [docs/LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md](docs/LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md) · [comparison figure](docs/AF_COMPARISON_FIGURES.md) |
