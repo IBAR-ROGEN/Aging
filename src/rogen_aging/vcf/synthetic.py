@@ -12,14 +12,14 @@ Example:
 
 from __future__ import annotations
 
-import argparse
 import logging
 import sys
 from collections.abc import Iterator, Sequence
 from pathlib import Path
-from typing import TextIO
+from typing import Any, TextIO
 
 import numpy as np
+import typer
 
 # GRCh38 primary assembly lengths (bp) for chr1–chr22 — used in ##contig headers.
 GRCH38_CHROM_LENGTHS: dict[str, int] = {
@@ -376,72 +376,89 @@ def iter_variant_lines(
         yield line
 
 
-def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
-    """Parse CLI arguments for synthetic VCF generation.
+app = typer.Typer(
+    add_completion=False,
+    help=(
+        "Generate a synthetic VCF v4.2 for a mock Romanian (EUR-structured) "
+        "population cohort under Hardy–Weinberg genotypes."
+    ),
+)
 
-    Args:
-        argv: Argument list; defaults to ``sys.argv[1:]`` when ``None``.
 
-    Returns:
-        Parsed namespace with ``samples``, ``variants``, ``output``, etc.
-    """
-    parser = argparse.ArgumentParser(
-        description=(
-            "Generate a synthetic VCF v4.2 for a mock Romanian (EUR-structured) "
-            "population cohort under Hardy–Weinberg genotypes."
-        )
-    )
-    parser.add_argument(
+@app.command()
+def generate(
+    samples: int = typer.Option(
+        ...,
         "--samples",
-        type=int,
-        required=True,
         metavar="N",
         help="Number of diploid samples (columns after FORMAT).",
-    )
-    parser.add_argument(
+    ),
+    variants: int = typer.Option(
+        ...,
         "--variants",
-        type=int,
-        required=True,
         metavar="M",
         help="Number of variant rows to write.",
-    )
-    parser.add_argument(
+    ),
+    output: Path = typer.Option(
+        ...,
         "--output",
-        type=Path,
-        required=True,
+        path_type=Path,
         help="Output path for uncompressed VCF (tab-delimited text).",
-    )
-    parser.add_argument(
+    ),
+    seed: int | None = typer.Option(
+        None,
         "--seed",
-        type=int,
-        default=None,
         help="Random seed for reproducibility.",
-    )
-    parser.add_argument(
+    ),
+    mean_depth: float = typer.Option(
+        32.0,
         "--mean-depth",
-        type=float,
-        default=32.0,
         help="Mean simulated read depth per sample per site (Poisson mean).",
-    )
-    parser.add_argument(
+    ),
+    cohort_label: str = typer.Option(
+        "mock_RO_EUR_cohort",
         "--cohort-label",
-        type=str,
-        default="mock_RO_EUR_cohort",
         help="Label written to ##synthetic_cohort header line.",
-    )
-    parser.add_argument(
+    ),
+    sample_prefix: str = typer.Option(
+        "RO_EUR",
         "--sample-prefix",
-        type=str,
-        default="RO_EUR",
         help="Prefix for synthetic sample IDs.",
-    )
-    parser.add_argument(
+    ),
+    verbose: bool = typer.Option(
+        False,
         "-v",
         "--verbose",
-        action="store_true",
         help="Enable debug logging.",
+    ),
+) -> None:
+    """Write VCF headers then stream variant lines to the output file."""
+    log_level = logging.DEBUG if verbose else logging.INFO
+    configure_logging(log_level)
+    log = logging.getLogger(__name__)
+
+    if samples < 1:
+        raise SystemExit("--samples must be >= 1")
+    if variants < 1:
+        raise SystemExit("--variants must be >= 1")
+    if mean_depth <= 0:
+        raise SystemExit("--mean-depth must be positive")
+
+    rng = np.random.default_rng(seed)
+    sample_ids = romanian_cohort_sample_ids(samples, sample_prefix)
+
+    output.parent.mkdir(parents=True, exist_ok=True)
+    log.info(
+        "Writing %d variants for %d samples to %s",
+        variants,
+        samples,
+        output,
     )
-    return parser.parse_args(argv)
+    with output.open("w", encoding="ascii", newline="\n") as out:
+        write_vcf_headers(out, sample_ids, cohort_label)
+        for line in iter_variant_lines(rng, samples, variants, mean_depth):
+            out.write(line)
+    log.info("Finished writing VCF.")
 
 
 def main(argv: Sequence[str] | None = None) -> None:
@@ -450,35 +467,11 @@ def main(argv: Sequence[str] | None = None) -> None:
     Args:
         argv: Optional argument list for testing; defaults to process arguments.
     """
-    args = parse_args(argv)
-    log_level = logging.DEBUG if args.verbose else logging.INFO
-    configure_logging(log_level)
-    log = logging.getLogger(__name__)
-
-    if args.samples < 1:
-        raise SystemExit("--samples must be >= 1")
-    if args.variants < 1:
-        raise SystemExit("--variants must be >= 1")
-    if args.mean_depth <= 0:
-        raise SystemExit("--mean-depth must be positive")
-
-    rng = np.random.default_rng(args.seed)
-    sample_ids = romanian_cohort_sample_ids(args.samples, args.sample_prefix)
-
-    args.output.parent.mkdir(parents=True, exist_ok=True)
-    log.info(
-        "Writing %d variants for %d samples to %s",
-        args.variants,
-        args.samples,
-        args.output,
-    )
-    with args.output.open("w", encoding="ascii", newline="\n") as out:
-        write_vcf_headers(out, sample_ids, args.cohort_label)
-        for line in iter_variant_lines(
-            rng, args.samples, args.variants, args.mean_depth
-        ):
-            out.write(line)
-    log.info("Finished writing VCF.")
+    kwargs: dict[str, Any] = {}
+    if argv is not None:
+        kwargs["args"] = list(argv)
+        kwargs["standalone_mode"] = False
+    app(**kwargs)
 
 
 if __name__ == "__main__":

@@ -2,7 +2,7 @@
 
 **Project:** IBAR-ROGEN Aging  
 **Activity:** 2.1.10.1 — methylation aging clock (GSE40279 train, GSE87571 validate)  
-**Script:** [`evaluate_methylation_clock.py`](../evaluate_methylation_clock.py)  
+**Script:** [`scripts/clock/evaluate_methylation_clock.py`](../scripts/clock/evaluate_methylation_clock.py) (deprecated shim: [`evaluate_methylation_clock.py`](../evaluate_methylation_clock.py))  
 **Library:** `rogen_aging.clock` (`load_model`, `build_feature_matrix`)  
 **Related:** [CLOCK_LIBRARY.md](CLOCK_LIBRARY.md) · [CLOCK_EVAL_FIGURES.md](CLOCK_EVAL_FIGURES.md) · [GSE40279_CLOCK_TRAINING.md](GSE40279_CLOCK_TRAINING.md)
 
@@ -23,8 +23,10 @@ This complements `rogen-clock evaluate` (decade MAE / residual PNGs) and `plot_c
 |-------|--------------|-------------|
 | Methylation matrix | `data/methylation/GSE87571_processed.parquet` | Wide beta table (`sample_id` + `cg*` columns; probes×samples also accepted) |
 | Phenotype metadata | `data/methylation/GSE87571_meta.csv` | `sample_id` (or GEO accession) + `chronological_age` / `age` |
-| Trained model | `models/methylation_clock_v1.joblib` | Fitted `Pipeline(SimpleImputer, ElasticNetCV)` from `rogen-clock train` |
+| Trained model | `models/ro_clock_elasticnet_gse40279.pkl` | Fitted bare `sklearn.linear_model.ElasticNet` (Pipelines / ElasticNetCV rejected) |
 | Probe→gene annotation (optional) | `data/methylation/HM450_probe_annotation.csv` | `IlmnID` + `UCSC_RefGene_Name` (falls back to Horvath S3 table) |
+
+Preflight: the script reads [`INPUT_MANIFEST.md`](../INPUT_MANIFEST.md) and aborts if any required file is missing.
 
 ## Outputs
 
@@ -32,7 +34,7 @@ This complements `rogen-clock evaluate` (decade MAE / residual PNGs) and `plot_c
 |--------|------|
 | Metrics JSON | `outputs/clock_metrics.json` |
 | Figure (raster) | `outputs/figures/Figure_Epigenetic_Clock_Panels.png` (300 dpi) |
-| Figure (vector) | `outputs/figures/Figure_Epigenetic_Clock_Panels.pdf` / `.svg` |
+| Figure (vector) | `outputs/figures/Figure_Epigenetic_Clock_Panels.pdf` |
 | Markdown summary | Printed to stdout |
 
 ## CLI usage
@@ -40,18 +42,32 @@ This complements `rogen-clock evaluate` (decade MAE / residual PNGs) and `plot_c
 ```bash
 uv sync
 
-uv run python evaluate_methylation_clock.py
+uv run python scripts/clock/evaluate_methylation_clock.py
 
 # Explicit paths / options
-uv run python evaluate_methylation_clock.py \
+uv run python scripts/clock/evaluate_methylation_clock.py \
   --methylation data/methylation/GSE87571_processed.parquet \
   --meta data/methylation/GSE87571_meta.csv \
-  --model models/methylation_clock_v1.joblib \
+  --model models/ro_clock_elasticnet_gse40279.pkl \
   --metrics-out outputs/clock_metrics.json \
   --figure-stem outputs/figures/Figure_Epigenetic_Clock_Panels \
   --annotation data/methylation/HM450_probe_annotation.csv \
   --top-n 25
+
+# Skip INPUT_MANIFEST.md preflight when overriding paths in tests/CI
+uv run python scripts/clock/evaluate_methylation_clock.py \
+  --model /tmp/ro_clock.pkl \
+  --methylation /tmp/meth.parquet \
+  --meta /tmp/meta.csv \
+  --skip-manifest-check
 ```
+
+## Technical notes
+
+- **Estimator contract:** the pickle must unpickle to exactly `sklearn.linear_model.ElasticNet`. `Pipeline`, `ElasticNetCV`, and other regressors raise `TypeError` (no silent retrain).
+- **Feature alignment:** uses `rogen_aging.clock.evaluate.build_feature_matrix` to reorder CpGs to `feature_names_in_` and mean-impute probes missing from GSE87571.
+- **Strata:** middle bin is closed `[30, 60]`; empty strata report `MAE = null` in JSON / `NA` in the markdown summary.
+- **Tests:** `uv run pytest tests/test_evaluate_methylation_clock.py -q`
 
 ## Metrics definition
 

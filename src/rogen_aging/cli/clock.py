@@ -22,6 +22,15 @@ def train_cmd(
     test_size: float = typer.Option(0.2, "--test_size", help="Held-out test fraction."),
     random_state: int = typer.Option(42, "--random_state", help="Random seed."),
 ) -> None:
+    """Train an epigenetic clock and write model plus metrics.
+
+    Args:
+        input_data: Parquet/CSV with ``cg*`` columns and ``chronological_age``.
+        output_model: Destination path for the fitted pipeline (``.pkl``/``.joblib``).
+        output_metrics: Destination path for training metrics JSON.
+        test_size: Held-out test fraction.
+        random_state: Random seed for the train/test split.
+    """
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
     metrics = train_clock(
         input_data,
@@ -43,6 +52,13 @@ def evaluate_cmd(
     test_data: Path = typer.Option(..., "--test_data", help="Test table (.parquet or .csv)."),
     output_dir: Path = typer.Option(..., "--output_dir", help="Directory for figures and metrics JSON."),
 ) -> None:
+    """Evaluate a trained clock on held-out data and write figures/metrics.
+
+    Args:
+        model_path: Trained model path (``.pkl`` or ``.joblib``).
+        test_data: Test table path (``.parquet`` or ``.csv``).
+        output_dir: Directory for figures and metrics JSON.
+    """
     result = evaluate_clock(model_path, test_data, output_dir)
     imputed = result.pop("imputed_missing_cpgs", [])
     typer.echo(json.dumps(result, indent=2))
@@ -54,6 +70,7 @@ def evaluate_cmd(
 
 
 def main() -> None:
+    """Console entry for ``rogen-clock``."""
     app()
 
 

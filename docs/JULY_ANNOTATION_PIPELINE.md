@@ -1,6 +1,6 @@
 # July prioritized-variant annotation pipeline
 
-**Script:** `run_july_annotation_pipeline.py` (repo root)  
+**Script:** `scripts/ukb/run_july_annotation_pipeline.py` (deprecated shim: `run_july_annotation_pipeline.py`)  
 **Related:** [LA_SNP_VEP_ANNOTATION.md](LA_SNP_VEP_ANNOTATION.md) · [LA_SNP_GTEX_ANNOTATION.md](LA_SNP_GTEX_ANNOTATION.md) · [GENOMICS_ANALYSIS.md](GENOMICS_ANALYSIS.md)
 
 ## Overview
@@ -42,13 +42,13 @@ API responses are cached under `data/cache/july_annotation/`. Progress uses
 
 ```bash
 uv sync
-uv run python run_july_annotation_pipeline.py
+uv run python scripts/ukb/run_july_annotation_pipeline.py
 
 # Warm-cache / offline mode (no live API on cache miss)
-uv run python run_july_annotation_pipeline.py --cache-only
+uv run python scripts/ukb/run_july_annotation_pipeline.py --cache-only
 
 # Custom paths
-uv run python run_july_annotation_pipeline.py \
+uv run python scripts/ukb/run_july_annotation_pipeline.py \
   --variants data/processed/prioritized_variants.csv \
   --alphagenome data/scores/alphagenome_raw.parquet \
   --alphamissense data/scores/alphamissense_raw.parquet \

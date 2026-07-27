@@ -26,7 +26,21 @@ def generate_synthetic_ukb_data(
     snp_maf: float = 0.2,
     seed: int | None = 42,
 ) -> pd.DataFrame:
-    """Generate a synthetic UK Biobank-style clinical table with mock SNP genotypes."""
+    """Generate a synthetic UK Biobank-style clinical table with mock SNP genotypes.
+
+    Args:
+        n_samples: Number of synthetic participants.
+        min_age: Inclusive lower bound for simulated age (years).
+        max_age: Inclusive upper bound for simulated age (years).
+        eaa_mean: Mean of the simulated epigenetic age acceleration (EAA).
+        eaa_std: Standard deviation of simulated EAA.
+        snp_maf: Minor allele frequency used for Hardy–Weinberg genotype draws.
+        seed: Random seed; ``None`` leaves the generator unseeded.
+
+    Returns:
+        DataFrame with ``Sample_ID``, demographics, ``AD_diagnosis``, ``EAA``,
+        and columns for each ID in ``DUMMY_SNP_IDS`` (dosages 0/1/2).
+    """
     rng = np.random.default_rng(seed)
     sample_ids = [f"MOCK_{i:08d}" for i in range(1, n_samples + 1)]
     age = rng.integers(min_age, max_age + 1, size=n_samples)

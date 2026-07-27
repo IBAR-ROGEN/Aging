@@ -6,6 +6,7 @@ from rogen_aging.ukb.mock_rap import app
 
 
 def entry() -> None:
+    """Console entry for ``rogen-ukb-mock-rap``."""
     app()
 
 

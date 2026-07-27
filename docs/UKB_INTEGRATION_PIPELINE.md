@@ -4,7 +4,7 @@
 **Activity:** 2.1.11.1  
 **Console:** `rogen-ukb-integrate`  
 **Script:** `scripts/ukb/run_integration.py` (same CLI as console)  
-**Library:** `src/rogen_aging/integration/ukb_joiner.py`  
+**Library:** `src/rogen_aging/ukb_integration/ukb_joiner.py` (`rogen_aging.integration` is a deprecated alias)  
 **Input:** Mock UKB-RAP output from `scripts/ukb/mock_rap_folder.py` (`rogen-ukb-mock-rap`)
 
 ## Overview
@@ -72,7 +72,7 @@ Each CSV includes a synthetic-data disclaimer header. Columns: `rsID`, `OR`, `CI
 
 ```python
 from pathlib import Path
-from rogen_aging.integration.ukb_joiner import run_integration_pipeline
+from rogen_aging.ukb_integration.ukb_joiner import run_integration_pipeline
 
 joined, parental, ad = run_integration_pipeline(
     Path("test_data/mock_ukb_rap/phenotypes/ukb_phenotypes.csv"),
@@ -93,7 +93,7 @@ Uses a 70-SNP mock manifest fixture and `rogen_aging.ukb.mock_rap.generate_ukb_r
 
 - **Synthetic data only** — no real UKB participant IDs or genotypes.
 - Input VCF paths are read locally; do not commit `.vcf` files (git-ignored).
-- `scripts/ukb/run_integration.py`, `src/rogen_aging/integration/`, and `src/rogen_aging/ukb/` are whitelisted in the pre-commit hook because they reference mock `ukb_*` paths by design.
+- `scripts/ukb/run_integration.py`, `src/rogen_aging/ukb_integration/`, and `src/rogen_aging/ukb/` are whitelisted in the pre-commit hook because they reference mock `ukb_*` paths by design.
 
 ## Related documentation
 

@@ -36,12 +36,11 @@ rogen_aging/
 | `clock/` | Epigenetic clock train/eval/data ([CLOCK_LIBRARY.md](CLOCK_LIBRARY.md)) |
 | `ukb/` | LA-SNP manifest, gnomAD compare, mock clinical CSV ([LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md](LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md)) |
 | `vcf/` | Synthetic VCF utilities ([SYNTHETIC_ROMANIAN_VCF_GENERATOR.md](SYNTHETIC_ROMANIAN_VCF_GENERATOR.md)) |
-| `integration/` | Synthetic UKB join + associations ([UKB_INTEGRATION_PIPELINE.md](UKB_INTEGRATION_PIPELINE.md)) |
+| `ukb_integration/` | Synthetic UKB join + associations ([UKB_INTEGRATION_PIPELINE.md](UKB_INTEGRATION_PIPELINE.md)); `integration/` is a deprecated alias |
 | `integrative/` | Offline variant×tissue×phenotype joins + composite risk ([INTEGRATIVE_PIPELINE.md](INTEGRATIVE_PIPELINE.md)) |
 | `eda_dashboard/` | Streamlit merged-cohort EDA ([EDA_DASHBOARD.md](EDA_DASHBOARD.md)) |
 | `cli/` | Console entry points (`rogen-clock`, `rogen-ukb-manifest`, `rogen-ukb-integrate`, …) |
 | `methylation_visualizations.py`, `network_visualizer.py` | Shared visualization helpers |
-| `pipeline/` | Placeholder for shared pipeline steps |
 
 ## `scripts/`
 
@@ -49,10 +48,10 @@ Grouped by workflow. Flat `scripts/*.py` paths are **deprecation shims** that fo
 
 | Folder | Contents |
 |--------|----------|
-| `clock/` | `run_clock.py` (canonical), deprecated `validate_clock.py` / `train_clock_on_gse40279.py`, Romanian demo |
-| `ukb/` | `la_snp_lookup.py`, `compare_af_gnomad.py`, `mock_clinical_csv.py`, `mock_rap_folder.py`, `run_integration.py`, `annotate_la_snps_vep.py` |
+| `clock/` | `run_clock.py`, `evaluate_methylation_clock.py`, Romanian demo, deprecated train/validate shims |
+| `ukb/` | `la_snp_lookup.py`, `compare_af_gnomad.py`, `mock_clinical_csv.py`, `mock_rap_folder.py`, `run_integration.py`, `run_july_annotation_pipeline.py`, `annotate_la_snps_vep.py` |
 | `vcf/` | `generate_synthetic_romanian_vcf.py` |
-| `figures/` | `render_*`, `generate_*` manuscript figure scripts |
+| `figures/` | `plot_*`, `render_*`, `generate_*`, `reconcile_and_generate_figures.py` |
 | `alphagenome/` | Sequence comparer + analysis + visualize |
 | `integrative/` | `run_pipeline.py`, `map_variant_tissues.py`, `integrate_phenotypes.py` |
 | `eda/` | Mock epigenetic EDA |
@@ -120,7 +119,7 @@ Run with `uv run pytest` after `uv sync --extra dev`. Imports use `rogen_aging.*
 | LA-SNP manifest / AF CSVs | `analysis/` | `analysis/ukb_snp_manifest_v0.1.csv` |
 | VEP annotation + cache | `analysis/` | `analysis/vep_annotation/`, `analysis/vep_cache/` |
 | GTEx eQTL annotation + cache | `analysis/` | `analysis/gtex_annotation/`, `analysis/gtex_cache/` |
-| July batch annotation | repo root + `data/` / `outputs/` | `run_july_annotation_pipeline.py` → [JULY_ANNOTATION_PIPELINE.md](JULY_ANNOTATION_PIPELINE.md) |
+| July batch annotation | `scripts/ukb/` + `data/` / `outputs/` | `scripts/ukb/run_july_annotation_pipeline.py` → [JULY_ANNOTATION_PIPELINE.md](JULY_ANNOTATION_PIPELINE.md) |
 | Integrative multi-omics | `analysis/integrative/` | `scripts/integrative/run_pipeline.py` → [INTEGRATIVE_PIPELINE.md](INTEGRATIVE_PIPELINE.md) |
 | Clock model + metrics | `analysis/` | `analysis/gse40279_elasticnet_clock.pkl` |
 

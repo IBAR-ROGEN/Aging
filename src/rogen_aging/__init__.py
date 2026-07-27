@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import rogen_aging.methylation_visualizations as methylation_visualizations
 import rogen_aging.network_visualizer as network_visualizer
-import rogen_aging.pipeline as pipeline
 from rogen_aging.methylation_visualizations import (
     create_bimodal_risk_heatmap,
     create_clock_validation_plot,
@@ -25,5 +24,4 @@ __all__ = [
     "generate_all_visualizations",
     "methylation_visualizations",
     "network_visualizer",
-    "pipeline",
 ]

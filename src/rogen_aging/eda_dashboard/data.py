@@ -20,6 +20,14 @@ DEFAULT_MERGED_PATH = (REPO_ROOT / "data" / "merged_cohort.parquet").resolve()
 
 
 def default_merged_parquet_path() -> Path:
+    """Resolve the default merged-cohort Parquet path.
+
+    Uses ``ROGEN_MERGED_COHORT_PARQUET`` when set; otherwise the repo
+    ``data/merged_cohort.parquet`` location.
+
+    Returns:
+        Absolute path to the merged cohort Parquet file.
+    """
     env = os.environ.get("ROGEN_MERGED_COHORT_PARQUET")
     if env:
         return Path(env).expanduser().resolve()
@@ -28,7 +36,15 @@ def default_merged_parquet_path() -> Path:
 
 @st.cache_data(show_spinner="Loading merged cohort (Parquet)…")
 def load_merged_parquet(path_str: str) -> pd.DataFrame:
-    """Load the integration pipeline merged table from Parquet via Polars."""
+    """Load the integration pipeline merged table from Parquet via Polars.
+
+    Args:
+        path_str: Filesystem path to the merged cohort Parquet.
+
+    Returns:
+        Pandas frame with normalised column names and age acceleration when
+        computable.
+    """
     df = pl.read_parquet(path_str).to_pandas()
     df = normalize_column_names(df)
     return ensure_epigenetic_age_acceleration(df)
@@ -36,7 +52,15 @@ def load_merged_parquet(path_str: str) -> pd.DataFrame:
 
 @st.cache_data(show_spinner="Synthesizing in-memory cohort…")
 def load_synthetic_cohort(*, n_samples: int = 320, random_seed: int = 42) -> pd.DataFrame:
-    """Build a reproducible mock multi-omics-style cohort for offline exploration."""
+    """Build a reproducible mock multi-omics-style cohort for offline exploration.
+
+    Args:
+        n_samples: Number of synthetic participants to generate.
+        random_seed: Seed for the NumPy Generator.
+
+    Returns:
+        Pandas frame with clinical, epigenetic age, and LA-SNP dosage columns.
+    """
     rng = np.random.default_rng(random_seed)
     n = int(n_samples)
     age = rng.normal(58.0, 14.0, n).clip(22.0, 92.0)

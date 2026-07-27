@@ -1,8 +1,8 @@
-# Legacy convenience list — canonical dependencies are in pyproject.toml.
-# Install with: uv sync --extra dev
-
-numpy>=2.0
-pandas>=2.0
-scikit-learn>=1.5
-networkx>=3.0
-streamlit>=1.40
+# Legacy convenience pointer — do not treat this file as the dependency source of truth.
+# Canonical dependencies and extras live in pyproject.toml.
+#
+# Install:
+#   uv sync --extra dev
+#
+# Avoid `pip install -r requirements.txt` for day-to-day work; use uv so the lockfile
+# (uv.lock) stays authoritative.

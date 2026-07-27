@@ -1,6 +1,6 @@
 # Analysis Notebooks
 
-This directory contains Jupyter notebooks for the ROGEN Aging Research project, organized by functional area.
+This directory contains Jupyter notebooks for the IBAR-ROGEN Aging project, organized by functional area.
 
 ## Directory Structure
 

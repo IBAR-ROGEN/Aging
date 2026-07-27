@@ -85,6 +85,22 @@ All paths and styling are **constants at the top of** `plot_af_comparison.py` (n
 
 ## Input table columns
 
+### Canonical AF column vocabulary
+
+Use these names in new code and docs. Older aliases appear in legacy CSVs and should be normalized at load time.
+
+| Canonical | Meaning | Legacy aliases (do not invent new ones) |
+|-----------|---------|----------------------------------------|
+| `rsID` | dbSNP identifier | `rsid`, `SNP_rsID` (manifest join key) |
+| `AF_1kg` | 1000 Genomes EUR allele frequency | `maf_1000g_eur` |
+| `AF_gnomad_nfe` | gnomAD v4 non-Finnish European AF | `maf_gnomad_nfe` |
+| `ROGEN_AF` | Cohort / study AF in nomenclature figures | (figure-specific; not interchangeable with 1KG) |
+| `Gene` | Gene symbol for labels | (merged from manifest `Gene`) |
+| `abs_diff` | \|AF_1kg − AF_gnomad_nfe\| | |
+| `large_diff` | Boolean; `True` when `abs_diff` exceeds threshold | |
+
+Canonical compare output from `rogen-compare-af-gnomad` is `analysis/la_snp_af_1kg_vs_gnomad.csv` (`AF_1kg`, `AF_gnomad_nfe`). Publication plotting reads that file via `scripts/figures/plot_af_comparison.py`.
+
 The comparison CSV (**required**):
 
 | Column | Meaning |
