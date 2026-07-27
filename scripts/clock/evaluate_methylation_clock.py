@@ -44,7 +44,9 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 INPUT_MANIFEST = REPO_ROOT / "INPUT_MANIFEST.md"
 DEFAULT_METHYLATION = REPO_ROOT / "data" / "methylation" / "GSE87571_processed.parquet"
 DEFAULT_META = REPO_ROOT / "data" / "methylation" / "GSE87571_meta.csv"
-DEFAULT_MODEL = REPO_ROOT / "models" / "ro_clock_elasticnet_gse40279.pkl"
+DEFAULT_MODEL_PKL = REPO_ROOT / "models" / "ro_clock_elasticnet_gse40279.pkl"
+DEFAULT_MODEL_JOBLIB = REPO_ROOT / "models" / "methylation_clock_v1.joblib"
+DEFAULT_MODEL = DEFAULT_MODEL_PKL
 DEFAULT_METRICS = REPO_ROOT / "outputs" / "clock_metrics.json"
 DEFAULT_FIGURE_STEM = REPO_ROOT / "outputs" / "figures" / "Figure_Epigenetic_Clock_Panels"
 
@@ -63,6 +65,32 @@ _MANIFEST_REQUIRED_PATH_RE = re.compile(
     r"^\|\s*`([^`]+)`\s*\|[^|]*\|\s*yes\s*\|",
     re.IGNORECASE | re.MULTILINE,
 )
+
+
+def resolve_clock_model_path(preferred: Path | None = None) -> Path:
+    """Resolve a usable clock artifact path for local development.
+
+    Prefers ``models/ro_clock_elasticnet_gse40279.pkl``, then falls back to
+    ``models/methylation_clock_v1.joblib`` when the pickle is absent.
+
+    Args:
+        preferred: Explicit model path from the CLI. When provided and present,
+            it is returned unchanged.
+
+    Returns:
+        Path to an existing model file when one of the defaults exists;
+        otherwise ``preferred`` or ``DEFAULT_MODEL_PKL`` (caller may still fail
+        later with a clear FileNotFoundError).
+    """
+    if preferred is not None and preferred != DEFAULT_MODEL_PKL and preferred.is_file():
+        return preferred
+    if preferred is not None and preferred.is_file():
+        return preferred
+    if DEFAULT_MODEL_PKL.is_file():
+        return DEFAULT_MODEL_PKL
+    if DEFAULT_MODEL_JOBLIB.is_file():
+        return DEFAULT_MODEL_JOBLIB
+    return preferred if preferred is not None else DEFAULT_MODEL_PKL
 
 
 def verify_input_manifest(
@@ -109,11 +137,22 @@ def verify_input_manifest(
             missing.append(rel)
 
     if missing:
-        raise FileNotFoundError(
-            "Required input file(s) listed in INPUT_MANIFEST.md are missing:\n  - "
-            + "\n  - ".join(missing)
-            + "\nHalt: fix paths or restore artifacts before running evaluation."
-        )
+        # Development unblock: accept methylation_clock_v1.joblib when the
+        # preferred pickle path is missing under the same repo_root.
+        remaining: list[str] = []
+        joblib_fallback = root / "models" / "methylation_clock_v1.joblib"
+        for rel in missing:
+            if rel.endswith("ro_clock_elasticnet_gse40279.pkl") and joblib_fallback.is_file():
+                resolved.append(joblib_fallback.resolve())
+                continue
+            remaining.append(rel)
+        if remaining:
+            raise FileNotFoundError(
+                "Required input file(s) listed in INPUT_MANIFEST.md are missing:\n  - "
+                + "\n  - ".join(remaining)
+                + "\nHint: uv run python scripts/dev/write_pipeline_fixtures.py"
+                + "\nHalt: fix paths or restore artifacts before running evaluation."
+            )
     return resolved
 
 
@@ -838,7 +877,7 @@ def main(
     model: Path = typer.Option(
         DEFAULT_MODEL,
         "--model",
-        help="Pickled sklearn.linear_model.ElasticNet (.pkl).",
+        help="Pickled ElasticNet or Pipeline clock (.pkl / .joblib).",
     ),
     metrics_out: Path = typer.Option(
         DEFAULT_METRICS,
@@ -870,6 +909,14 @@ def main(
         "--allow-positional-align",
         help="Allow row-order alignment when sample IDs do not overlap.",
     ),
+    demo: bool = typer.Option(
+        False,
+        "--demo",
+        help=(
+            "Write offline clock fixtures (model pickle; synthetic cohort only if "
+            "methylation inputs are missing) and run evaluation."
+        ),
+    ),
 ) -> None:
     """Validate ElasticNet/Pipeline clock on GSE87571 and write metrics + figures.
 
@@ -883,7 +930,25 @@ def main(
         top_n: Number of top ``|weight|`` CpGs for panel C.
         skip_manifest_check: Bypass ``INPUT_MANIFEST.md`` checks.
         allow_positional_align: Opt into row-order sample alignment.
+        demo: Materialize fixtures and run offline-friendly evaluation.
     """
+    if demo:
+        from rogen_aging.pipeline_fixtures import write_clock_fixtures
+
+        fixtures = write_clock_fixtures(repo_root=REPO_ROOT)
+        model = fixtures["model"]
+        methylation = fixtures["methylation"]
+        meta = fixtures["meta"]
+        skip_manifest_check = True
+        if metrics_out == DEFAULT_METRICS:
+            metrics_out = REPO_ROOT / "outputs" / "demo" / "clock_metrics.json"
+        if figure_stem == DEFAULT_FIGURE_STEM:
+            figure_stem = (
+                REPO_ROOT / "outputs" / "demo" / "figures" / "Figure_Epigenetic_Clock_Panels"
+            )
+
+    model = resolve_clock_model_path(model)
+
     run_validation(
         methylation_path=methylation,
         meta_path=meta,

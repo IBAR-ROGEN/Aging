@@ -122,3 +122,7 @@ models/*
 # Personal / administrative scripts (defense in depth)
 make_pontaj.py
 *pontaj*
+
+# Regenerable offline pipeline fixtures / demo outputs
+analysis/integrative/demo/
+analysis/integrative/fixtures/
