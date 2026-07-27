@@ -61,12 +61,21 @@ def load_phenotype_table(path: Path) -> pl.DataFrame:
 
 
 def _alt_dosage_from_gt_type(gt_type: int) -> int | None:
-    """Map cyvcf2 ``gt_type`` to alt-allele dosage 0/1/2; unknown genotypes → ``None``."""
+    """Map cyvcf2 ``gt_types`` to alt-allele dosage 0/1/2.
+
+    cyvcf2 encoding: ``0=HOM_REF``, ``1=HET``, ``2=UNKNOWN``, ``3=HOM_ALT``.
+
+    Args:
+        gt_type: Integer genotype class from ``variant.gt_types``.
+
+    Returns:
+        Alt-allele dosage ``0``, ``1``, or ``2``, or ``None`` for unknown/missing.
+    """
     if gt_type == 0:
         return 0
     if gt_type == 1:
         return 1
-    if gt_type == 2:
+    if gt_type == 3:
         return 2
     return None
 
@@ -100,18 +109,15 @@ def load_genotype_matrix_from_vcf(path: Path) -> pl.DataFrame:
             chrom = variant.CHROM
             pos = variant.POS
             rs_id = f"{chrom}:{pos}"
-        dosages: list[int | None] = []
-        for gt_type in variant.gt_types:
-            dosages.append(_alt_dosage_from_gt_type(int(gt_type)))
+        dosages: list[int | None] = [
+            _alt_dosage_from_gt_type(int(gt_type)) for gt_type in variant.gt_types
+        ]
         dosage_by_snp[str(rs_id)] = dosages
 
     if not dosage_by_snp:
         raise ValueError(f"VCF contains no variant records: {path}")
 
-    frame = pl.DataFrame({"eid": sample_ids})
-    for rs_id, values in dosage_by_snp.items():
-        frame = frame.with_columns(pl.Series(rs_id, values))
-    return frame
+    return pl.DataFrame({"eid": sample_ids, **dosage_by_snp})
 
 
 def join_phenotypes_genotypes(
@@ -165,6 +171,9 @@ def genotype_phenotype_contingency(
 ) -> np.ndarray:
     """Build a 2×3 table: rows = outcome (0, 1), columns = genotype dosage (0, 1, 2).
 
+    Non-finite genotype or outcome values (e.g. missing dosages) are dropped; they
+    are never coerced to dosage ``0``.
+
     Args:
         genotype: Per-sample alt-allele dosages (expected values 0, 1, or 2).
         outcome: Per-sample binary outcomes (expected values 0 or 1).
@@ -172,20 +181,33 @@ def genotype_phenotype_contingency(
     Returns:
         ``int64`` array of shape ``(2, 3)`` with counts for valid genotype/outcome pairs.
     """
-    table = np.zeros((2, 3), dtype=np.int64)
-    g = np.asarray(genotype, dtype=np.int64)
-    y = np.asarray(outcome, dtype=np.int64)
-    valid = (g >= 0) & (g <= 2) & (y >= 0) & (y <= 1)
-    g = g[valid]
-    y = y[valid]
-    for outcome_val in (0, 1):
-        for dosage in (0, 1, 2):
-            table[outcome_val, dosage] = int(np.sum((y == outcome_val) & (g == dosage)))
-    return table
+    g = np.asarray(genotype, dtype=float)
+    y = np.asarray(outcome, dtype=float)
+    valid = (
+        np.isfinite(g)
+        & np.isfinite(y)
+        & (g >= 0)
+        & (g <= 2)
+        & (y >= 0)
+        & (y <= 1)
+    )
+    g_i = g[valid].astype(np.int64)
+    y_i = y[valid].astype(np.int64)
+    if g_i.size == 0:
+        return np.zeros((2, 3), dtype=np.int64)
+    return np.bincount(y_i * 3 + g_i, minlength=6).reshape(2, 3).astype(np.int64)
 
 
 def _dominant_2x2_from_contingency(table_2x3: np.ndarray) -> list[list[int]]:
-    """Collapse 2×3 genotype table to 2×2 dominant model (carrier = dosage 1 or 2)."""
+    """Collapse 2×3 genotype table to 2×2 dominant model (carrier = dosage 1 or 2).
+
+    Args:
+        table_2x3: Contingency from :func:`genotype_phenotype_contingency`.
+
+    Returns:
+        Nested list ``[[control_non_carrier, control_carrier],
+        [case_non_carrier, case_carrier]]``.
+    """
     control_non_carrier = int(table_2x3[0, 0])
     carrier_control = int(table_2x3[0, 1] + table_2x3[0, 2])
     case_non_carrier = int(table_2x3[1, 0])
@@ -205,10 +227,25 @@ def _or_confidence_interval(
     *,
     alpha: float = 0.05,
 ) -> tuple[float, float]:
-    """Woolf log-OR interval on a 2×2 table [[a,b],[c,d]] with Haldane correction if needed."""
+    """Woolf log-OR interval on a 2×2 table ``[[a,b],[c,d]]``.
+
+    Zero cells receive a Haldane (+0.5) correction for the standard-error
+    calculation only. The CI is centered on the caller-supplied ``or_point``
+    (typically the same Haldane-adjusted OR returned as the point estimate).
+
+    Args:
+        a: Control non-carriers.
+        b: Control carriers.
+        c: Case non-carriers.
+        d: Case carriers.
+        or_point: Odds-ratio point estimate used as the CI center.
+        alpha: Two-sided type I error rate (default 0.05 → 95% CI).
+
+    Returns:
+        ``(ci_low, ci_high)`` on the odds-ratio scale.
+    """
     if min(a, b, c, d) == 0:
         a, b, c, d = a + 0.5, b + 0.5, c + 0.5, d + 0.5
-        or_point = (a * d) / (b * c)
     log_or = math.log(or_point)
     se = math.sqrt(1.0 / a + 1.0 / b + 1.0 / c + 1.0 / d)
     z = float(norm.ppf(1.0 - alpha / 2.0))
@@ -250,8 +287,14 @@ def dominant_odds_ratio(
         ci_low, ci_high = float("nan"), float("nan")
         return or_val, ci_low, ci_high, p_val, n
 
-    or_val, p_val = fisher_exact(table_2x2)
-    or_float = float(or_val)
+    _fisher_or, p_val = fisher_exact(table_2x2)
+    # When any cell is zero, report the Haldane-adjusted OR so the Woolf CI
+    # is centered on the same point estimate that is returned.
+    if min(a, b, c, d) == 0:
+        aa, bb, cc, dd = a + 0.5, b + 0.5, c + 0.5, d + 0.5
+        or_float = (aa * dd) / (bb * cc)
+    else:
+        or_float = float(_fisher_or)
     if not math.isfinite(or_float) or or_float <= 0:
         ci_low, ci_high = float("nan"), float("nan")
     else:

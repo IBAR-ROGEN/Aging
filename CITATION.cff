@@ -1,0 +1,21 @@
+cff-version: 1.2.0
+title: "IBAR-ROGEN Aging Analysis"
+message: "If you use this software, please cite it using these metadata."
+type: software
+authors:
+  - family-names: Toren
+    given-names: Dmitri
+    email: mitya@rogen.ai
+license: MIT
+repository-code: "https://github.com/IBAR-ROGEN/Aging"
+version: "0.1.0"
+abstract: >-
+  IBAR-ROGEN aging analysis: epigenetic clocks, UK Biobank LA-SNP public-frequency
+  tooling, synthetic cohort integration, integrative variant×tissue×phenotype
+  risk scoring, and manuscript figure pipelines.
+keywords:
+  - aging
+  - epigenetics
+  - methylation clock
+  - UK Biobank
+  - longevity

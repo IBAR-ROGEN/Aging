@@ -185,17 +185,36 @@ def test_load_elasticnet_clock_missing(tmp_path: Path) -> None:
         emc.load_elasticnet_clock(tmp_path / "absent.pkl")
 
 
-def test_load_elasticnet_clock_rejects_pipeline(tmp_path: Path) -> None:
-    pipe = Pipeline([("enet", ElasticNet())])
+def test_load_elasticnet_clock_accepts_pipeline(tmp_path: Path) -> None:
+    from sklearn.impute import SimpleImputer
+
+    pipe = Pipeline(
+        [
+            ("imputer", SimpleImputer(strategy="mean")),
+            ("elasticnet", _fit_elasticnet()),
+        ]
+    )
+    # Fit imputer on dummy data so statistics_ exist.
+    rng = np.random.default_rng(0)
+    x = pd.DataFrame(
+        {
+            CPG_A: rng.uniform(0.1, 0.9, size=20),
+            CPG_B: rng.uniform(0.1, 0.9, size=20),
+            CPG_C: rng.uniform(0.1, 0.9, size=20),
+        }
+    )
+    y = 30.0 + 10.0 * x[CPG_A]
+    pipe.fit(x, y)
     path = _write_pickle(tmp_path / "pipe.pkl", pipe)
-    with pytest.raises(TypeError, match="expected exactly sklearn.linear_model.ElasticNet"):
-        emc.load_elasticnet_clock(path)
+    loaded = emc.load_elasticnet_clock(path)
+    assert hasattr(loaded, "named_steps")
+    assert "elasticnet" in loaded.named_steps
 
 
-def test_load_elasticnet_clock_rejects_elasticnetcv(tmp_path: Path) -> None:
+def test_load_elasticnet_clock_rejects_bare_elasticnetcv(tmp_path: Path) -> None:
     cv = ElasticNetCV(l1_ratio=[0.5], alphas=[0.1], cv=2)
     path = _write_pickle(tmp_path / "cv.pkl", cv)
-    with pytest.raises(TypeError, match="ElasticNetCV"):
+    with pytest.raises(TypeError, match="ElasticNet"):
         emc.load_elasticnet_clock(path)
 
 
@@ -336,7 +355,7 @@ def test_load_validation_cohort_transpose(tmp_path: Path) -> None:
 def test_load_validation_cohort_positional_fallback(
     tmp_path: Path,
 ) -> None:
-    """Positional align when IDs never overlap but row counts match."""
+    """Positional align requires explicit allow_positional_align=True."""
     rng = np.random.default_rng(1)
     n = 4
     # Methylation carries GSM IDs; metadata has only ages (RangeIndex → "0"…"3").
@@ -354,8 +373,13 @@ def test_load_validation_cohort_positional_fallback(
     meta_path = tmp_path / "meta.csv"
     meta.to_csv(meta_path, index=False)
 
+    with pytest.raises(ValueError, match="allow-positional-align"):
+        emc.load_validation_cohort(meth_path, meta_path)
+
     with pytest.warns(UserWarning, match="aligning by row order"):
-        wide = emc.load_validation_cohort(meth_path, meta_path)
+        wide = emc.load_validation_cohort(
+            meth_path, meta_path, allow_positional_align=True
+        )
     assert len(wide) == n
     np.testing.assert_allclose(wide["chronological_age"].to_numpy(), [20.0, 40.0, 55.0, 70.0])
 

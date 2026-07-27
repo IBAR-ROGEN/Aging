@@ -1,4 +1,2 @@
-# Pinned for deterministic variant functional annotation reruns (GRCh38/hg38).
-pandas==2.2.3
-requests==2.32.3
-typer==0.15.1
+# Use the repo root: uv sync --extra dev
+# This file is intentionally empty of pins to avoid drifting from pyproject.toml.

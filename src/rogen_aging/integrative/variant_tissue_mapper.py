@@ -247,19 +247,17 @@ class VariantTissueMapper:
         )
 
         ranked = filtered.sort(["rsid", "p_value"], nulls_last=True)
-        best = ranked.group_by("rsid").agg(
+        agg_exprs: list[pl.Expr] = [
             pl.len().alias("gtex_n_eqtls"),
             pl.col("tissue").first().alias("gtex_best_tissue"),
             pl.col("nes").first().alias("gtex_best_slope"),
             pl.col("p_value").first().alias("gtex_best_p_value"),
             pl.col("tissue").unique().sort().str.join(";").alias("gtex_tissues"),
-        )
+        ]
         if gene_col is not None:
-            gene_best = ranked.group_by("rsid").agg(
-                pl.col(gene_col).first().alias("gtex_best_gene")
-            )
-            best = best.join(gene_best, on="rsid", how="left")
-        else:
+            agg_exprs.insert(2, pl.col(gene_col).first().alias("gtex_best_gene"))
+        best = ranked.group_by("rsid").agg(agg_exprs)
+        if gene_col is None:
             best = best.with_columns(pl.lit(None).cast(pl.Utf8).alias("gtex_best_gene"))
 
         if "gtex_variant_id" in filtered.columns:

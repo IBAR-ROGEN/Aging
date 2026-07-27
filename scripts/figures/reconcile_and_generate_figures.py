@@ -376,8 +376,12 @@ def crosscheck_candidate_vs_supp(
         supp: Normalized Supplementary Table 3.
         report: Audit report mutated in place.
     """
-    cand = candidates.set_index("Gene_Symbol", drop=False)
-    table = supp.set_index("Gene_Symbol", drop=False)
+    cand = candidates.drop_duplicates(subset=["Gene_Symbol"], keep="first").set_index(
+        "Gene_Symbol", drop=False
+    )
+    table = supp.drop_duplicates(subset=["Gene_Symbol"], keep="first").set_index(
+        "Gene_Symbol", drop=False
+    )
 
     cand_genes = set(cand.index.astype(str))
     supp_genes = set(table.index.astype(str))
@@ -490,14 +494,17 @@ def load_af_table(path: Path) -> pd.DataFrame:
     """Load ROGEN vs gnomAD v4 NFE allele frequencies.
 
     Accepts either manuscript column names (``ROGEN_AF``, ``gnomAD_AF``) or
-    legacy pipeline aliases (``AF_1kg``, ``AF_gnomad_nfe``).
+    legacy pipeline aliases (``AF_1kg``, ``AF_gnomad_nfe``). ``AF_1kg`` is
+    renamed to ``ROGEN_AF`` for plotting compatibility; the original source is
+    recorded in ``af_source`` (``\"AF_1kg\"`` or ``\"ROGEN\"``).
 
     Args:
         path: Allele-frequency comparison CSV.
 
     Returns:
         DataFrame with ``rsID``, ``ROGEN_AF``, ``gnomAD_AF``, ``delta_af``,
-        ``abs_delta_af``, and boolean ``outlier`` (|ΔAF| > threshold).
+        ``abs_delta_af``, ``af_source``, and boolean ``outlier``
+        (|ΔAF| ≥ threshold).
 
     Raises:
         FileNotFoundError: If ``path`` does not exist.
@@ -507,6 +514,8 @@ def load_af_table(path: Path) -> pd.DataFrame:
         raise FileNotFoundError(f"AF comparison CSV not found: {path}")
 
     df = pd.read_csv(path)
+    had_rogen = any(c in df.columns for c in ("ROGEN_AF", "AF_rogen", "rogen_af"))
+    had_1kg = "AF_1kg" in df.columns
     rename = {
         "AF_gnomad_nfe": "gnomAD_AF",
         "gnomad_af": "gnomAD_AF",
@@ -529,7 +538,14 @@ def load_af_table(path: Path) -> pd.DataFrame:
     out["gnomAD_AF"] = pd.to_numeric(out["gnomAD_AF"], errors="coerce")
     out["delta_af"] = out["gnomAD_AF"] - out["ROGEN_AF"]
     out["abs_delta_af"] = out["delta_af"].abs()
-    out["outlier"] = out["abs_delta_af"] > DELTA_AF_THRESHOLD
+    out["outlier"] = out["abs_delta_af"] >= DELTA_AF_THRESHOLD
+    if "af_source" not in out.columns:
+        if had_rogen:
+            out["af_source"] = "ROGEN"
+        elif had_1kg:
+            out["af_source"] = "AF_1kg"
+        else:
+            out["af_source"] = "ROGEN"
     if "Gene" in out.columns:
         out["Gene"] = out["Gene"].map(lambda v: map_legacy_symbol(v)[0] if pd.notna(v) else "")
     return out
@@ -582,9 +598,10 @@ def _save_figure(fig: plt.Figure, stem: Path) -> tuple[Path, Path]:
 def plot_af_scatter(af: pd.DataFrame, output_stem: Path) -> tuple[Path, Path]:
     """Draw a log-scale scatter of gnomAD_AF versus ROGEN_AF.
 
-    Concordant points (|\ΔAF| ≤ threshold) are grey; outliers are highlighted
-    and labelled by ``rsID``. Axes use a small epsilon floor so AF = 0 does not
-    break the log scale (display-only; values are not rewritten on disk).
+    Concordant points (|ΔAF| < threshold) are grey; outliers (|ΔAF| ≥ threshold)
+    are highlighted and labelled by ``rsID``. Axes use a small epsilon floor so
+    AF = 0 does not break the log scale (display-only; values are not rewritten
+    on disk).
 
     Args:
         af: Output of :func:`load_af_table`.
@@ -615,7 +632,7 @@ def plot_af_scatter(af: pd.DataFrame, output_stem: Path) -> tuple[Path, Path]:
         c="#9CA3AF",
         alpha=0.85,
         edgecolors="none",
-        label=f"|ΔAF| ≤ {DELTA_AF_THRESHOLD:.2f}",
+        label=f"|ΔAF| < {DELTA_AF_THRESHOLD:.2f}",
         zorder=2,
     )
     ax.scatter(
@@ -626,7 +643,7 @@ def plot_af_scatter(af: pd.DataFrame, output_stem: Path) -> tuple[Path, Path]:
         alpha=0.95,
         edgecolors="#7F1D1D",
         linewidths=0.6,
-        label=f"|ΔAF| > {DELTA_AF_THRESHOLD:.2f}",
+        label=f"|ΔAF| ≥ {DELTA_AF_THRESHOLD:.2f}",
         zorder=3,
     )
 
@@ -1025,7 +1042,7 @@ def run_pipeline(
     typer.echo(f"     {af_pdf}")
     typer.echo(f"     {af_png}")
     n_out = int(af["outlier"].fillna(False).sum())
-    typer.echo(f"     Outliers (|ΔAF| > {DELTA_AF_THRESHOLD}): {n_out}")
+    typer.echo(f"     Outliers (|ΔAF| ≥ {DELTA_AF_THRESHOLD}): {n_out}")
 
     typer.echo("3/3  41-gene functional network…")
     edges, nodes = load_network_tables(network_csv, nodes_csv, supp)

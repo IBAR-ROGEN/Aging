@@ -14,6 +14,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import typer
 
 # ---------------------------------------------------------------------------
 # Configurable constants
@@ -33,9 +34,18 @@ COLOR_CONCORDANT = "#888888"
 COLOR_DISCREPANT = "#C45C3E"
 FONT_SIZE = 11
 
+app = typer.Typer(add_completion=False, help=__doc__)
+
 
 def normalize_rsid(value: object) -> str:
-    """Return a normalized rsID string (``rs`` prefix, stripped)."""
+    """Return a normalized rsID string (``rs`` prefix, stripped).
+
+    Args:
+        value: Raw rsID-like value from a table cell.
+
+    Returns:
+        Canonical ``rs…`` string, or ``""`` when empty / missing.
+    """
     text = str(value).strip()
     if not text or text.lower() == "nan":
         return ""
@@ -43,7 +53,17 @@ def normalize_rsid(value: object) -> str:
 
 
 def load_gene_map(manifest_path: Path) -> pd.Series:
-    """Map rsID -> gene name(s) from the LA-SNP manifest."""
+    """Map rsID -> gene name(s) from the LA-SNP manifest.
+
+    Args:
+        manifest_path: CSV with ``Gene`` and ``SNP_rsID`` columns.
+
+    Returns:
+        Series indexed by normalized rsID with comma-joined unique gene names.
+
+    Raises:
+        ValueError: If required columns are missing.
+    """
     manifest = pd.read_csv(manifest_path)
     required = {"Gene", "SNP_rsID"}
     missing = required - set(manifest.columns)
@@ -64,7 +84,17 @@ def load_gene_map(manifest_path: Path) -> pd.Series:
 
 
 def load_comparison_table(path: Path) -> pd.DataFrame:
-    """Load the 1KG vs gnomAD comparison CSV."""
+    """Load the 1KG vs gnomAD comparison CSV.
+
+    Args:
+        path: Comparison CSV with ``rsID``, ``AF_1kg``, and ``AF_gnomad_nfe``.
+
+    Returns:
+        DataFrame with normalized ``rsID`` values.
+
+    Raises:
+        ValueError: If required columns are missing.
+    """
     df = pd.read_csv(path)
     required = {"rsID", "AF_1kg", "AF_gnomad_nfe"}
     missing = required - set(df.columns)
@@ -77,7 +107,16 @@ def load_comparison_table(path: Path) -> pd.DataFrame:
 
 
 def merge_genes(comparison: pd.DataFrame, gene_map: pd.Series) -> pd.DataFrame:
-    """Attach gene names from the manifest; keep an existing ``Gene`` column when present."""
+    """Attach gene names from the manifest; keep an existing ``Gene`` column when present.
+
+    Args:
+        comparison: AF comparison table with ``rsID``.
+        gene_map: rsID → gene name mapping from ``load_gene_map``.
+
+    Returns:
+        Copy of ``comparison`` with a ``Gene`` column filled from the manifest
+        where missing.
+    """
     out = comparison.copy()
     if "Gene" not in out.columns:
         out["Gene"] = out["rsID"].map(gene_map)
@@ -88,7 +127,16 @@ def merge_genes(comparison: pd.DataFrame, gene_map: pd.Series) -> pd.DataFrame:
 
 
 def ensure_diff_columns(df: pd.DataFrame, threshold: float) -> pd.DataFrame:
-    """Ensure ``abs_diff`` and ``large_diff`` exist, recomputing when needed."""
+    """Ensure ``abs_diff`` and ``large_diff`` exist, recomputing when needed.
+
+    Args:
+        df: Comparison table with ``AF_1kg`` and ``AF_gnomad_nfe``.
+        threshold: Absolute AF difference at which a locus is flagged
+            (``large_diff`` is True when ``|ΔAF| >= threshold``).
+
+    Returns:
+        Copy of ``df`` with ``abs_diff`` and ``large_diff`` columns.
+    """
     out = df.copy()
     paired = out["AF_1kg"].notna() & out["AF_gnomad_nfe"].notna()
 
@@ -98,12 +146,19 @@ def ensure_diff_columns(df: pd.DataFrame, threshold: float) -> pd.DataFrame:
 
     if "large_diff" not in out.columns:
         out["large_diff"] = False
-    out.loc[paired, "large_diff"] = out.loc[paired, "abs_diff"] > threshold
+    out.loc[paired, "large_diff"] = out.loc[paired, "abs_diff"] >= threshold
     return out
 
 
 def format_locus_label(row: pd.Series) -> str:
-    """Build a scatter annotation label from rsID and optional gene name."""
+    """Build a scatter annotation label from rsID and optional gene name.
+
+    Args:
+        row: Table row with ``rsID`` and optional ``Gene``.
+
+    Returns:
+        Label string such as ``rs123`` or ``rs123 (GENE)``.
+    """
     rsid = str(row["rsID"])
     gene = row.get("Gene")
     if pd.notna(gene) and str(gene).strip() and str(gene).strip().lower() != "nan":
@@ -112,7 +167,12 @@ def format_locus_label(row: pd.Series) -> str:
 
 
 def print_coverage_summary(df: pd.DataFrame, threshold: float) -> None:
-    """Print headline counts for the prioritized SNP set."""
+    """Print headline counts for the prioritized SNP set.
+
+    Args:
+        df: Comparison table with AF and ``large_diff`` columns.
+        threshold: Absolute AF difference used for flagging (for display).
+    """
     total = len(df)
     paired_mask = df["AF_1kg"].notna() & df["AF_gnomad_nfe"].notna()
     paired = int(paired_mask.sum())
@@ -121,11 +181,18 @@ def print_coverage_summary(df: pd.DataFrame, threshold: float) -> None:
     print("Allele-frequency comparison coverage")
     print(f"  Total SNPs in prioritized set: {total}")
     print(f"  SNPs with usable AF in both sources: {paired}")
-    print(f"  SNPs flagged (|ΔAF| > {threshold:g}): {flagged}")
+    print(f"  SNPs flagged (|ΔAF| ≥ {threshold:g}): {flagged}")
 
 
-def plot_scatter_panel(ax: plt.Axes, paired: pd.DataFrame, top_n: int) -> None:
-    """Panel A: AF scatter with identity line and top-discrepancy labels."""
+def plot_scatter_panel(ax: plt.Axes, paired: pd.DataFrame, top_n: int, threshold: float) -> None:
+    """Panel A: AF scatter with identity line and top-discrepancy labels.
+
+    Args:
+        ax: Matplotlib axes for the scatter panel.
+        paired: Rows with both AF sources present, including ``large_diff``.
+        top_n: Number of largest-|ΔAF| loci to annotate.
+        threshold: Absolute AF difference used for concordant/discrepant colors.
+    """
     concordant = paired.loc[~paired["large_diff"]]
     discrepant = paired.loc[paired["large_diff"]]
 
@@ -136,7 +203,7 @@ def plot_scatter_panel(ax: plt.Axes, paired: pd.DataFrame, top_n: int) -> None:
         color=COLOR_CONCORDANT,
         alpha=0.85,
         linewidths=0,
-        label=f"|ΔAF| ≤ {DIFF_THRESHOLD:g}",
+        label=f"|ΔAF| < {threshold:g}",
     )
     if not discrepant.empty:
         ax.scatter(
@@ -146,7 +213,7 @@ def plot_scatter_panel(ax: plt.Axes, paired: pd.DataFrame, top_n: int) -> None:
             color=COLOR_DISCREPANT,
             alpha=0.95,
             linewidths=0,
-            label=f"|ΔAF| > {DIFF_THRESHOLD:g}",
+            label=f"|ΔAF| ≥ {threshold:g}",
         )
 
     max_af = float(max(paired["AF_1kg"].max(), paired["AF_gnomad_nfe"].max()))
@@ -176,8 +243,15 @@ def plot_scatter_panel(ax: plt.Axes, paired: pd.DataFrame, top_n: int) -> None:
         )
 
 
-def plot_ranked_panel(ax: plt.Axes, paired: pd.DataFrame, top_n: int) -> None:
-    """Panel B: horizontal bars of the top |ΔAF| loci."""
+def plot_ranked_panel(ax: plt.Axes, paired: pd.DataFrame, top_n: int, threshold: float) -> None:
+    """Panel B: horizontal bars of the top |ΔAF| loci.
+
+    Args:
+        ax: Matplotlib axes for the ranked bar panel.
+        paired: Rows with both AF sources present, including ``abs_diff``.
+        top_n: Number of largest-|ΔAF| loci to show.
+        threshold: Absolute AF difference drawn as a vertical reference line.
+    """
     top = paired.sort_values("abs_diff", ascending=False).head(top_n).iloc[::-1]
     y_pos = np.arange(len(top))
     colors = [COLOR_DISCREPANT if flag else COLOR_CONCORDANT for flag in top["large_diff"]]
@@ -187,12 +261,57 @@ def plot_ranked_panel(ax: plt.Axes, paired: pd.DataFrame, top_n: int) -> None:
     ax.set_yticklabels(top["rsID"].astype(str), fontsize=FONT_SIZE - 1)
     ax.set_xlabel("|ΔAF| (1000 Genomes − gnomAD v4 NFE)")
     ax.set_title("Largest allele-frequency discrepancies")
-    ax.axvline(DIFF_THRESHOLD, color="#666666", linestyle="--", linewidth=1.0, label=f"Threshold ({DIFF_THRESHOLD:g})")
+    ax.axvline(threshold, color="#666666", linestyle="--", linewidth=1.0, label=f"Threshold ({threshold:g})")
     ax.legend(loc="lower right", frameon=False, fontsize=FONT_SIZE - 2)
     ax.margins(x=0.08)
 
 
-def main() -> None:
+@app.command()
+def main(
+    input: Path = typer.Option(
+        INPUT_CSV,
+        "--input",
+        help="1KG vs gnomAD AF comparison CSV",
+        path_type=Path,
+    ),
+    manifest: Path = typer.Option(
+        MANIFEST_CSV,
+        "--manifest",
+        help="UKB LA-SNP manifest CSV (Gene + SNP_rsID)",
+        path_type=Path,
+    ),
+    output_dir: Path = typer.Option(
+        OUTPUT_DIR,
+        "--output-dir",
+        help="Directory for PNG and PDF outputs",
+        path_type=Path,
+    ),
+    basename: str = typer.Option(
+        FIG_BASENAME,
+        "--basename",
+        help="Output filename stem (without extension)",
+    ),
+    threshold: float = typer.Option(
+        DIFF_THRESHOLD,
+        "--threshold",
+        help="Absolute AF difference flagging threshold (|ΔAF| >= threshold)",
+    ),
+    top_n: int = typer.Option(
+        TOP_N_LABELS,
+        "--top-n",
+        help="Number of top |ΔAF| loci to label / rank",
+    ),
+) -> None:
+    """Write the two-panel AF comparison figure (PNG + PDF).
+
+    Args:
+        input: Path to the AF comparison CSV.
+        manifest: Path to the LA-SNP gene manifest CSV.
+        output_dir: Directory for figure outputs.
+        basename: Filename stem for PNG/PDF.
+        threshold: Absolute AF difference for ``large_diff`` (≥).
+        top_n: Number of top discrepancies to annotate and rank.
+    """
     plt.rcParams.update(
         {
             "font.size": FONT_SIZE,
@@ -204,24 +323,24 @@ def main() -> None:
         }
     )
 
-    comparison = load_comparison_table(INPUT_CSV)
-    gene_map = load_gene_map(MANIFEST_CSV)
+    comparison = load_comparison_table(input)
+    gene_map = load_gene_map(manifest)
     comparison = merge_genes(comparison, gene_map)
-    comparison = ensure_diff_columns(comparison, DIFF_THRESHOLD)
+    comparison = ensure_diff_columns(comparison, threshold)
 
-    print_coverage_summary(comparison, DIFF_THRESHOLD)
+    print_coverage_summary(comparison, threshold)
 
     paired = comparison.dropna(subset=["AF_1kg", "AF_gnomad_nfe"]).copy()
     if paired.empty:
         raise ValueError("No SNPs with allele frequencies in both 1000 Genomes and gnomAD.")
 
     fig, axes = plt.subplots(1, 2, figsize=(13.5, 5.8), constrained_layout=True)
-    plot_scatter_panel(axes[0], paired, TOP_N_LABELS)
-    plot_ranked_panel(axes[1], paired, TOP_N_LABELS)
+    plot_scatter_panel(axes[0], paired, top_n, threshold)
+    plot_ranked_panel(axes[1], paired, top_n, threshold)
 
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    png_path = OUTPUT_DIR / f"{FIG_BASENAME}.png"
-    pdf_path = OUTPUT_DIR / f"{FIG_BASENAME}.pdf"
+    output_dir.mkdir(parents=True, exist_ok=True)
+    png_path = output_dir / f"{basename}.png"
+    pdf_path = output_dir / f"{basename}.pdf"
     fig.savefig(png_path, dpi=FIGURE_DPI, bbox_inches="tight")
     fig.savefig(pdf_path, bbox_inches="tight")
     plt.close(fig)
@@ -231,4 +350,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    app()

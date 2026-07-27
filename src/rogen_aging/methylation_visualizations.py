@@ -1,7 +1,8 @@
-"""Visualization scripts for ROGEN Methylation Pipeline.
+"""Visualization helpers for the ROGEN methylation calling pipeline.
 
-This module generates visualizations for the methylation calling pipeline,
-including workflow diagrams and example DMR analysis plots.
+Produces workflow diagrams, example DMR analysis panels, and demo clock /
+risk figures. Random demo data uses ``numpy.random.Generator`` with an
+explicit seed for reproducibility.
 """
 
 from pathlib import Path
@@ -167,11 +168,16 @@ def create_pipeline_workflow_diagram(output_path: str | None = None) -> None:
     plt.close()
 
 
-def create_example_dmr_visualizations(output_path: str | None = None) -> None:
+def create_example_dmr_visualizations(
+    output_path: str | None = None,
+    *,
+    seed: int = 42,
+) -> None:
     """Create example DMR visualizations with simulated data.
     
     Args:
         output_path: Path to save the figure. If None, saves to ``figures/`` directory.
+        seed: RNG seed for reproducible simulated DMR coordinates and stats.
     """
     if output_path is None:
         output_dir = Path(__file__).parent.parent.parent / "figures"
@@ -179,12 +185,12 @@ def create_example_dmr_visualizations(output_path: str | None = None) -> None:
         output_path = output_dir / "Example_DMR_Visualizations.png"
     
     # Generate simulated DMR data
-    np.random.seed(42)
+    rng = np.random.default_rng(seed)
     n_dmrs = 50
     
     # Simulate chromosome positions
     chromosomes = ['chr1', 'chr2', 'chr3', 'chr4', 'chr5', 'chr6', 'chr7', 'chr8']
-    chr_counts = np.random.multinomial(n_dmrs, [0.2, 0.15, 0.15, 0.15, 0.1, 0.1, 0.1, 0.05])
+    chr_counts = rng.multinomial(n_dmrs, [0.2, 0.15, 0.15, 0.15, 0.1, 0.1, 0.1, 0.05])
     
     dmr_data = []
     chr_pos = {}
@@ -193,11 +199,11 @@ def create_example_dmr_visualizations(output_path: str | None = None) -> None:
         for j in range(count):
             dmr_data.append({
                 'chr': chr_name,
-                'position': chr_pos[chr_name] + np.random.randint(-50, 50),
-                'p_value': np.random.uniform(0.0001, 0.05),
-                'meth_diff': np.random.uniform(-0.3, 0.3),
-                'width': np.random.randint(100, 2000),
-                'n_cpg': np.random.randint(3, 15)
+                'position': chr_pos[chr_name] + int(rng.integers(-50, 50)),
+                'p_value': float(rng.uniform(0.0001, 0.05)),
+                'meth_diff': float(rng.uniform(-0.3, 0.3)),
+                'width': int(rng.integers(100, 2000)),
+                'n_cpg': int(rng.integers(3, 15))
             })
     
     df = pd.DataFrame(dmr_data)
@@ -462,7 +468,11 @@ def create_bimodal_risk_heatmap(output_path: str | None = None) -> None:
     plt.close()
 
 
-def create_clock_validation_plot(output_path: str | None = None) -> None:
+def create_clock_validation_plot(
+    output_path: str | None = None,
+    *,
+    seed: int = 42,
+) -> None:
     """Create Figure 3: Methylation Clock Accuracy scatter plot.
     
     This script generates the scatter plot for Activity 2.1.10, showing the
@@ -470,6 +480,7 @@ def create_clock_validation_plot(output_path: str | None = None) -> None:
     
     Args:
         output_path: Path to save the figure. If None, saves to ``figures/`` directory.
+        seed: RNG seed for reproducible synthetic age / DNAm pairs.
     """
     if output_path is None:
         output_dir = Path(__file__).parent.parent.parent / "figures"
@@ -477,12 +488,12 @@ def create_clock_validation_plot(output_path: str | None = None) -> None:
         output_path = output_dir / "Fig3_Clock_Validation.png"
     
     # Generate synthetic data
-    np.random.seed(42)  # For reproducibility
+    rng = np.random.default_rng(seed)
     n_samples = 150
-    chronological_age = np.random.uniform(20, 90, n_samples)
+    chronological_age = rng.uniform(20, 90, n_samples)
     
     # Simulate DNAm Age with small error (MAE ~ 2.1)
-    error = np.random.normal(0, 2.6, n_samples)  # Random noise
+    error = rng.normal(0, 2.6, n_samples)  # Random noise
     dnam_age = chronological_age + error
     
     # Calculate actual stats for the plot
@@ -525,14 +536,19 @@ def create_clock_validation_plot(output_path: str | None = None) -> None:
     plt.close()
 
 
-def generate_all_visualizations() -> None:
-    """Generate all methylation pipeline visualizations."""
+def generate_all_visualizations(*, seed: int = 42) -> None:
+    """Generate all methylation pipeline visualizations.
+
+    Args:
+        seed: RNG seed forwarded to demo plots that use simulated data.
+    """
     print("Generating methylation pipeline visualizations...")
     print("=" * 60)
     
     create_pipeline_workflow_diagram()
-    create_example_dmr_visualizations()
+    create_example_dmr_visualizations(seed=seed)
     create_pipeline_summary_diagram()
+    create_clock_validation_plot(seed=seed)
     
     print("=" * 60)
     print("All visualizations generated successfully!")

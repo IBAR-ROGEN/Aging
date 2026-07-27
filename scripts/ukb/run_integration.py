@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Activity 2.1.11.1 — thin CLI for synthetic UKB integrative validation.
+"""Activity 2.1.11.1 — thin CLI for synthetic UKB integration.
 
 Joins mock RAP phenotype CSV and LA-SNP VCF (from ``rogen-ukb-mock-rap``), runs
 dominant-model association scans, and writes tidy result tables. **Synthetic data

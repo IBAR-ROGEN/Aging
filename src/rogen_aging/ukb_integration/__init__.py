@@ -1,4 +1,8 @@
-"""Synthetic UKB integrative validation (Activity 2.1.11.1); not for real cohort data."""
+"""Synthetic UKB integration (phenotype–genotype join; Activity 2.1.11.1).
+
+Not for real cohort data. Distinct from :mod:`rogen_aging.integrative`
+(variant×tissue×phenotype risk scoring).
+"""
 
 from __future__ import annotations
 
