@@ -37,7 +37,7 @@ You should see version information if installed correctly.
 
 Once Graphviz is installed, run:
 ```bash
-uv run python scripts/generate_agent_system_schema.py
+uv run python scripts/figures/generate_agent_system_schema.py
 ```
 
 The PNG will be saved to `analysis/Fig4_Agent_System_Schema.png`.

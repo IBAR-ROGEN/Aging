@@ -1,0 +1,182 @@
+# ROGEN Aging — Workflow index
+
+Navigation hub for installable packages, CLI entry points, and detailed guides.  
+**Project layout:** [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md) · **Activity map:** [ACTIVITIES.md](ACTIVITIES.md)
+
+## Quickstart
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+uv sync --extra dev
+uv run pytest
+uv run jupyter lab   # optional
+```
+
+Install the Git pre-commit hook (UKB data protection):
+
+```bash
+./scripts/dev/install_pre_commit_hook.sh
+```
+
+## Output directories
+
+| Directory | Role |
+|-----------|------|
+| `figures/` | **Regenerated plots** (git-ignored) — default for matplotlib/networkx scripts |
+| `analysis/` | Pipeline CSVs, models, VEP cache; plus **committed** manuscript PNG/PDF snapshots |
+| `data/` | Large/local inputs (git-ignored) |
+| `outputs/` | Optional scratch (git-ignored) |
+| `test_data/` | Versioned synthetic fixtures |
+
+See [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md#data-flow) for the full path reference.
+
+## Console entry points (`uv run …`)
+
+| Command | Purpose |
+|---------|---------|
+| `rogen-clock train …` / `rogen-clock evaluate …` | Epigenetic clock train & validation ([CLOCK_LIBRARY.md](CLOCK_LIBRARY.md)) |
+| `rogen-ukb-manifest build …` / `… extract …` | LA-SNP manifest + 1KG AF ([LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md](LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md)) |
+| `rogen-compare-af-gnomad …` | 1KG vs gnomAD v4 NFE ([LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md](LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md)) |
+| `rogen-compare-af-gnomad summarize …` | Markdown summary + top-|ΔAF| table from comparison CSV |
+| `rogen-ukb-mock-clinical …` | Synthetic clinical CSV ([SYNTHETIC_UKB_GENERATOR.md](SYNTHETIC_UKB_GENERATOR.md)) |
+| `rogen-ukb-mock-rap …` | Synthetic UKB-RAP folder (phenotypes + LA-SNP VCF) ([SYNTHETIC_UKB_RAP_GENERATOR.md](SYNTHETIC_UKB_RAP_GENERATOR.md)) |
+| `rogen-ukb-integrate …` | Mock phenotype–genotype join + LA-SNP associations ([UKB_INTEGRATION_PIPELINE.md](UKB_INTEGRATION_PIPELINE.md)) |
+| `rogen-vcf-synthetic …` | Streaming synthetic VCF ([SYNTHETIC_ROMANIAN_VCF_GENERATOR.md](SYNTHETIC_ROMANIAN_VCF_GENERATOR.md)) |
+
+Legacy script paths under `scripts/*.py` and at the repo root remain as **deprecation shims** forwarding to `scripts/<workflow>/`.
+
+## Workflows
+
+### Epigenetic clock (Activity 2.1.10.1)
+
+- **Package:** `src/rogen_aging/clock/` (`data.py`, `model.py`, `train.py`, `evaluate.py`, `external_data.py`)
+- **Canonical CLI:** `uv run rogen-clock train|evaluate` or `scripts/clock/run_clock.py`
+- **GSE87571 external cohort:** `uv run python -m rogen_aging.clock.external_data --output data/gse87571.parquet`
+- **External-validation figure:** `uv run python scripts/figures/plot_clock_eval.py` → [CLOCK_EVAL_FIGURES.md](CLOCK_EVAL_FIGURES.md)
+- **Final metrics + three-panel figure:** `uv run python evaluate_methylation_clock.py` → [METHYLATION_CLOCK_VALIDATION.md](METHYLATION_CLOCK_VALIDATION.md)
+- **Romanian mock demo** (separate StandardScaler path): `scripts/clock/train_romanian_epigenetic_clock.py`
+- **Docs:** [CLOCK_LIBRARY.md](CLOCK_LIBRARY.md), [GSE40279_CLOCK_TRAINING.md](GSE40279_CLOCK_TRAINING.md), [CLOCK_EVAL_FIGURES.md](CLOCK_EVAL_FIGURES.md), [METHYLATION_CLOCK_VALIDATION.md](METHYLATION_CLOCK_VALIDATION.md), [ROMANIAN_EPIGENETIC_CLOCK.md](ROMANIAN_EPIGENETIC_CLOCK.md), [ACTIVITIES.md](ACTIVITIES.md#21101--methylation-aging-clock)
+
+### UK Biobank (synthetic + LA-SNP)
+
+- **Packages:** `src/rogen_aging/ukb/`, `src/rogen_aging/integration/`
+- **Mock clinical CSV:** `scripts/ukb/mock_clinical_csv.py` · **Mock RAP folder:** `scripts/ukb/mock_rap_folder.py`
+- **Integration scan:** `uv run rogen-ukb-integrate` or `scripts/ukb/run_integration.py`
+- **Docs:** [SYNTHETIC_UKB_GENERATOR.md](SYNTHETIC_UKB_GENERATOR.md), [SYNTHETIC_UKB_RAP_GENERATOR.md](SYNTHETIC_UKB_RAP_GENERATOR.md), [UKB_INTEGRATION_PIPELINE.md](UKB_INTEGRATION_PIPELINE.md), [LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md](LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md), [AF_COMPARISON_FIGURES.md](AF_COMPARISON_FIGURES.md)
+- **Publication AF figure:** `uv run python scripts/figures/plot_af_comparison.py` → `figures/af_1kg_vs_gnomad_comparison.png` + `.pdf`
+
+### Methylation (Oxford Nanopore)
+
+- **Canonical scripts:** `scripts/dev/pipeline_validation.sh`, `scripts/dev/downstream_analysis.R` (root paths are shims)
+- **Docs:** [METHYLATION_PIPELINE_README.md](METHYLATION_PIPELINE_README.md), [METHYLATION_PIPELINE_USAGE.md](METHYLATION_PIPELINE_USAGE.md)
+
+### Multi-omics EDA dashboard
+
+```bash
+uv run streamlit run src/rogen_aging/eda_dashboard/app.py
+```
+
+See [EDA_DASHBOARD.md](EDA_DASHBOARD.md).
+
+### AlphaGenome (Activity 2.1.7.1)
+
+```bash
+uv run python scripts/alphagenome/alphagenome_sequence_comparer.py
+uv run python scripts/alphagenome/analyze_alphagenome_results.py
+uv run python scripts/alphagenome/visualize_alphagenome_results.py
+```
+
+Tables → `analysis/alphagenome/` · plots → `figures/alphagenome/`. See [ALPHAGENOME_ANALYSIS_EXPLANATION.md](ALPHAGENOME_ANALYSIS_EXPLANATION.md).
+
+**VEP functional consequences (manuscript table):**
+
+```bash
+uv run python scripts/ukb/annotate_la_snps_vep.py
+```
+
+See [LA_SNP_VEP_ANNOTATION.md](LA_SNP_VEP_ANNOTATION.md).
+
+**GTEx eQTL evidence (brain + whole blood):**
+
+```bash
+uv run python scripts/ukb/annotate_la_snps_gtex.py
+```
+
+See [LA_SNP_GTEX_ANNOTATION.md](LA_SNP_GTEX_ANNOTATION.md).
+
+### Genomics validation pipeline (Activities 2.1.7.2–2.1.7.4)
+
+Table validation, LongevityMap overlap enrichment, and variant functional annotation
+(GRCh38/hg38). Outputs → `results/`.
+
+```bash
+uv run python analysis/validate_genomics_tables/validate_genomics_tables.py \
+  --input overlapping_genes_with_snps.xlsx --output-dir results
+uv run python analysis/overlap_enrichment/run_overlap_enrichment.py --output-dir results
+uv run python analysis/variant_functional_annotation/run_variant_functional_annotation.py \
+  --input results/snps_validated.csv --output-dir results
+```
+
+See [GENOMICS_ANALYSIS.md](GENOMICS_ANALYSIS.md) · module index: [analysis/genomics/README.md](../analysis/genomics/README.md).
+
+### July prioritized-variant annotation
+
+Combined GTEx v8 eQTL + Ensembl VEP + AlphaGenome/AlphaMissense Excel export
+for the prioritized variant CSV. Output → `outputs/Supplementary_Table_1_Annotated_Variants.xlsx`.
+
+```bash
+uv run python run_july_annotation_pipeline.py
+uv run python run_july_annotation_pipeline.py --cache-only
+```
+
+See [JULY_ANNOTATION_PIPELINE.md](JULY_ANNOTATION_PIPELINE.md).
+
+### Integrative multi-omics (variant × tissue × phenotype)
+
+Offline joins of annotated variants with GTEx eQTL summaries, optional
+AlphaGenome / methylation links, and composite phenotypic risk. Package:
+`rogen_aging.integrative`. Outputs → `analysis/integrative/`.
+
+```bash
+uv run python scripts/integrative/run_pipeline.py \
+  --variants data/processed/prioritized_variants.csv \
+  --eqtls analysis/gtex_annotation/la_snp_gtex_eqtls.csv \
+  --output-dir analysis/integrative/
+uv run python scripts/integrative/map_variant_tissues.py --help
+uv run python scripts/integrative/integrate_phenotypes.py --help
+```
+
+See [INTEGRATIVE_PIPELINE.md](INTEGRATIVE_PIPELINE.md).
+
+### Manuscript figures
+
+Canonical renders live under **`scripts/figures/`** (flat `scripts/render_*.py` / `scripts/generate_*.py` are deprecation shims). Default output: **`figures/`**.
+
+```bash
+uv run python scripts/figures/generate_network_fig.py          # → figures/Fig_LA_SNP_network.*
+uv run python scripts/figures/render_figure1c_mechanisms_network.py
+uv run python scripts/figures/generate_la_snp_per_gene_plot.py
+uv run python scripts/figures/render_dashboard_figure_mockup.py
+uv run python scripts/figures/render_longevity_network_diagram.py
+uv run python scripts/figures/generate_methylation_visualizations.py
+uv run python scripts/figures/generate_bimodal_heatmap.py
+uv run python scripts/figures/generate_clock_validation.py
+uv run python scripts/figures/plot_clock_eval.py              # GSE87571 external validation
+uv run python scripts/figures/plot_af_comparison.py           # 1KG vs gnomAD AF comparison
+uv run python reconcile_and_generate_figures.py               # nomenclature audit + AF/network figures
+uv run python scripts/figures/generate_agent_system_schema.py
+uv run python scripts/figures/generate_pipeline_diagram.py   # requires Graphviz `dot` on PATH
+```
+
+See [FIGURES.md](FIGURES.md) for React vs matplotlib assets and output paths. Nomenclature / ROGEN–gnomAD / 41-gene network: [NOMENCLATURE_RECONCILE_FIGURES.md](NOMENCLATURE_RECONCILE_FIGURES.md).
+
+### Compliance & CI
+
+- Pre-commit: [UKB_PRE_COMMIT_HOOK.md](UKB_PRE_COMMIT_HOOK.md)
+- CI audit: [UKBB_CI_COMPLIANCE_AUDIT.md](UKBB_CI_COMPLIANCE_AUDIT.md) · `./scripts/dev/ukbb_ci_compliance_audit.sh`
+- GitHub Actions: `.github/workflows/ci.yml` — `uv sync --extra dev` → `pytest -q` → UKB audit (see [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md#tests))
+- Clock tests: `tests/test_clock_regression.py` requires scikit-learn **1.9+** API (`alphas=20`, not removed `n_alphas`) — [GSE40279_CLOCK_TRAINING.md](GSE40279_CLOCK_TRAINING.md#scikit-learn-compatibility)
+
+## Notebooks
+
+Grouped under `notebooks/01_*` … `05_*`. See [notebooks/README.md](../notebooks/README.md).

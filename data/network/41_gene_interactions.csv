@@ -1,0 +1,117 @@
+gene_a,gene_b,string_score,functional_cluster_a,functional_cluster_b,longevity_a,longevity_b
+HSPA1B,HSPA1A,0.994,Protein Folding/HSP,Protein Folding/HSP,Pro-Longevity,Pro-Longevity
+CETP,APOC1,0.985,Lipid Metabolism,Lipid Metabolism,Anti-Longevity,Anti-Longevity
+TLR4,HSPA1B,0.941,Neuroinflammation,Protein Folding/HSP,Anti-Longevity,Pro-Longevity
+HSPA1B,HSPA1L,0.879,Protein Folding/HSP,Protein Folding/HSP,Pro-Longevity,Pro-Longevity
+TLR4,LY86,0.854,Neuroinflammation,Neuroinflammation,Anti-Longevity,Anti-Longevity
+PITPNM3,SEMA4A,0.767,Lipid Metabolism,Neuroinflammation,Context-Dependent,Context-Dependent
+HMOX1,TLR4,0.719,Mitochondrial Function,Neuroinflammation,Pro-Longevity,Anti-Longevity
+HSPA1A,HSPA1L,0.705,Protein Folding/HSP,Protein Folding/HSP,Pro-Longevity,Pro-Longevity
+SEMA4A,PROM1,0.627,Neuroinflammation,Other/Context,Context-Dependent,Context-Dependent
+PLXNA4,SEMA4A,0.61,Neuronal Signaling,Neuroinflammation,Context-Dependent,Context-Dependent
+PITPNM3,PROM1,0.586,Lipid Metabolism,Other/Context,Context-Dependent,Context-Dependent
+TLR4,HSPA1A,0.574,Neuroinflammation,Protein Folding/HSP,Anti-Longevity,Pro-Longevity
+HMOX1,HSPA1B,0.497,Mitochondrial Function,Protein Folding/HSP,Pro-Longevity,Pro-Longevity
+LINGO2,LRP1B,0.477,Neuronal Signaling,Lipid Metabolism,Context-Dependent,Context-Dependent
+HLA-DQB1,HSPA1L,0.475,Neuroinflammation,Protein Folding/HSP,Anti-Longevity,Pro-Longevity
+NLRC5,TLR4,0.472,Neuroinflammation,Neuroinflammation,Pro-Longevity,Anti-Longevity
+LY86,PARVG,0.471,Neuroinflammation,Cell Adhesion/Structure,Anti-Longevity,Context-Dependent
+HMOX1,MT2A,0.432,Mitochondrial Function,Mitochondrial Function,Pro-Longevity,Pro-Longevity
+CAMK4,HPCAL1,0.428,Neuronal Signaling,Neuronal Signaling,Context-Dependent,Context-Dependent
+YWHAG,HPCAL1,0.398,Protein Folding/HSP,Neuronal Signaling,Pro-Longevity,Context-Dependent
+YWHAG,HSPA1A,0.389,Protein Folding/HSP,Protein Folding/HSP,Pro-Longevity,Pro-Longevity
+CETP,CAMTA1,0.386,Lipid Metabolism,Neuronal Signaling,Anti-Longevity,Context-Dependent
+MT2A,HSPA1A,0.37,Mitochondrial Function,Protein Folding/HSP,Pro-Longevity,Pro-Longevity
+YWHAG,HSPA1B,0.37,Protein Folding/HSP,Protein Folding/HSP,Pro-Longevity,Pro-Longevity
+HLA-DQB1,LRP1B,0.37,Neuroinflammation,Lipid Metabolism,Anti-Longevity,Context-Dependent
+MT2A,HSPA1B,0.363,Mitochondrial Function,Protein Folding/HSP,Pro-Longevity,Pro-Longevity
+LRP1B,RYR3,0.355,Lipid Metabolism,Neuronal Signaling,Context-Dependent,Context-Dependent
+LY86,HPCAL1,0.351,Neuroinflammation,Neuronal Signaling,Anti-Longevity,Context-Dependent
+HMOX1,HSPA1A,0.348,Mitochondrial Function,Protein Folding/HSP,Pro-Longevity,Pro-Longevity
+RAD23B,NDUFS1,0.344,Protein Folding/HSP,Mitochondrial Function,Pro-Longevity,Pro-Longevity
+SGK1,PRR5L,0.342,Growth Signaling,Other/Context,Anti-Longevity,Context-Dependent
+PCSK1,TLR4,0.339,Lipid Metabolism,Neuroinflammation,Context-Dependent,Anti-Longevity
+LRP1B,THSD7B,0.337,Lipid Metabolism,Cell Adhesion/Structure,Context-Dependent,Context-Dependent
+TLR4,HLA-DQB1,0.333,Neuroinflammation,Neuroinflammation,Anti-Longevity,Anti-Longevity
+HMOX1,LRP1B,0.317,Mitochondrial Function,Lipid Metabolism,Pro-Longevity,Context-Dependent
+TLR4,PROM1,0.315,Neuroinflammation,Other/Context,Anti-Longevity,Context-Dependent
+SGK1,TLR4,0.293,Growth Signaling,Neuroinflammation,Anti-Longevity,Anti-Longevity
+YWHAG,RAD23B,0.276,Protein Folding/HSP,Protein Folding/HSP,Pro-Longevity,Pro-Longevity
+HMOX1,ABCC4,0.275,Mitochondrial Function,Transport/Metabolism,Pro-Longevity,Context-Dependent
+CETP,TLR4,0.271,Lipid Metabolism,Neuroinflammation,Anti-Longevity,Anti-Longevity
+PHYHIP,TMEM151B,0.27,Other/Context,Other/Context,Context-Dependent,Context-Dependent
+PLXNA4,CLSTN2,0.263,Neuronal Signaling,Neuronal Signaling,Context-Dependent,Context-Dependent
+SDC4,APOC1,0.26,Neuroinflammation,Lipid Metabolism,Context-Dependent,Anti-Longevity
+HLA-DQB1,LY86,0.259,Neuroinflammation,Neuroinflammation,Anti-Longevity,Anti-Longevity
+SGK1,HSPA1B,0.257,Growth Signaling,Protein Folding/HSP,Anti-Longevity,Pro-Longevity
+SGK1,HSPA1A,0.253,Growth Signaling,Protein Folding/HSP,Anti-Longevity,Pro-Longevity
+NLRC5,PARVG,0.252,Neuroinflammation,Cell Adhesion/Structure,Pro-Longevity,Context-Dependent
+RAD23B,HSPA1B,0.252,Protein Folding/HSP,Protein Folding/HSP,Pro-Longevity,Pro-Longevity
+HPCAL1,RYR3,0.251,Neuronal Signaling,Neuronal Signaling,Context-Dependent,Context-Dependent
+ASIC2,TMEM151B,0.244,Transport/Metabolism,Other/Context,Context-Dependent,Context-Dependent
+ASIC2,PHYHIP,0.242,Transport/Metabolism,Other/Context,Context-Dependent,Context-Dependent
+TLR4,ABCC4,0.241,Neuroinflammation,Transport/Metabolism,Anti-Longevity,Context-Dependent
+HMOX1,CAMK4,0.24,Mitochondrial Function,Neuronal Signaling,Pro-Longevity,Context-Dependent
+LRP1B,NBEA,0.238,Lipid Metabolism,Neuronal Signaling,Context-Dependent,Context-Dependent
+CETP,NLRC5,0.237,Lipid Metabolism,Neuroinflammation,Anti-Longevity,Pro-Longevity
+HMOX1,PROM1,0.237,Mitochondrial Function,Other/Context,Pro-Longevity,Context-Dependent
+RAD23B,HSPA1A,0.237,Protein Folding/HSP,Protein Folding/HSP,Pro-Longevity,Pro-Longevity
+RAD23B,HSPA1L,0.234,Protein Folding/HSP,Protein Folding/HSP,Pro-Longevity,Pro-Longevity
+CETP,LY86,0.23,Lipid Metabolism,Neuroinflammation,Anti-Longevity,Anti-Longevity
+CAMTA1,MYT1L,0.229,Neuronal Signaling,Neuronal Signaling,Context-Dependent,Context-Dependent
+YWHAG,SGK1,0.228,Protein Folding/HSP,Growth Signaling,Pro-Longevity,Anti-Longevity
+MT2A,SGK1,0.225,Mitochondrial Function,Growth Signaling,Pro-Longevity,Anti-Longevity
+CAMK4,TLR4,0.22,Neuronal Signaling,Neuroinflammation,Context-Dependent,Anti-Longevity
+HMOX1,SGK1,0.214,Mitochondrial Function,Growth Signaling,Pro-Longevity,Anti-Longevity
+CAMK4,RYR3,0.212,Neuronal Signaling,Neuronal Signaling,Context-Dependent,Context-Dependent
+PCSK1,LINGO2,0.212,Lipid Metabolism,Neuronal Signaling,Context-Dependent,Context-Dependent
+PCSK1,MYT1L,0.209,Lipid Metabolism,Neuronal Signaling,Context-Dependent,Context-Dependent
+HMOX1,HSPA1L,0.209,Mitochondrial Function,Protein Folding/HSP,Pro-Longevity,Pro-Longevity
+NLRC5,HLA-DQB1,0.209,Neuroinflammation,Neuroinflammation,Pro-Longevity,Anti-Longevity
+CAMK4,HSPA1B,0.207,Neuronal Signaling,Protein Folding/HSP,Context-Dependent,Pro-Longevity
+SDC4,TLR4,0.207,Neuroinflammation,Neuroinflammation,Context-Dependent,Anti-Longevity
+PROM1,ABCC4,0.205,Other/Context,Transport/Metabolism,Context-Dependent,Context-Dependent
+PCSK1,HSPA1B,0.203,Lipid Metabolism,Protein Folding/HSP,Context-Dependent,Pro-Longevity
+CAMK4,SGK1,0.201,Neuronal Signaling,Growth Signaling,Context-Dependent,Anti-Longevity
+HLA-DQB1,HSPA1B,0.199,Neuroinflammation,Protein Folding/HSP,Anti-Longevity,Pro-Longevity
+ASIC2,PLXNA4,0.196,Transport/Metabolism,Neuronal Signaling,Context-Dependent,Context-Dependent
+HLA-DQB1,HSPA1A,0.194,Neuroinflammation,Protein Folding/HSP,Anti-Longevity,Pro-Longevity
+LY86,LINGO2,0.19,Neuroinflammation,Neuronal Signaling,Anti-Longevity,Context-Dependent
+TLR4,PARVG,0.188,Neuroinflammation,Cell Adhesion/Structure,Anti-Longevity,Context-Dependent
+YWHAG,HLA-DQB1,0.188,Protein Folding/HSP,Neuroinflammation,Pro-Longevity,Anti-Longevity
+ASIC2,SGK1,0.187,Transport/Metabolism,Growth Signaling,Context-Dependent,Anti-Longevity
+CAMK4,CAMTA1,0.186,Neuronal Signaling,Neuronal Signaling,Context-Dependent,Context-Dependent
+LY86,APOC1,0.185,Neuroinflammation,Lipid Metabolism,Anti-Longevity,Anti-Longevity
+HLA-DQB1,PARVG,0.184,Neuroinflammation,Cell Adhesion/Structure,Anti-Longevity,Context-Dependent
+PCSK1,SEMA4A,0.183,Lipid Metabolism,Neuroinflammation,Context-Dependent,Context-Dependent
+HMOX1,PCSK1,0.179,Mitochondrial Function,Lipid Metabolism,Pro-Longevity,Context-Dependent
+CAMTA1,PROM1,0.177,Neuronal Signaling,Other/Context,Context-Dependent,Context-Dependent
+PCSK1,HSPA1L,0.17,Lipid Metabolism,Protein Folding/HSP,Context-Dependent,Pro-Longevity
+TLR4,HSPA1L,0.17,Neuroinflammation,Protein Folding/HSP,Anti-Longevity,Pro-Longevity
+PCSK1,HSPA1A,0.17,Lipid Metabolism,Protein Folding/HSP,Context-Dependent,Pro-Longevity
+ESRRG,TLR4,0.168,Mitochondrial Function,Neuroinflammation,Pro-Longevity,Anti-Longevity
+PCSK1,ESRRG,0.167,Lipid Metabolism,Mitochondrial Function,Context-Dependent,Pro-Longevity
+PROM1,MYT1L,0.165,Other/Context,Neuronal Signaling,Context-Dependent,Context-Dependent
+YWHAG,HSPA1L,0.163,Protein Folding/HSP,Protein Folding/HSP,Pro-Longevity,Pro-Longevity
+HSPA1B,NDUFS1,0.162,Protein Folding/HSP,Mitochondrial Function,Pro-Longevity,Pro-Longevity
+TLR4,HPCAL1,0.162,Neuroinflammation,Neuronal Signaling,Anti-Longevity,Context-Dependent
+CAMK4,YWHAG,0.162,Neuronal Signaling,Protein Folding/HSP,Context-Dependent,Pro-Longevity
+CAMTA1,LRP1B,0.162,Neuronal Signaling,Lipid Metabolism,Context-Dependent,Context-Dependent
+CETP,HMOX1,0.16,Lipid Metabolism,Mitochondrial Function,Anti-Longevity,Pro-Longevity
+HSPA1A,NDUFS1,0.159,Protein Folding/HSP,Mitochondrial Function,Pro-Longevity,Pro-Longevity
+LINGO2,MYT1L,0.158,Neuronal Signaling,Neuronal Signaling,Context-Dependent,Context-Dependent
+MT2A,HSPA1L,0.158,Mitochondrial Function,Protein Folding/HSP,Pro-Longevity,Pro-Longevity
+CAMK4,NBEA,0.158,Neuronal Signaling,Neuronal Signaling,Context-Dependent,Context-Dependent
+CAMK4,HSPA1L,0.157,Neuronal Signaling,Protein Folding/HSP,Context-Dependent,Pro-Longevity
+CAMK4,HSPA1A,0.157,Neuronal Signaling,Protein Folding/HSP,Context-Dependent,Pro-Longevity
+MT2A,APOC1,0.155,Mitochondrial Function,Lipid Metabolism,Pro-Longevity,Anti-Longevity
+NLRC5,LY86,0.154,Neuroinflammation,Neuroinflammation,Pro-Longevity,Anti-Longevity
+LRP1B,CLSTN2,0.151,Lipid Metabolism,Neuronal Signaling,Context-Dependent,Context-Dependent
+PHYHIP,MYT1L,0.151,Other/Context,Neuronal Signaling,Context-Dependent,Context-Dependent
+ASIC2,RYR3,0.151,Transport/Metabolism,Neuronal Signaling,Context-Dependent,Context-Dependent
+HLA-DQB1,APOC1,0.151,Neuroinflammation,Lipid Metabolism,Anti-Longevity,Anti-Longevity
+HMOX1,HPCAL1,0.151,Mitochondrial Function,Neuronal Signaling,Pro-Longevity,Context-Dependent
+YWHAG,TLR4,0.151,Protein Folding/HSP,Neuroinflammation,Pro-Longevity,Anti-Longevity
+HSPA1A,HPCAL1,0.15,Protein Folding/HSP,Neuronal Signaling,Pro-Longevity,Context-Dependent
+PITPNM3,PHYHIP,0.15,Lipid Metabolism,Other/Context,Context-Dependent,Context-Dependent
+ESRRG,NDUFS1,0.15,Mitochondrial Function,Mitochondrial Function,Pro-Longevity,Pro-Longevity

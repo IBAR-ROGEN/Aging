@@ -1,0 +1,6 @@
+# Pinned for deterministic validation reruns (GRCh38/hg38).
+# Install from repo root: uv pip install -r analysis/validate_genomics_tables/requirements.txt
+pandas==2.2.3
+openpyxl==3.1.5
+requests==2.32.3
+typer==0.15.1

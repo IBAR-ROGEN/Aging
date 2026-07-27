@@ -1,0 +1,42 @@
+Gene_Symbol,Variant_Count,Functional_Cluster,Longevity_Class
+ABCC4,1,Transport/Metabolism,Context-Dependent
+APOC1,2,Lipid Metabolism,Anti-Longevity
+ASIC2,1,Transport/Metabolism,Context-Dependent
+CAMK4,1,Neuronal Signaling,Context-Dependent
+CAMTA1,1,Neuronal Signaling,Context-Dependent
+CETP,10,Lipid Metabolism,Anti-Longevity
+CLSTN2,1,Neuronal Signaling,Context-Dependent
+ESRRG,1,Mitochondrial Function,Pro-Longevity
+GPX1,1,Mitochondrial Function,Pro-Longevity
+HLA-DQB1,2,Neuroinflammation,Anti-Longevity
+HMOX1,1,Mitochondrial Function,Pro-Longevity
+HPCAL1,1,Neuronal Signaling,Context-Dependent
+HSPA1A,3,Protein Folding/HSP,Pro-Longevity
+HSPA1B,3,Protein Folding/HSP,Pro-Longevity
+HSPA1L,2,Protein Folding/HSP,Pro-Longevity
+LINGO2,1,Neuronal Signaling,Context-Dependent
+LRP1B,1,Lipid Metabolism,Context-Dependent
+LY86,1,Neuroinflammation,Anti-Longevity
+MT2A,1,Mitochondrial Function,Pro-Longevity
+MYT1L,1,Neuronal Signaling,Context-Dependent
+NBEA,1,Neuronal Signaling,Context-Dependent
+NDUFS1,5,Mitochondrial Function,Pro-Longevity
+NLRC5,1,Neuroinflammation,Pro-Longevity
+PARVG,1,Cell Adhesion/Structure,Context-Dependent
+PCSK1,3,Lipid Metabolism,Context-Dependent
+PHYHIP,1,Other/Context,Context-Dependent
+PITPNM3,1,Lipid Metabolism,Context-Dependent
+PLXNA4,1,Neuronal Signaling,Context-Dependent
+PROM1,1,Other/Context,Context-Dependent
+PRR5L,1,Other/Context,Context-Dependent
+RAD23B,1,Protein Folding/HSP,Pro-Longevity
+RYR3,1,Neuronal Signaling,Context-Dependent
+SDC4,2,Neuroinflammation,Context-Dependent
+SEMA4A,1,Neuroinflammation,Context-Dependent
+SGK1,1,Growth Signaling,Anti-Longevity
+THSD7B,1,Cell Adhesion/Structure,Context-Dependent
+TLR4,1,Neuroinflammation,Anti-Longevity
+TMEM151B,1,Other/Context,Context-Dependent
+TUSC3,1,Transport/Metabolism,Context-Dependent
+VEGFA,1,Growth Signaling,Anti-Longevity
+YWHAG,1,Protein Folding/HSP,Pro-Longevity

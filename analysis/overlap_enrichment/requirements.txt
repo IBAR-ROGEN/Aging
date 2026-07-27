@@ -1,0 +1,7 @@
+# Pinned for deterministic overlap enrichment reruns (GRCh38/hg38 gene symbols).
+pandas==2.2.3
+openpyxl==3.1.5
+scipy==1.14.1
+requests==2.32.3
+typer==0.15.1
+GEOparse==2.0.4
