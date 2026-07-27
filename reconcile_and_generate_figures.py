@@ -918,7 +918,7 @@ def plot_gene_network(
         ax.text(
             cx,
             cy,
-            cluster.replace("/", "/\n"),
+            cluster.replace("/", "/" + "\n"),
             ha="center",
             va="center",
             fontsize=7.5,

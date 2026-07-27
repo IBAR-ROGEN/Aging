@@ -210,6 +210,11 @@ scan_hardcoded_paths() {
       if [[ "$candidate" != /* ]]; then
         continue
       fi
+      # Skip non-path string fragments that the quoted-slash matcher can pick
+      # up from replace() / format helpers (embedded escapes or whitespace).
+      if [[ "$candidate" == *\\* || "$candidate" == *$'\n'* || "$candidate" == *$'\r'* || "$candidate" == *$'\t'* ]]; then
+        continue
+      fi
       if is_allowed_abs_path "$candidate"; then
         continue
       fi
