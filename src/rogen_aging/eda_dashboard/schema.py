@@ -41,6 +41,19 @@ def _first_present(columns: Iterable[str], candidates: tuple[str, ...]) -> str |
 
 
 def resolve_column(df: pd.DataFrame, candidates: tuple[str, ...], *, label: str) -> str:
+    """Return the first matching column name from ``candidates``.
+
+    Args:
+        df: Cohort frame whose columns are searched.
+        candidates: Ordered alias names to try.
+        label: Human-readable field name used in the error message.
+
+    Returns:
+        The first candidate present in ``df.columns``.
+
+    Raises:
+        KeyError: If none of ``candidates`` are present.
+    """
     found = _first_present(df.columns, candidates)
     if found is None:
         raise KeyError(f"Merged cohort is missing a {label} column. Tried: {candidates}")
@@ -48,7 +61,15 @@ def resolve_column(df: pd.DataFrame, candidates: tuple[str, ...], *, label: str)
 
 
 def normalize_column_names(df: pd.DataFrame) -> pd.DataFrame:
-    """Rename common aliases to canonical dashboard names when unambiguous."""
+    """Rename common aliases to canonical dashboard names when unambiguous.
+
+    Args:
+        df: Cohort frame that may use alternate column labels.
+
+    Returns:
+        Frame with aliases renamed to canonical names, or ``df`` unchanged
+        when no renames apply.
+    """
     rename_map: dict[str, str] = {}
     if _first_present(df.columns, AGE_CANDIDATES) and "Chronological_Age" not in df.columns:
         src = _first_present(df.columns, AGE_CANDIDATES)
@@ -76,7 +97,14 @@ def normalize_column_names(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def list_snp_columns(columns: Iterable[str]) -> list[str]:
-    """Columns that look like SNP / variant IDs (e.g. rs5882_CETP, CETP_rs5882)."""
+    """Columns that look like SNP / variant IDs (e.g. rs5882_CETP, CETP_rs5882).
+
+    Args:
+        columns: Iterable of column names to scan.
+
+    Returns:
+        Sorted list of names containing an ``rs`` + digits pattern.
+    """
     out: list[str] = []
     for c in columns:
         if re.search(r"rs\d+", str(c), flags=re.IGNORECASE):
@@ -85,7 +113,15 @@ def list_snp_columns(columns: Iterable[str]) -> list[str]:
 
 
 def ensure_epigenetic_age_acceleration(df: pd.DataFrame) -> pd.DataFrame:
-    """Add Epigenetic_Age_Acceleration if Epigenetic_Age and Chronological_Age exist."""
+    """Add Epigenetic_Age_Acceleration if Epigenetic_Age and Chronological_Age exist.
+
+    Args:
+        df: Cohort frame that may already include acceleration.
+
+    Returns:
+        Frame with ``Epigenetic_Age_Acceleration`` when both age columns are
+        present; otherwise ``df`` unchanged.
+    """
     if "Epigenetic_Age_Acceleration" in df.columns:
         return df
     if "Epigenetic_Age" in df.columns and "Chronological_Age" in df.columns:
@@ -96,7 +132,14 @@ def ensure_epigenetic_age_acceleration(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def clinical_numeric_columns_for_heatmap(df: pd.DataFrame) -> list[str]:
-    """Continuous columns suitable for a clinical correlation heatmap."""
+    """Continuous columns suitable for a clinical correlation heatmap.
+
+    Args:
+        df: Cohort frame after column normalisation.
+
+    Returns:
+        Numeric non-SNP columns with sufficient non-null variance.
+    """
     skip_substrings = ("sample", "id", "IID")
     snp_cols = set(list_snp_columns(df.columns))
     numeric = df.select_dtypes(include=["number"]).columns.tolist()

@@ -7,7 +7,8 @@ from pathlib import Path
 import polars as pl
 import pytest
 
-from rogen_aging.integration.ukb_joiner import (
+from rogen_aging.ukb.mock_rap import generate_ukb_rap_mock
+from rogen_aging.ukb_integration.ukb_joiner import (
     AD_OUT,
     LA_SNP_ASSOC_COLUMNS,
     PARENTAL_LONGEVITY_OUT,
@@ -17,7 +18,6 @@ from rogen_aging.integration.ukb_joiner import (
     run_association_scan,
     run_integration_pipeline,
 )
-from rogen_aging.ukb.mock_rap import generate_ukb_rap_mock
 
 LA_SNP_COUNT = 70
 

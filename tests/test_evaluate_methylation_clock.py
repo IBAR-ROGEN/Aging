@@ -17,7 +17,7 @@ from sklearn.linear_model import ElasticNet, ElasticNetCV
 from sklearn.pipeline import Pipeline
 
 _REPO_ROOT = Path(__file__).resolve().parent.parent
-_SCRIPT = _REPO_ROOT / "evaluate_methylation_clock.py"
+_SCRIPT = _REPO_ROOT / "scripts" / "clock" / "evaluate_methylation_clock.py"
 
 
 def _load_script() -> ModuleType:

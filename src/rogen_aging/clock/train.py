@@ -30,7 +30,22 @@ def train_clock(
 ) -> dict[str, Any]:
     """Fit a clock pipeline on a wide table and write model + metrics JSON.
 
-    Returns the metrics dictionary written to ``output_metrics``.
+    Args:
+        input_data: Path to a wide methylation table (Parquet, CSV, or TSV)
+            with ``cg*`` feature columns and ``chronological_age``.
+        output_model: Destination path for the fitted joblib pipeline.
+        output_metrics: Destination path for the metrics JSON file.
+        test_size: Fraction of rows held out for the test split.
+        random_state: Seed for the train/test split and ElasticNetCV.
+
+    Returns:
+        The metrics dictionary written to ``output_metrics``.
+
+    Raises:
+        ValueError: If ``chronological_age`` contains non-numeric or missing
+            values.
+        FileNotFoundError: If ``input_data`` does not exist.
+        KeyError: If ``chronological_age`` is missing from the table.
     """
     df = load_wide_table(input_data)
     x, y = split_features_target(df)

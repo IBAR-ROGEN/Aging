@@ -6,6 +6,7 @@ from rogen_aging.ukb.gnomad import main
 
 
 def entry() -> None:
+    """Console entry for ``rogen-compare-af-gnomad``."""
     raise SystemExit(main())
 
 

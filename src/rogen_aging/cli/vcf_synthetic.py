@@ -6,6 +6,7 @@ from rogen_aging.vcf.synthetic import main
 
 
 def entry() -> None:
+    """Console entry for ``rogen-vcf-synthetic``."""
     main()
 
 

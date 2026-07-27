@@ -43,7 +43,7 @@ Installable code lives under `src/rogen_aging/`. Console entry points are regist
 | **`rogen_aging.clock`** | Train and evaluate ElasticNet epigenetic clocks; load GSE87571 and Romanian mock cohorts |
 | **`rogen_aging.ukb`** | Build LA-SNP manifest CSVs, extract 1KG allele frequencies, compare to gnomAD, generate synthetic UKB-RAP mocks |
 | `rogen_aging.vcf` | Synthetic Romanian VCF generation for pipeline testing |
-| `rogen_aging.integration` | Join synthetic UKB phenotypes/genotypes and run LA-SNP association summaries |
+| `rogen_aging.ukb_integration` | Join synthetic UKB phenotypes/genotypes and run LA-SNP association summaries (`rogen_aging.integration` is a deprecated alias) |
 | `rogen_aging.integrative` | Offline variant×tissue×phenotype joins and composite risk scoring |
 | `rogen_aging.eda_dashboard` | Streamlit EDA on merged mock clinical / epigenetic-age tables |
 | `rogen_aging.cli` | Typer wrappers: `rogen-clock`, `rogen-ukb-manifest`, `rogen-ukb-integrate`, … |
@@ -88,7 +88,7 @@ uv run python scripts/figures/plot_clock_eval.py
 
 # Final GSE87571 metrics + three-panel publication figure
 # Requires INPUT_MANIFEST.md paths (or pass --skip-manifest-check with explicit flags)
-uv run python evaluate_methylation_clock.py
+uv run python scripts/clock/evaluate_methylation_clock.py
 # → outputs/clock_metrics.json
 # → outputs/figures/Figure_Epigenetic_Clock_Panels.png/.pdf
 ```
@@ -125,7 +125,7 @@ See [docs/GENOMICS_ANALYSIS.md](docs/GENOMICS_ANALYSIS.md).
 ### July prioritized-variant annotation (GTEx v8 + VEP + Alpha scores)
 
 ```bash
-uv run python run_july_annotation_pipeline.py
+uv run python scripts/ukb/run_july_annotation_pipeline.py
 # → outputs/Supplementary_Table_1_Annotated_Variants.xlsx
 ```
 
@@ -146,7 +146,7 @@ See [docs/INTEGRATIVE_PIPELINE.md](docs/INTEGRATIVE_PIPELINE.md).
 ### Figures and annotation scripts
 
 ```bash
-uv run python reconcile_and_generate_figures.py            # nomenclature audit + AF/network figures
+uv run python scripts/figures/reconcile_and_generate_figures.py  # nomenclature audit + AF/network figures
 uv run python scripts/figures/generate_network_fig.py      # → figures/Fig_LA_SNP_network.*
 uv run python scripts/ukb/annotate_la_snps_vep.py          # VEP table + cache under analysis/
 uv run python scripts/ukb/annotate_la_snps_gtex.py         # GTEx eQTL table + cache under analysis/
@@ -154,7 +154,7 @@ uv run python scripts/alphagenome/alphagenome_sequence_comparer.py
 uv run streamlit run src/rogen_aging/eda_dashboard/app.py
 ```
 
-Flat paths such as `plot_clock_eval.py`, `plot_af_comparison.py`, `annotate_la_snps_vep.py`, and `annotate_la_snps_gtex.py` at the repo root forward to `scripts/` with a deprecation warning.
+Flat paths such as `plot_clock_eval.py`, `plot_af_comparison.py`, `plot_clock_validation.py`, `plot_consequence_summary.py`, `evaluate_methylation_clock.py`, `reconcile_and_generate_figures.py`, `run_july_annotation_pipeline.py`, `annotate_la_snps_vep.py`, and `annotate_la_snps_gtex.py` at the repo root forward to `scripts/` with a deprecation warning.
 
 ## Documentation index
 

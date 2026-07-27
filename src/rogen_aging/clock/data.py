@@ -21,7 +21,18 @@ __all__ = [
 
 
 def load_wide_table(path: Path) -> pd.DataFrame:
-    """Load a GSE40279-style wide table (Parquet, CSV, or TSV)."""
+    """Load a GSE40279-style wide table (Parquet, CSV, or TSV).
+
+    Args:
+        path: Path to a ``.parquet``, ``.csv``, or ``.tsv`` file.
+
+    Returns:
+        Wide table as a pandas DataFrame (samples as rows).
+
+    Raises:
+        FileNotFoundError: If ``path`` does not exist.
+        ValueError: If the file extension is unsupported.
+    """
     if not path.is_file():
         raise FileNotFoundError(path)
     suffix = path.suffix.lower()
@@ -34,7 +45,19 @@ def load_wide_table(path: Path) -> pd.DataFrame:
 
 
 def split_features_target(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series]:
-    """Return CpG feature matrix (``cg*`` columns) and chronological age target."""
+    """Return CpG feature matrix (``cg*`` columns) and chronological age target.
+
+    Args:
+        df: Wide table containing ``chronological_age`` and ``cg*`` columns.
+
+    Returns:
+        A pair ``(X, y)`` where ``X`` is the CpG feature matrix and ``y`` is
+        the chronological age series.
+
+    Raises:
+        KeyError: If ``chronological_age`` is missing.
+        ValueError: If no columns start with ``cg``.
+    """
     if "chronological_age" not in df.columns:
         raise KeyError("Expected column 'chronological_age'")
     cpg_cols = [c for c in df.columns if str(c).startswith("cg")]
@@ -50,7 +73,16 @@ def write_mock_romanian_cohort(
     n_cpgs: int = 80,
     random_state: int = 42,
 ) -> None:
-    """Create deterministic mock methylation + metadata CSVs for development."""
+    """Create deterministic mock methylation + metadata CSVs for development.
+
+    Writes ``methylation_matrix.csv`` and ``metadata.csv`` under ``data_dir``.
+
+    Args:
+        data_dir: Output directory (created if missing).
+        n_samples: Number of mock samples.
+        n_cpgs: Number of mock CpG feature columns.
+        random_state: Seed for the mock generator.
+    """
     data_dir.mkdir(parents=True, exist_ok=True)
     rng = np.random.default_rng(random_state)
     sample_ids = [f"ROM{i:04d}" for i in range(1, n_samples + 1)]
@@ -75,7 +107,26 @@ def load_romanian_cohort(
     regenerate_mock: bool = False,
     random_state: int = 42,
 ) -> tuple[np.ndarray, np.ndarray, list[str]]:
-    """Load Romanian-style two-file cohort; return X, y, and sample IDs."""
+    """Load Romanian-style two-file cohort; return X, y, and sample IDs.
+
+    Expects ``methylation_matrix.csv`` and ``metadata.csv`` under ``data_dir``.
+    When files are missing or ``regenerate_mock`` is true, writes a mock cohort
+    via :func:`write_mock_romanian_cohort`.
+
+    Args:
+        data_dir: Directory containing the methylation and metadata CSVs.
+        regenerate_mock: If true, overwrite/create mock CSVs before loading.
+        random_state: Seed used when regenerating the mock cohort.
+
+    Returns:
+        A triple ``(X, y, sample_ids)`` where ``X`` is an ``(n_samples,
+        n_features)`` float array, ``y`` is chronological ages, and
+        ``sample_ids`` is the joined sample ID list.
+
+    Raises:
+        ValueError: If required columns are missing or no feature columns
+            remain after the join.
+    """
     meth_path = data_dir / "methylation_matrix.csv"
     meta_path = data_dir / "metadata.csv"
     if regenerate_mock or not meth_path.is_file() or not meta_path.is_file():

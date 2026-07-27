@@ -1,7 +1,7 @@
 # ROGEN Project - Activity 2.1.8.1: Methylation Pipeline Development Summary
 
 **Date:** January 8, 2025  
-**Project:** ROGEN Aging Research  
+**Project:** IBAR-ROGEN Aging
 **Activity:** 2.1.8.1 - Methylation Calling Pipeline Development
 
 ## Overview

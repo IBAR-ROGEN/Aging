@@ -13,7 +13,7 @@ This document summarizes installable modules and CLI entry points. Per-file inve
 | `ukb/gnomad.py` | 1KG vs gnomAD v4 NFE comparison |
 | `ukb/mock_clinical.py` | Synthetic clinical CSV generator |
 | `ukb/mock_rap.py` | Synthetic UKB-RAP phenotype + LA-SNP VCF folder |
-| `integration/ukb_joiner.py` | Mock phenotype–genotype join + LA-SNP associations |
+| `ukb_integration/ukb_joiner.py` | Mock phenotype–genotype join + LA-SNP associations |
 | `integrative/` | Offline variant×tissue×phenotype joins + composite risk — [INTEGRATIVE_PIPELINE.md](INTEGRATIVE_PIPELINE.md) |
 | `vcf/synthetic.py` | Streaming synthetic VCF (Hardy–Weinberg, GRCh38) |
 | `eda_dashboard/` | Streamlit multi-omics EDA — [EDA_DASHBOARD.md](EDA_DASHBOARD.md) |
@@ -30,7 +30,7 @@ This document summarizes installable modules and CLI entry points. Per-file inve
 | `rogen-compare-af-gnomad` | `rogen_aging.cli.compare_af_gnomad` → `ukb.gnomad` (`compare` + `summarize` subcommands) |
 | `rogen-ukb-mock-clinical` | `rogen_aging.cli.ukb_mock_clinical` |
 | `rogen-ukb-mock-rap` | `rogen_aging.cli.ukb_mock_rap` |
-| `rogen-ukb-integrate` | `rogen_aging.cli.ukb_integrate` → `integration.run_cli` |
+| `rogen-ukb-integrate` | `rogen_aging.cli.ukb_integrate` → `ukb_integration.run_cli` |
 | `rogen-vcf-synthetic` | `rogen_aging.cli.vcf_synthetic` |
 
 **Canonical clock CLI:** `uv run rogen-clock train|evaluate` or `scripts/clock/run_clock.py`.  
@@ -44,8 +44,8 @@ See [ACTIVITIES.md](ACTIVITIES.md) for the full tree. Highlights:
 - **`scripts/figures/`** — matplotlib/networkx renders + `plot_clock_eval.py` ([FIGURES.md](FIGURES.md)); flat `scripts/generate_*.py` shims forward here
 - **`scripts/alphagenome/`** — AlphaGenome batch + analysis (tables → `analysis/alphagenome/`, plots → `figures/alphagenome/`)
 - **`analysis/validate_genomics_tables/`**, **`analysis/overlap_enrichment/`**, **`analysis/variant_functional_annotation/`** — GRCh38 genomics validation ([GENOMICS_ANALYSIS.md](GENOMICS_ANALYSIS.md); index: [analysis/genomics/README.md](../analysis/genomics/README.md))
-- **`run_july_annotation_pipeline.py`** (repo root) — July batch GTEx v8 + VEP + AlphaGenome/AlphaMissense Excel export ([JULY_ANNOTATION_PIPELINE.md](JULY_ANNOTATION_PIPELINE.md))
-- **`evaluate_methylation_clock.py`** (repo root) — GSE87571 external validation of a bare ElasticNet clock; writes `outputs/clock_metrics.json` + three-panel figure ([METHYLATION_CLOCK_VALIDATION.md](METHYLATION_CLOCK_VALIDATION.md), [INPUT_MANIFEST.md](../INPUT_MANIFEST.md))
+- **`scripts/ukb/run_july_annotation_pipeline.py`** — July batch GTEx v8 + VEP + AlphaGenome/AlphaMissense Excel export ([JULY_ANNOTATION_PIPELINE.md](JULY_ANNOTATION_PIPELINE.md))
+- **`scripts/clock/evaluate_methylation_clock.py`** — GSE87571 external validation of a bare ElasticNet clock; writes `outputs/clock_metrics.json` + three-panel figure ([METHYLATION_CLOCK_VALIDATION.md](METHYLATION_CLOCK_VALIDATION.md), [INPUT_MANIFEST.md](../INPUT_MANIFEST.md))
 - **`scripts/integrative/`** — variant×tissue map, phenotype risk, end-to-end pipeline ([INTEGRATIVE_PIPELINE.md](INTEGRATIVE_PIPELINE.md))
 - **`scripts/dev/`** — `security_check.sh`, CI audit, ONT pipeline validation, R bootstrap, `find_r.sh`
 
@@ -57,6 +57,11 @@ See [ACTIVITIES.md](ACTIVITIES.md) for the full tree. Highlights:
 | `annotate_la_snps_gtex.py` | `scripts/ukb/annotate_la_snps_gtex.py` |
 | `plot_clock_eval.py` | `scripts/figures/plot_clock_eval.py` |
 | `plot_af_comparison.py` | `scripts/figures/plot_af_comparison.py` |
+| `plot_clock_validation.py` | `scripts/figures/plot_clock_validation.py` |
+| `plot_consequence_summary.py` | `scripts/figures/plot_consequence_summary.py` |
+| `evaluate_methylation_clock.py` | `scripts/clock/evaluate_methylation_clock.py` |
+| `reconcile_and_generate_figures.py` | `scripts/figures/reconcile_and_generate_figures.py` |
+| `run_july_annotation_pipeline.py` | `scripts/ukb/run_july_annotation_pipeline.py` |
 | `pipeline_validation.sh` | `scripts/dev/pipeline_validation.sh` |
 | `find_r.sh` | `scripts/dev/find_r.sh` |
 

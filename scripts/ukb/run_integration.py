@@ -10,7 +10,7 @@ Prefer: ``uv run rogen-ukb-integrate``
 
 from __future__ import annotations
 
-from rogen_aging.integration.run_cli import main
+from rogen_aging.ukb_integration.run_cli import main
 
 if __name__ == "__main__":
     raise SystemExit(main())

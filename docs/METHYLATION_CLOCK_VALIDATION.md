@@ -2,7 +2,7 @@
 
 **Project:** IBAR-ROGEN Aging  
 **Activity:** 2.1.10.1 — methylation aging clock (GSE40279 train, GSE87571 validate)  
-**Script:** [`evaluate_methylation_clock.py`](../evaluate_methylation_clock.py)  
+**Script:** [`scripts/clock/evaluate_methylation_clock.py`](../scripts/clock/evaluate_methylation_clock.py) (deprecated shim: [`evaluate_methylation_clock.py`](../evaluate_methylation_clock.py))  
 **Library:** `rogen_aging.clock` (`load_model`, `build_feature_matrix`)  
 **Related:** [CLOCK_LIBRARY.md](CLOCK_LIBRARY.md) · [CLOCK_EVAL_FIGURES.md](CLOCK_EVAL_FIGURES.md) · [GSE40279_CLOCK_TRAINING.md](GSE40279_CLOCK_TRAINING.md)
 
@@ -42,10 +42,10 @@ Preflight: the script reads [`INPUT_MANIFEST.md`](../INPUT_MANIFEST.md) and abor
 ```bash
 uv sync
 
-uv run python evaluate_methylation_clock.py
+uv run python scripts/clock/evaluate_methylation_clock.py
 
 # Explicit paths / options
-uv run python evaluate_methylation_clock.py \
+uv run python scripts/clock/evaluate_methylation_clock.py \
   --methylation data/methylation/GSE87571_processed.parquet \
   --meta data/methylation/GSE87571_meta.csv \
   --model models/ro_clock_elasticnet_gse40279.pkl \
@@ -55,7 +55,7 @@ uv run python evaluate_methylation_clock.py \
   --top-n 25
 
 # Skip INPUT_MANIFEST.md preflight when overriding paths in tests/CI
-uv run python evaluate_methylation_clock.py \
+uv run python scripts/clock/evaluate_methylation_clock.py \
   --model /tmp/ro_clock.pkl \
   --methylation /tmp/meth.parquet \
   --meta /tmp/meta.csv \

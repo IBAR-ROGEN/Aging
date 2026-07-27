@@ -31,6 +31,7 @@ def _init_session_state(default_path: Path) -> None:
 
 
 def main() -> None:
+    """Run the Streamlit multi-omics EDA dashboard."""
     st.set_page_config(
         page_title="ROGEN Multi-Omics Aging — EDA",
         layout="wide",

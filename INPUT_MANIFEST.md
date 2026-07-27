@@ -1,6 +1,6 @@
 # Input Manifest — Methylation Clock Validation
 
-Required inputs for [`evaluate_methylation_clock.py`](evaluate_methylation_clock.py)
+Required inputs for [`scripts/clock/evaluate_methylation_clock.py`](scripts/clock/evaluate_methylation_clock.py)
 (activity 2.1.10.1: GSE40279-trained ElasticNet clock, GSE87571 external validation).
 
 | Path | Role | Required |

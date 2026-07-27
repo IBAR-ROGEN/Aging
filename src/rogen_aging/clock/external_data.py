@@ -48,7 +48,12 @@ _AGE_VALUE_RE = re.compile(
 
 
 def save_as_parquet(df: pd.DataFrame, output_path: str | Path) -> None:
-    """Write ``df`` to Parquet using the pyarrow engine (requires pyarrow)."""
+    """Write ``df`` to Parquet using the pyarrow engine (requires pyarrow).
+
+    Args:
+        df: DataFrame to serialize (index is preserved).
+        output_path: Destination Parquet path; parent directories are created.
+    """
     path = Path(output_path)
     path.parent.mkdir(parents=True, exist_ok=True)
     df.to_parquet(path, index=True, engine="pyarrow")
@@ -69,7 +74,16 @@ def _open_text(path: Path) -> IO[str]:
 
 
 def _download_url(url: str, dest: Path, timeout_s: int = 600) -> None:
-    """Stream ``url`` to ``dest`` using ``requests`` first, then stdlib ``urllib``."""
+    """Stream ``url`` to ``dest`` using ``requests`` first, then stdlib ``urllib``.
+
+    Args:
+        url: HTTP(S) URL to download.
+        dest: Destination file path.
+        timeout_s: Per-request timeout in seconds.
+
+    Raises:
+        RuntimeError: If both ``requests`` and ``urllib`` downloads fail.
+    """
     dest.parent.mkdir(parents=True, exist_ok=True)
     tmp = dest.with_suffix(dest.suffix + ".partial")
     attempts: list[str] = []
@@ -199,7 +213,20 @@ def _parse_title_to_gsm(sample_rows: dict[str, Any]) -> dict[str, str]:
 
 
 def _parse_chronological_ages(sample_rows: dict[str, Any], n_samples: int) -> list[float | None]:
-    """GEO repeats ``!Sample_characteristics_ch1`` on multiple lines (gender, age, tissue, …)."""
+    """Parse ages from repeated ``!Sample_characteristics_ch1`` GEO lines.
+
+    GEO repeats ``!Sample_characteristics_ch1`` on multiple lines (gender, age,
+    tissue, …).
+
+    Args:
+        sample_rows: Parsed ``!Sample_*`` metadata keyed by SOFT field name.
+        n_samples: Expected number of samples (length of each characteristics
+            row).
+
+    Returns:
+        Per-sample chronological ages, or ``None`` where age could not be
+        parsed.
+    """
     ages: list[float | None] = [None] * n_samples
     raw = sample_rows.get("!Sample_characteristics_ch1")
     rows: list[list[str]]
@@ -220,7 +247,18 @@ def _parse_chronological_ages(sample_rows: dict[str, Any], n_samples: int) -> li
 
 
 def _parse_series_matrix_file_full(path: Path) -> tuple[dict[str, list[str]], list[str], list[list[str]]]:
-    """Parse file in one pass: metadata before table, then matrix block."""
+    """Parse a GEO series matrix in one pass: metadata, then matrix block.
+
+    Args:
+        path: Path to a ``.txt`` or ``.txt.gz`` series matrix file.
+
+    Returns:
+        A triple ``(sample_rows, header, body)`` with sample metadata,
+        matrix header columns, and matrix body rows.
+
+    Raises:
+        ValueError: If the table begin marker / header is not found.
+    """
     sample_rows: dict[str, list[str]] = {}
     header: list[str] | None = None
     body: list[list[str]] = []
@@ -383,22 +421,22 @@ def load_gse87571(
     ``matrix2of2`` files are downloaded from NCBI FTP into ``geo_cache_dir``
     and merged.
 
-    Parameters
-    ----------
-    local_path:
-        Optional path to a local ``GSE87571_series_matrix.txt.gz`` (or plain
-        ``.txt``) file.
-    geo_cache_dir:
-        Directory for GEO downloads and caches.
-    restrict_to_cpgs:
-        If set, keep only these CpG IDs (intersection must be non-empty).
+    Args:
+        local_path: Optional path to a local ``GSE87571_series_matrix.txt.gz``
+            (or plain ``.txt``) file.
+        geo_cache_dir: Directory for GEO downloads and caches.
+        restrict_to_cpgs: If set, keep only these CpG IDs (intersection must
+            be non-empty).
 
-    Raises
-    ------
-    FileNotFoundError
-        If ``local_path`` is set but the file does not exist.
-    RuntimeError
-        On repeated network / GEOparse failures (see error text for manual steps).
+    Returns:
+        Wide sample-by-CpG DataFrame with a ``chronological_age`` column and
+        GSM accessions as the index (named ``sample_id``).
+
+    Raises:
+        FileNotFoundError: If ``local_path`` is set but the file does not exist.
+        RuntimeError: On repeated network / GEOparse failures (see error text
+            for manual steps).
+        ValueError: If metadata, ages, or requested CpGs cannot be resolved.
     """
     geo_cache_dir = Path(geo_cache_dir)
     series_path: Path

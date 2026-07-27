@@ -13,6 +13,18 @@ from rogen_aging.eda_dashboard.schema import resolve_column
 
 @dataclass(frozen=True, slots=True)
 class GlobalFilters:
+    """Resolved sidebar filter selections and column names.
+
+    Attributes:
+        age_min: Inclusive lower bound on chronological age.
+        age_max: Inclusive upper bound on chronological age.
+        sex_values: Selected sex labels to retain.
+        disease_values: Selected disease-status labels to retain.
+        col_age: Resolved chronological-age column name.
+        col_sex: Resolved sex column name.
+        col_disease: Resolved disease-status column name.
+    """
+
     age_min: float
     age_max: float
     sex_values: list[str]
@@ -23,7 +35,17 @@ class GlobalFilters:
 
 
 def render_global_sidebar(df: pd.DataFrame) -> GlobalFilters:
-    """Render persistent cohort filters; returns resolved column names and selections."""
+    """Render persistent cohort filters; returns resolved column names and selections.
+
+    Args:
+        df: Full loaded cohort used to populate filter options and ranges.
+
+    Returns:
+        Frozen filter bundle applied by every dashboard tab.
+
+    Raises:
+        KeyError: If age, sex, or disease columns cannot be resolved.
+    """
     st.sidebar.header("Cohort filters")
     st.sidebar.caption("Selections apply to every tab.")
 
@@ -66,11 +88,28 @@ def render_global_sidebar(df: pd.DataFrame) -> GlobalFilters:
 
 
 def np_finite_pair(a: float, b: float) -> bool:
+    """Return whether both values are finite floats.
+
+    Args:
+        a: First value.
+        b: Second value.
+
+    Returns:
+        ``True`` when both ``a`` and ``b`` are finite.
+    """
     return math.isfinite(a) and math.isfinite(b)
 
 
 def apply_global_filters(df: pd.DataFrame, filt: GlobalFilters) -> pd.DataFrame:
-    """Return a filtered view of the cohort (copy)."""
+    """Return a filtered view of the cohort (copy).
+
+    Args:
+        df: Full cohort frame.
+        filt: Age / sex / disease selections and resolved column names.
+
+    Returns:
+        Reset-index copy restricted to the selected analytic subset.
+    """
     out = df.copy()
     age_num = pd.to_numeric(out[filt.col_age], errors="coerce")
     mask = (age_num >= filt.age_min) & (age_num <= filt.age_max)

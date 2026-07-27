@@ -1,6 +1,6 @@
 # ROGEN Methylation Calling Pipeline - User Guide
 
-**Project:** ROGEN Aging Research  
+**Project:** IBAR-ROGEN Aging  
 **Activity:** 2.1.8.1 - Methylation Calling Pipeline  
 **Last Updated:** January 8, 2025
 
