@@ -87,3 +87,39 @@ def test_association_outputs_have_seventy_rows(
     snp_cols = [c for c in joined.columns if c.startswith("rs_mock_")]
     scan = run_association_scan(joined, phenotype_col="parental_longevity")
     assert scan.height == len(snp_cols) == LA_SNP_COUNT
+
+
+def test_alt_dosage_from_gt_type_cyvcf2_encoding() -> None:
+    from rogen_aging.ukb_integration.ukb_joiner import _alt_dosage_from_gt_type
+
+    # cyvcf2: 0=HOM_REF, 1=HET, 2=UNKNOWN, 3=HOM_ALT
+    assert _alt_dosage_from_gt_type(0) == 0
+    assert _alt_dosage_from_gt_type(1) == 1
+    assert _alt_dosage_from_gt_type(3) == 2
+    assert _alt_dosage_from_gt_type(2) is None
+
+
+def test_load_genotype_matrix_maps_hom_alt(tmp_path: Path) -> None:
+    vcf_text = """##fileformat=VCFv4.2
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##contig=<ID=1>
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	S1	S2	S3	S4
+1	100	rsTEST	A	G	.	.	.	GT	0/0	0/1	1/1	./.
+"""
+    path = tmp_path / "gt.vcf"
+    path.write_text(vcf_text, encoding="utf-8")
+    frame = load_genotype_matrix_from_vcf(path)
+    assert frame["rsTEST"].to_list() == [0, 1, 2, None]
+
+
+def test_contingency_drops_missing_dosages() -> None:
+    import numpy as np
+
+    from rogen_aging.ukb_integration.ukb_joiner import genotype_phenotype_contingency
+
+    g = np.array([0.0, 1.0, 2.0, np.nan])
+    y = np.array([0, 1, 0, 1])
+    table = genotype_phenotype_contingency(g, y)
+    # Missing dosage must not become HOM_REF under outcome=1.
+    assert table.tolist() == [[1, 0, 1], [0, 1, 0]]
+    assert int(table.sum()) == 3

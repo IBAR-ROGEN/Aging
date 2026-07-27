@@ -543,7 +543,7 @@ def build_comparison_table(plans: list[LookupPlan], cache: dict[str, dict[str, A
         large_diff = False
         if af_1kg is not None and af_gnomad is not None:
             abs_diff = abs(af_1kg - float(af_gnomad))
-            large_diff = abs_diff > DIFF_THRESHOLD
+            large_diff = abs_diff >= DIFF_THRESHOLD
 
         rows.append(
             {
@@ -573,7 +573,7 @@ def plot_scatter(comparison: pd.DataFrame, output_path: Path) -> None:
     normal = plotted[~plotted["large_diff"]]
     flagged = plotted[plotted["large_diff"]]
 
-    ax.scatter(normal["AF_1kg"], normal["AF_gnomad_nfe"], s=36, color="#5B7C99", alpha=0.85, label="|diff| ≤ 0.05")
+    ax.scatter(normal["AF_1kg"], normal["AF_gnomad_nfe"], s=36, color="#5B7C99", alpha=0.85, label="|diff| < 0.05")
     if not flagged.empty:
         ax.scatter(
             flagged["AF_1kg"],
@@ -581,7 +581,7 @@ def plot_scatter(comparison: pd.DataFrame, output_path: Path) -> None:
             s=48,
             color="#C45C3E",
             alpha=0.95,
-            label="|diff| > 0.05",
+            label="|diff| ≥ 0.05",
         )
 
     max_af = max(plotted["AF_1kg"].max(), plotted["AF_gnomad_nfe"].max())
@@ -669,9 +669,11 @@ def summarize_comparison(
 
     paired = comparison.loc[has_1kg & has_gnomad].copy()
     paired["abs_diff"] = (paired["AF_1kg"] - paired["AF_gnomad_nfe"]).abs()
+    # Discordant iff abs_diff >= threshold (matches large_diff flag).
     concordant_mask = paired["abs_diff"] < diff_threshold
+    discordant_mask = paired["abs_diff"] >= diff_threshold
     concordant = int(concordant_mask.sum())
-    discordant = int((~concordant_mask).sum())
+    discordant = int(discordant_mask.sum())
 
     concordant_diffs = paired.loc[concordant_mask, "abs_diff"]
     mean_abs_diff = float(concordant_diffs.mean()) if not concordant_diffs.empty else None

@@ -9,14 +9,18 @@ using the same feature alignment logic as ``rogen_aging.clock.evaluate``.
 
 from __future__ import annotations
 
-import pickle
 import warnings
 from pathlib import Path
+from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import typer
 from scipy.stats import linregress, pearsonr
+
+from rogen_aging.clock.data import load_wide_table
+from rogen_aging.clock.evaluate import build_feature_matrix, load_model
 
 # ---------------------------------------------------------------------------
 # Configurable constants
@@ -41,36 +45,11 @@ POSITIVE_COLOR = "#2166ac"
 NEGATIVE_COLOR = "#b2182b"
 SCATTER_COLOR = "#404040"
 
-
-def load_model(model_path: Path) -> object:
-    """Load a sklearn Pipeline saved with ``joblib.dump`` (``train_clock`` default)."""
-    if not model_path.is_file():
-        raise FileNotFoundError(f"Model file not found: {model_path}")
-    try:
-        import joblib
-
-        return joblib.load(model_path)
-    except Exception:
-        with model_path.open("rb") as handle:
-            return pickle.load(handle)
+app = typer.Typer(add_completion=False, help=__doc__)
 
 
-def load_wide_table(path: Path) -> pd.DataFrame:
-    """Load a wide methylation table (Parquet, CSV, or TSV)."""
-    suffix = path.suffix.lower()
-    if suffix == ".parquet":
-        return pd.read_parquet(path)
-    if suffix in {".csv", ".tsv"}:
-        sep = "\t" if suffix == ".tsv" else ","
-        return pd.read_csv(path, sep=sep)
-    raise ValueError(f"Unsupported test data format: {path}")
-
-
-def _cg_columns(df: pd.DataFrame) -> list[str]:
-    return [c for c in df.columns if str(c).startswith("cg")]
-
-
-def _feature_names(model: object) -> list[str] | None:
+def _feature_names(model: Any) -> list[str] | None:
+    """Return ``feature_names_in_`` from a Pipeline or bare estimator."""
     if hasattr(model, "feature_names_in_"):
         return [str(x) for x in model.feature_names_in_]
     if hasattr(model, "named_steps"):
@@ -80,71 +59,56 @@ def _feature_names(model: object) -> list[str] | None:
     return None
 
 
-def build_feature_matrix(df: pd.DataFrame, model: object) -> pd.DataFrame:
-    """Align test CpGs to training features; mean-impute missing model sites."""
-    if "chronological_age" not in df.columns:
-        raise ValueError("Test data must include a 'chronological_age' column.")
+def predict_ages(model: Any, x: pd.DataFrame) -> np.ndarray:
+    """Predict ages via ``model.predict`` (Pipeline or bare ElasticNet).
 
-    cg_cols = _cg_columns(df)
-    if not cg_cols:
-        raise ValueError("No feature columns starting with 'cg' were found in the test data.")
+    Args:
+        model: Fitted sklearn Pipeline or ElasticNet.
+        x: Feature matrix aligned to training CpG columns.
 
-    expected = _feature_names(model)
-    if expected is None:
-        raise ValueError("Model has no feature_names_in_; cannot align CpG columns.")
-
-    present_cg = df.reindex(columns=cg_cols).apply(pd.to_numeric, errors="coerce")
-    flat_mean = float(np.nanmean(present_cg.to_numpy(dtype=float))) if cg_cols else 0.5
-    if not np.isfinite(flat_mean):
-        flat_mean = 0.5
-
-    x = pd.DataFrame(index=df.index)
-    for name in expected:
-        if name in df.columns:
-            col = pd.to_numeric(df[name], errors="coerce")
-            fill = float(np.nanmean(col.to_numpy())) if col.notna().any() else flat_mean
-            if not np.isfinite(fill):
-                fill = flat_mean
-            x[name] = col.fillna(fill)
-        else:
-            warnings.warn(
-                f"CpG '{name}' expected by the model is absent from test data; "
-                f"filling with global mean ({flat_mean:.6g}).",
-                stacklevel=2,
-            )
-            x[name] = flat_mean
-    return x
+    Returns:
+        1-D array of predicted ages.
+    """
+    return np.asarray(model.predict(x), dtype=float)
 
 
-def predict_ages(model: object, x: pd.DataFrame) -> np.ndarray:
-    """Run imputer + ElasticNet prediction without importing sklearn."""
-    imputer = model.named_steps["imputer"]
-    enet = model.named_steps["elasticnet"]
-    x_imputed = x.to_numpy(dtype=float)
-    nan_mask = np.isnan(x_imputed)
-    if nan_mask.any():
-        x_imputed = np.where(nan_mask, imputer.statistics_, x_imputed)
-    return np.asarray(enet.predict(x_imputed), dtype=float)
+def load_or_compute_eval_table(
+    *,
+    eval_csv: Path | None,
+    model_path: Path,
+    test_data_path: Path,
+) -> pd.DataFrame:
+    """Load per-sample ages from CSV, or compute them from model + test cohort.
 
+    Args:
+        eval_csv: Optional per-sample predictions CSV; used when the file exists.
+        model_path: Serialized clock model (used when recomputing).
+        test_data_path: Wide methylation table with ``chronological_age``.
 
-def load_or_compute_eval_table() -> pd.DataFrame:
-    """Load per-sample ages from CSV, or compute them from model + test cohort."""
-    if EVAL_CSV is not None and EVAL_CSV.is_file():
-        df = pd.read_csv(EVAL_CSV)
+    Returns:
+        DataFrame with ``chronological_age``, ``predicted_age``, and optional
+        ``sample_id``.
+
+    Raises:
+        ValueError: If ``eval_csv`` exists but lacks required columns.
+        FileNotFoundError: If neither a usable eval CSV nor test data is available.
+    """
+    if eval_csv is not None and eval_csv.is_file():
+        df = pd.read_csv(eval_csv)
         required = {"chronological_age", "predicted_age"}
         missing = required - set(df.columns)
         if missing:
             raise ValueError(f"EVAL_CSV missing columns: {sorted(missing)}")
         return df
 
-    if not TEST_DATA_PATH.is_file():
+    if not test_data_path.is_file():
         raise FileNotFoundError(
-            f"No EVAL_CSV at {EVAL_CSV} and test data not found at {TEST_DATA_PATH}. "
+            f"No EVAL_CSV at {eval_csv} and test data not found at {test_data_path}. "
             "Run training/evaluation first or set EVAL_CSV to a predictions table."
         )
 
-    model = load_model(MODEL_PATH)
-    wide = load_wide_table(TEST_DATA_PATH)
+    model = load_model(model_path)
+    wide = load_wide_table(test_data_path)
     y = pd.to_numeric(wide["chronological_age"], errors="coerce")
     valid = y.notna()
     if not bool(valid.all()):
@@ -152,7 +116,7 @@ def load_or_compute_eval_table() -> pd.DataFrame:
     wide = wide.loc[valid].copy()
     y = y.loc[valid]
 
-    x = build_feature_matrix(wide, model)
+    x, _imputed = build_feature_matrix(wide, model)
     y_pred = predict_ages(model, x)
 
     out = pd.DataFrame(
@@ -168,9 +132,28 @@ def load_or_compute_eval_table() -> pd.DataFrame:
 
 
 def extract_cpg_weights(model_path: Path) -> pd.Series:
-    """Return probe ID -> ElasticNet coefficient for all model features."""
+    """Return probe ID -> ElasticNet coefficient for all model features.
+
+    Args:
+        model_path: Path to a serialized Pipeline (``elasticnet`` step) or bare
+            ElasticNet.
+
+    Returns:
+        Series of coefficients indexed by CpG probe IDs.
+
+    Raises:
+        ValueError: If coefficients or feature names cannot be recovered.
+    """
     model = load_model(model_path)
-    enet = model.named_steps["elasticnet"]
+    if hasattr(model, "named_steps"):
+        named_steps = model.named_steps
+        if "elasticnet" not in named_steps:
+            raise ValueError("Pipeline model missing 'elasticnet' step.")
+        enet = named_steps["elasticnet"]
+    else:
+        enet = model
+    if not hasattr(enet, "coef_"):
+        raise ValueError("Model has no coef_; expected ElasticNet or Pipeline with elasticnet.")
     coef = np.ravel(enet.coef_)
     names = _feature_names(model)
     if names is None:
@@ -179,7 +162,15 @@ def extract_cpg_weights(model_path: Path) -> pd.Series:
 
 
 def plot_predicted_vs_chronological(ax: plt.Axes, eval_df: pd.DataFrame) -> tuple[float, float, int]:
-    """Scatter with identity and regression lines; return MAE, r, n."""
+    """Scatter with identity and regression lines; return MAE, r, n.
+
+    Args:
+        ax: Matplotlib axes for the scatter panel.
+        eval_df: Table with ``chronological_age`` and ``predicted_age``.
+
+    Returns:
+        Tuple of ``(mae, pearson_r, n_samples)``.
+    """
     x = eval_df["chronological_age"].to_numpy(dtype=float)
     y = eval_df["predicted_age"].to_numpy(dtype=float)
     n = int(len(x))
@@ -221,7 +212,13 @@ def plot_predicted_vs_chronological(ax: plt.Axes, eval_df: pd.DataFrame) -> tupl
 
 
 def plot_top_cpgs(ax: plt.Axes, weights: pd.Series, top_n: int) -> None:
-    """Horizontal bar chart of the top |weight| CpG probes."""
+    """Horizontal bar chart of the top |weight| CpG probes.
+
+    Args:
+        ax: Matplotlib axes for the bar panel.
+        weights: ElasticNet coefficients indexed by CpG ID.
+        top_n: Number of largest-|coefficient| sites to show.
+    """
     top = weights.reindex(weights.abs().sort_values(ascending=False).head(top_n).index)
     top = top.sort_values()
 
@@ -235,21 +232,61 @@ def plot_top_cpgs(ax: plt.Axes, weights: pd.Series, top_n: int) -> None:
     ax.set_title("Top CpG sites by model weight")
 
 
-def main() -> None:
+@app.command()
+def main(
+    model_path: Path = typer.Option(
+        MODEL_PATH,
+        "--model-path",
+        help="Serialized clock model (.pkl / .joblib)",
+        path_type=Path,
+    ),
+    test_data: Path = typer.Option(
+        TEST_DATA_PATH,
+        "--test-data",
+        help="Wide test table used when eval CSV is missing",
+        path_type=Path,
+    ),
+    eval_csv: Path | None = typer.Option(
+        EVAL_CSV,
+        "--eval-csv",
+        help="Optional per-sample predictions CSV (chronological_age, predicted_age)",
+        path_type=Path,
+    ),
+    output_dir: Path = typer.Option(
+        OUTPUT_DIR,
+        "--output-dir",
+        help="Directory for PNG and PDF outputs",
+        path_type=Path,
+    ),
+    basename: str = typer.Option(
+        FIG_BASENAME,
+        "--basename",
+        help="Output filename stem (without extension)",
+    ),
+    top_n: int = typer.Option(
+        TOP_N_CPgs,
+        "--top-n",
+        help="Number of top |weight| CpG sites for panel B",
+    ),
+) -> None:
+    """Write the clock validation figure (PNG + PDF)."""
     plt.rcParams.update({"font.size": FONT_SIZE})
 
-    eval_df = load_or_compute_eval_table()
-    mae, r_value, n = 0.0, 0.0, 0
+    eval_df = load_or_compute_eval_table(
+        eval_csv=eval_csv,
+        model_path=model_path,
+        test_data_path=test_data,
+    )
 
     fig, axes = plt.subplots(1, 2, figsize=(13.5, 5.8), constrained_layout=True)
     mae, r_value, n = plot_predicted_vs_chronological(axes[0], eval_df)
 
-    weights = extract_cpg_weights(MODEL_PATH)
-    plot_top_cpgs(axes[1], weights, TOP_N_CPgs)
+    weights = extract_cpg_weights(model_path)
+    plot_top_cpgs(axes[1], weights, top_n)
 
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    png_path = OUTPUT_DIR / f"{FIG_BASENAME}.png"
-    pdf_path = OUTPUT_DIR / f"{FIG_BASENAME}.pdf"
+    output_dir.mkdir(parents=True, exist_ok=True)
+    png_path = output_dir / f"{basename}.png"
+    pdf_path = output_dir / f"{basename}.pdf"
     fig.savefig(png_path, dpi=FIGURE_DPI, bbox_inches="tight")
     fig.savefig(pdf_path, bbox_inches="tight")
     plt.close(fig)
@@ -262,4 +299,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    app()

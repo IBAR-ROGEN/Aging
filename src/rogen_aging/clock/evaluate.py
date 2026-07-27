@@ -89,11 +89,51 @@ def _n_features_in(model: Any) -> int | None:
     return None
 
 
+def _has_fitted_imputer(model: Any) -> bool:
+    """Return True when ``model`` is a Pipeline with a fitted imputer step.
+
+    Args:
+        model: Fitted estimator or sklearn Pipeline.
+
+    Returns:
+        Whether a step exposes ``statistics_`` (e.g. ``SimpleImputer``).
+    """
+    if not hasattr(model, "named_steps"):
+        return False
+    for step in getattr(model, "named_steps").values():
+        if hasattr(step, "statistics_"):
+            return True
+    return False
+
+
+def _imputer_statistics(model: Any) -> np.ndarray | None:
+    """Return fitted imputer ``statistics_`` aligned to model features, if any.
+
+    Args:
+        model: Fitted estimator or sklearn Pipeline.
+
+    Returns:
+        1-D array of fill values, or ``None``.
+    """
+    if not hasattr(model, "named_steps"):
+        return None
+    for step in getattr(model, "named_steps").values():
+        stats = getattr(step, "statistics_", None)
+        if stats is not None:
+            return np.asarray(stats, dtype=float)
+    return None
+
+
 def build_feature_matrix(
     df: pd.DataFrame,
     model: Any,
 ) -> tuple[pd.DataFrame, list[str]]:
-    """Align test CpGs to training features; mean-impute missing model sites.
+    """Align test CpGs to training features.
+
+    When ``model`` is a Pipeline with a fitted imputer, missing values are left
+    as NaN so ``model.predict`` applies training imputation statistics. Bare
+    estimators without an imputer are filled from training ``statistics_`` when
+    available, otherwise from test-set column / global means.
 
     Args:
         df: Wide test table with ``chronological_age`` and ``cg*`` columns.
@@ -102,8 +142,7 @@ def build_feature_matrix(
 
     Returns:
         A pair ``(X, imputed_names)`` where ``X`` is the aligned feature
-        matrix and ``imputed_names`` lists training sites absent from ``df``
-        that were filled with a global mean.
+        matrix and ``imputed_names`` lists training sites absent from ``df``.
 
     Raises:
         ValueError: If ``chronological_age`` or ``cg*`` columns are missing,
@@ -118,6 +157,8 @@ def build_feature_matrix(
 
     expected = _extract_feature_names_in(model)
     imputed: list[str] = []
+    defer_to_pipeline = _has_fitted_imputer(model)
+    train_stats = _imputer_statistics(model)
 
     if expected is not None:
         x = pd.DataFrame(index=df.index)
@@ -126,21 +167,36 @@ def build_feature_matrix(
         if not np.isfinite(flat_mean):
             flat_mean = 0.5
 
-        for name in expected:
+        for idx, name in enumerate(expected):
+            train_fill = (
+                float(train_stats[idx])
+                if train_stats is not None and idx < len(train_stats) and np.isfinite(train_stats[idx])
+                else None
+            )
             if name in df.columns:
                 col = pd.to_numeric(df[name], errors="coerce")
-                fill = float(np.nanmean(col.to_numpy())) if col.notna().any() else flat_mean
-                if not np.isfinite(fill):
-                    fill = flat_mean
-                x[name] = col.fillna(fill)
+                if defer_to_pipeline:
+                    x[name] = col
+                elif train_fill is not None:
+                    x[name] = col.fillna(train_fill)
+                else:
+                    fill = float(np.nanmean(col.to_numpy())) if col.notna().any() else flat_mean
+                    if not np.isfinite(fill):
+                        fill = flat_mean
+                    x[name] = col.fillna(fill)
             else:
+                fill = train_fill if train_fill is not None else flat_mean
                 warnings.warn(
                     f"CpG '{name}' expected by the model is absent from test data; "
-                    f"filling with global mean imputation ({flat_mean:.6g}).",
+                    + (
+                        "leaving NaN for pipeline imputer."
+                        if defer_to_pipeline
+                        else f"filling with training/global mean ({fill:.6g})."
+                    ),
                     stacklevel=2,
                 )
                 imputed.append(name)
-                x[name] = flat_mean
+                x[name] = np.nan if defer_to_pipeline else fill
 
         return x, imputed
 
@@ -153,6 +209,8 @@ def build_feature_matrix(
         )
 
     x = df.reindex(columns=cg_cols).apply(pd.to_numeric, errors="coerce")
+    if defer_to_pipeline:
+        return x, imputed
     row_mean = x.mean(axis=1)
     x = x.T.fillna(row_mean).T
     col_mean = x.mean(axis=0)

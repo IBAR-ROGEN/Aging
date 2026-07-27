@@ -109,3 +109,20 @@ docs/_build/
 *.fastq.gz
 *.fq
 *.fq.gz
+
+# Excel / workbook artifacts (allow manuscript + known small inputs)
+*.xlsx
+!manuscript/tables/*.xlsx
+!analysis/_manifest_input.xlsx
+
+# Trained model binaries (regenerate locally; keep directory placeholder)
+models/*
+!models/.gitkeep
+
+# Personal / administrative scripts (defense in depth)
+make_pontaj.py
+*pontaj*
+
+# Regenerable offline pipeline fixtures / demo outputs
+analysis/integrative/demo/
+analysis/integrative/fixtures/

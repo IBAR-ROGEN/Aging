@@ -9,7 +9,6 @@ unique LA-SNP count. Writes PNG (300 DPI) and PDF to ``figures/``.
 
 from __future__ import annotations
 
-import argparse
 import logging
 import math
 from pathlib import Path
@@ -17,6 +16,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import networkx as nx
 import pandas as pd
+import typer
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 DEFAULT_INPUT = REPO_ROOT / "overlapping_genes_with_snps.xlsx"
@@ -54,25 +54,7 @@ PATHWAY_PALETTE: tuple[str, ...] = (
 UNASSIGNED_PATHWAY = "Unassigned"
 UNASSIGNED_COLOR = "#94a3b8"
 
-
-def parse_args() -> argparse.Namespace:
-    p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument("--input", type=Path, default=DEFAULT_INPUT, help="Excel path (.xlsx)")
-    p.add_argument(
-        "--pathway-map",
-        type=Path,
-        default=None,
-        help="CSV with Gene, Pathway columns (overrides hardcoded groups)",
-    )
-    p.add_argument(
-        "--output",
-        type=Path,
-        default=DEFAULT_OUTPUT,
-        help="PNG output path (companion PDF written alongside)",
-    )
-    p.add_argument("--gene-column", default="Gene", help="Gene name column")
-    p.add_argument("--snp-column", default="SNP_rsID", help="SNP identifier column")
-    return p.parse_args()
+app = typer.Typer(add_completion=False, help=__doc__)
 
 
 def _load_snp_counts(
@@ -229,6 +211,18 @@ def render_network(
     dpi: int = 300,
     figsize_in: tuple[float, float] = (8.0, 8.0),
 ) -> tuple[Path, Path]:
+    """Render hub-and-spoke network and write PNG + PDF.
+
+    Args:
+        snp_counts: Unique LA-SNP counts indexed by gene.
+        grouped: Pathway name → gene list.
+        output_png: PNG output path; companion PDF uses the same stem.
+        dpi: Raster resolution for PNG.
+        figsize_in: Figure size in inches ``(width, height)``.
+
+    Returns:
+        Paths to the written PNG and PDF files.
+    """
     _configure_matplotlib()
     output_png = output_png.resolve()
     output_png.parent.mkdir(parents=True, exist_ok=True)
@@ -328,25 +322,47 @@ def render_network(
     return output_png, output_pdf
 
 
-def main() -> None:
-    args = parse_args()
+@app.command()
+def main(
+    input: Path = typer.Option(
+        DEFAULT_INPUT,
+        "--input",
+        help="Excel path (.xlsx)",
+        path_type=Path,
+    ),
+    pathway_map: Path | None = typer.Option(
+        None,
+        "--pathway-map",
+        help="CSV with Gene, Pathway columns (overrides hardcoded groups)",
+        path_type=Path,
+    ),
+    output: Path = typer.Option(
+        DEFAULT_OUTPUT,
+        "--output",
+        help="PNG output path (companion PDF written alongside)",
+        path_type=Path,
+    ),
+    gene_column: str = typer.Option("Gene", "--gene-column", help="Gene name column"),
+    snp_column: str = typer.Option("SNP_rsID", "--snp-column", help="SNP identifier column"),
+) -> None:
+    """Build the LA-SNP hub-and-spoke network figure."""
     logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
     snp_counts = _load_snp_counts(
-        args.input,
-        gene_column=args.gene_column,
-        snp_column=args.snp_column,
+        input,
+        gene_column=gene_column,
+        snp_column=snp_column,
     )
     logging.info(
         "Loaded %d genes, %d unique SNPs from %s",
         len(snp_counts),
         int(snp_counts.sum()),
-        args.input,
+        input,
     )
 
-    if args.pathway_map is not None:
-        gene_to_pathway = _load_pathway_map_csv(args.pathway_map)
-        logging.info("Pathway assignments from %s (%d entries)", args.pathway_map, len(gene_to_pathway))
+    if pathway_map is not None:
+        gene_to_pathway = _load_pathway_map_csv(pathway_map)
+        logging.info("Pathway assignments from %s (%d entries)", pathway_map, len(gene_to_pathway))
     else:
         gene_to_pathway = _default_gene_to_pathway()
         logging.info("Using hardcoded pathway groups (%d gene assignments)", len(gene_to_pathway))
@@ -360,10 +376,10 @@ def main() -> None:
             ", ".join(unmapped),
         )
 
-    png_path, pdf_path = render_network(snp_counts, grouped, output_png=args.output)
+    png_path, pdf_path = render_network(snp_counts, grouped, output_png=output)
     logging.info("Wrote %s", png_path)
     logging.info("Wrote %s", pdf_path)
 
 
 if __name__ == "__main__":
-    main()
+    app()

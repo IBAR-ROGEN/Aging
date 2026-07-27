@@ -12,12 +12,12 @@ import re
 import sqlite3
 import time
 import zipfile
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable
-from urllib.parse import quote
 
 import pandas as pd
+import polars as pl
 import requests
 import typer
 from scipy.stats import fisher_exact, hypergeom
@@ -205,7 +205,22 @@ def longevity_gene_sets(db_path: Path) -> tuple[set[str], set[str]]:
     return sig_genes, all_genes
 
 
-def fetch_entrez_symbols(entrez_ids: Iterable[int], cache_dir: Path) -> dict[int, str]:
+def fetch_entrez_symbols(
+    entrez_ids: Iterable[int],
+    cache_dir: Path,
+    *,
+    offline: bool = False,
+) -> dict[int, str]:
+    """Map Entrez gene IDs to HGNC symbols via cache and optional NCBI E-utilities.
+
+    Args:
+        entrez_ids: Entrez Gene identifiers from the cluster table.
+        cache_dir: Directory holding ``entrez_symbol_<id>.json`` cache files.
+        offline: When True, never call NCBI; missing IDs stay unmapped.
+
+    Returns:
+        Mapping of Entrez ID → uppercase gene symbol (``NA`` when unresolved).
+    """
     mapping: dict[int, str] = {}
     pending: list[int] = []
     for eid in sorted(set(int(x) for x in entrez_ids)):
@@ -214,6 +229,16 @@ def fetch_entrez_symbols(entrez_ids: Iterable[int], cache_dir: Path) -> dict[int
             mapping[eid] = cached["symbol"]
         else:
             pending.append(eid)
+
+    if pending and offline:
+        log_step(
+            "WARNING: Entrez symbols missing from cache in offline mode",
+            pending=len(pending),
+        )
+        for eid in pending:
+            mapping[eid] = "NA"
+        log_step("Mapped ENTREZ IDs to symbols", mapped=len(mapping), pending=len(pending))
+        return mapping
 
     batch_size = 200
     for start in range(0, len(pending), batch_size):
@@ -240,7 +265,12 @@ def fetch_entrez_symbols(entrez_ids: Iterable[int], cache_dir: Path) -> dict[int
     return mapping
 
 
-def load_cluster_sets(cluster_path: Path, cache_dir: Path) -> dict[str, set[str]]:
+def load_cluster_sets(
+    cluster_path: Path,
+    cache_dir: Path,
+    *,
+    offline: bool = False,
+) -> dict[str, set[str]]:
     if not cluster_path.is_file():
         raise FileNotFoundError(
             f"Cluster table not found: {cluster_path}. "
@@ -263,7 +293,9 @@ def load_cluster_sets(cluster_path: Path, cache_dir: Path) -> dict[str, set[str]
             entrez_by_sheet[key] = [int(x) for x in df[entrez_col].dropna()]
 
     all_entrez = {eid for ids in entrez_by_sheet.values() for eid in ids}
-    symbol_map = fetch_entrez_symbols(all_entrez, cache_dir) if all_entrez else {}
+    symbol_map = (
+        fetch_entrez_symbols(all_entrez, cache_dir, offline=offline) if all_entrez else {}
+    )
 
     cluster_sets: dict[str, set[str]] = {}
     for key, sheet in CLUSTER_SHEETS.items():
@@ -307,12 +339,18 @@ def load_cluster_sets(cluster_path: Path, cache_dir: Path) -> dict[str, set[str]
     return derived
 
 
-def fetch_protein_coding_genes(cache_dir: Path) -> set[str]:
+def fetch_protein_coding_genes(cache_dir: Path, *, offline: bool = False) -> set[str]:
     cached = read_cache_json(cache_dir, "gencode_v46_protein_coding_symbols")
     if cached:
         symbols = {normalize_symbol(x) for x in cached}
         log_step("Loaded protein-coding universe (cache)", genes=len(symbols))
         return symbols
+
+    if offline:
+        raise FileNotFoundError(
+            f"Protein-coding universe cache missing under {cache_dir} "
+            "(gencode_v46_protein_coding_symbols.json). Re-run online once to populate."
+        )
 
     typer.echo(f"Downloading GENCODE GTF from {GENCODE_GTF_URL}")
     resp = requests.get(GENCODE_GTF_URL, timeout=300)
@@ -326,7 +364,7 @@ def fetch_protein_coding_genes(cache_dir: Path) -> set[str]:
             text = line.decode("utf-8").strip()
             if not text or text.startswith("#") or "\tgene\t" not in text:
                 continue
-            if "gene_type \"protein_coding\"" not in text:
+            if 'gene_type "protein_coding"' not in text:
                 continue
             match = re.search(r'gene_name "([^"]+)"', text)
             if match:
@@ -337,7 +375,22 @@ def fetch_protein_coding_genes(cache_dir: Path) -> set[str]:
 
 
 def fetch_platform_genes(gpl_file: Path, cache_dir: Path) -> set[str]:
+    """Load microarray platform gene symbols from GEO GPL accessions.
+
+    Args:
+        gpl_file: Text file with one GPL accession per line (``#`` comments allowed).
+        cache_dir: Directory for GEO / JSON caches.
+
+    Returns:
+        Union of gene symbols across listed platforms. Empty when the GPL file is
+        missing or empty (caller should fall back to another universe).
+    """
     if not gpl_file.is_file():
+        log_step(
+            "WARNING: GPL file missing — skipping microarray platform universe",
+            path=str(gpl_file),
+            hint="Create data/ad_pd_gpl_ids.txt (one GPL id per line) or pass --gpl-file",
+        )
         return set()
     gpl_ids = [
         line.strip()
@@ -345,6 +398,10 @@ def fetch_platform_genes(gpl_file: Path, cache_dir: Path) -> set[str]:
         if line.strip() and not line.strip().startswith("#")
     ]
     if not gpl_ids:
+        log_step(
+            "WARNING: GPL file is empty — skipping microarray platform universe",
+            path=str(gpl_file),
+        )
         return set()
 
     import GEOparse
@@ -426,7 +483,6 @@ def enrich_test(
     expected = (a * b / n) if n else float("nan")
     fold = (k / a) / (b / n) if a and b and n else float("nan")
 
-    not_a = n - a
     b_not_k = b - k
     not_b_in_universe = n - b
     a_not_k = a - k
@@ -506,6 +562,8 @@ def render_report(
     overlap_check: dict[str, object],
     output_path: Path,
     primary_universe: str,
+    *,
+    platform_universe_note: str | None = None,
 ) -> None:
     sig_primary = [
         r
@@ -536,6 +594,8 @@ def render_report(
         lines.append(
             f"- Genes in computed overlap but not in snps_validated: {overlap_check['extra_in_overlap']}"
         )
+    if platform_universe_note:
+        lines.extend(["", f"**Platform universe:** {platform_universe_note}"])
     lines.extend(
         [
             "",
@@ -615,6 +675,32 @@ def render_report(
     log_step("Wrote overlap enrichment report", path=str(output_path))
 
 
+@app.command("run")
+def run_cmd(
+    cluster_table: Path = typer.Option(DEFAULT_CLUSTER_TABLE, "--cluster-table"),
+    longevity_db: Path = typer.Option(DEFAULT_LONGEVITY_DB, "--longevity-db"),
+    snps_validated: Path = typer.Option(DEFAULT_SNPS_VALIDATED, "--snps-validated"),
+    gpl_file: Path = typer.Option(DEFAULT_GPL_FILE, "--gpl-file"),
+    output_dir: Path = typer.Option(DEFAULT_OUTPUT_DIR, "--output-dir"),
+    cache_dir: Path = typer.Option(DEFAULT_OUTPUT_DIR / "cache", "--cache-dir"),
+    offline: bool = typer.Option(
+        False,
+        "--offline",
+        help="Use local caches only (no NCBI/GENCODE/LongevityMap downloads).",
+    ),
+) -> None:
+    """Run cluster ∩ LongevityMap overlap enrichment (explicit subcommand)."""
+    _execute_enrichment(
+        cluster_table=cluster_table,
+        longevity_db=longevity_db,
+        snps_validated=snps_validated,
+        gpl_file=gpl_file,
+        output_dir=output_dir,
+        cache_dir=cache_dir,
+        offline=offline,
+    )
+
+
 @app.callback(invoke_without_command=True)
 def run_enrichment(
     ctx: typer.Context,
@@ -624,24 +710,62 @@ def run_enrichment(
     gpl_file: Path = typer.Option(DEFAULT_GPL_FILE, "--gpl-file"),
     output_dir: Path = typer.Option(DEFAULT_OUTPUT_DIR, "--output-dir"),
     cache_dir: Path = typer.Option(DEFAULT_OUTPUT_DIR / "cache", "--cache-dir"),
+    offline: bool = typer.Option(
+        False,
+        "--offline",
+        help="Use local caches only (no NCBI/GENCODE/LongevityMap downloads).",
+    ),
 ) -> None:
-    """Run cluster ∩ LongevityMap overlap enrichment."""
+    """Run cluster ∩ LongevityMap overlap enrichment.
+
+    Prefer ``uv run python analysis/overlap_enrichment/run_overlap_enrichment.py run``.
+    Invoking the module with no subcommand remains supported.
+    """
     if ctx.invoked_subcommand is not None:
         return
+    _execute_enrichment(
+        cluster_table=cluster_table,
+        longevity_db=longevity_db,
+        snps_validated=snps_validated,
+        gpl_file=gpl_file,
+        output_dir=output_dir,
+        cache_dir=cache_dir,
+        offline=offline,
+    )
 
+
+def _execute_enrichment(
+    *,
+    cluster_table: Path,
+    longevity_db: Path,
+    snps_validated: Path,
+    gpl_file: Path,
+    output_dir: Path,
+    cache_dir: Path,
+    offline: bool = False,
+) -> None:
+    """Shared enrichment runner used by the default callback and ``run`` command."""
     typer.echo(f"Genome build: {GENOME_BUILD}")
+    if offline:
+        log_step("Offline mode enabled — local caches only")
 
     snps_validated = resolve_snps_validated(snps_validated)
     output_dir = resolve_output_dir(output_dir)
-    cache_dir = output_dir / "cache"
+    cache_dir = Path(cache_dir)
+    cache_dir.mkdir(parents=True, exist_ok=True)
 
     if not longevity_db.is_file():
+        if offline:
+            raise FileNotFoundError(
+                f"LongevityMap sqlite missing: {longevity_db}. "
+                "Build it online once with: ... build-sqlite"
+            )
         build_longevity_sqlite(longevity_db, cache_dir)
 
     b_sig, b_all = longevity_gene_sets(longevity_db)
-    cluster_sets = load_cluster_sets(cluster_table, cache_dir)
+    cluster_sets = load_cluster_sets(cluster_table, cache_dir, offline=offline)
 
-    universe_a = fetch_protein_coding_genes(cache_dir)
+    universe_a = fetch_protein_coding_genes(cache_dir, offline=offline)
     universe_b = fetch_platform_genes(gpl_file, cache_dir)
     universe_c = cluster_sets["combined"]
     universes = {
@@ -649,7 +773,16 @@ def run_enrichment(
         "microarray_platform_union": universe_b,
         "meta_analysis_de_tested": universe_c,
     }
-    primary_universe = "microarray_platform_union" if universe_b else "meta_analysis_de_tested"
+    if universe_b:
+        primary_universe = "microarray_platform_union"
+        platform_note = f"loaded from `{gpl_file}` ({len(universe_b)} genes)"
+    else:
+        primary_universe = "meta_analysis_de_tested"
+        platform_note = (
+            f"SKIPPED — `{gpl_file}` missing or empty; "
+            "primary universe falls back to meta_analysis_de_tested"
+        )
+        log_step("Primary universe fallback", primary=primary_universe)
 
     cluster_labels = ["combined", "AD", "PD", "AD-up", "AD-down", "PD-up", "PD-down"]
     b_sets = {"significant": b_sig, "all_longevitymap": b_all}
@@ -690,8 +823,15 @@ def run_enrichment(
     )
 
     stats_csv = output_dir / "overlap_enrichment_stats.csv"
-    pd.DataFrame([r.__dict__ for r in results]).to_csv(stats_csv, index=False)
-    render_report(results, overlap_check, output_dir / "overlap_enrichment.md", primary_universe)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    pl.DataFrame([r.__dict__ for r in results]).write_csv(stats_csv)
+    render_report(
+        results,
+        overlap_check,
+        output_dir / "overlap_enrichment.md",
+        primary_universe,
+        platform_universe_note=platform_note,
+    )
     typer.echo(f"Done. Report: {output_dir / 'overlap_enrichment.md'}")
 
 

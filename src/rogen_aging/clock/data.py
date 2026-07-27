@@ -140,7 +140,7 @@ def load_romanian_cohort(
         raise ValueError("Metadata must include 'chronological_age'.")
 
     joined = meta.join(meth, on="sample_id", how="inner").sort("sample_id")
-    feature_cols = [c for c in joined.columns if c not in ("sample_id", "chronological_age")]
+    feature_cols = [c for c in joined.columns if str(c).startswith("cg")]
     if not feature_cols:
         raise ValueError("No CpG / feature columns found after join.")
 
