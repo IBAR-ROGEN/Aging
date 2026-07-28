@@ -41,8 +41,9 @@ JsonDict = dict[str, Any]
 JsonPayload = Any
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+INPUT_MANIFEST = REPO_ROOT / "INPUT_MANIFEST.md"
 
-DEFAULT_VARIANTS = REPO_ROOT / "data" / "processed" / "prioritized_variants.csv"
+DEFAULT_VARIANTS = REPO_ROOT / "data" / "processed" / "variants_47_input.csv"
 DEFAULT_ALPHAGENOME = REPO_ROOT / "data" / "scores" / "alphagenome_raw.parquet"
 DEFAULT_ALPHAMISSENSE = REPO_ROOT / "data" / "scores" / "alphamissense_raw.parquet"
 DEFAULT_OUTPUT = REPO_ROOT / "outputs" / "Supplementary_Table_1_Annotated_Variants.xlsx"
@@ -50,6 +51,12 @@ DEFAULT_CACHE_DIR = REPO_ROOT / "data" / "cache" / "july_annotation"
 DEFAULT_LOCAL_VEP = REPO_ROOT / "data" / "processed" / "vep_local.jsonl"
 
 REQUIRED_VARIANT_COLS = ("chrom", "pos", "ref", "alt", "rsid", "gene_symbol")
+EXPECTED_VARIANT_COUNT = 47
+JULY_MANIFEST_REQUIRED: tuple[str, ...] = (
+    "data/processed/variants_47_input.csv",
+    "data/scores/alphagenome_raw.parquet",
+    "data/scores/alphamissense_raw.parquet",
+)
 
 GTEX_API_BASE = "https://gtexportal.org/api/v2"
 GTEX_DATASET_ID = "gtex_v8"
@@ -95,6 +102,42 @@ HEADER_FONT = Font(color="FFFFFF", bold=True)
 HIGHLIGHT_FILL = PatternFill("solid", fgColor="FFF2CC")
 
 app = typer.Typer(add_completion=False, help=__doc__, no_args_is_help=False)
+
+
+def verify_july_input_manifest(
+    manifest_path: Path = INPUT_MANIFEST,
+    *,
+    repo_root: Path = REPO_ROOT,
+) -> None:
+    """Confirm ``INPUT_MANIFEST.md`` exists and July required inputs are on disk.
+
+    Args:
+        manifest_path: Path to the repository input manifest.
+        repo_root: Repository root used to resolve relative required paths.
+
+    Raises:
+        FileNotFoundError: If the manifest or any required July input is missing.
+    """
+    if not manifest_path.is_file():
+        raise FileNotFoundError(
+            f"INPUT_MANIFEST.md not found at {manifest_path}. "
+            "Read/create the Activity A.2.1.8.1 July annotation section before production runs."
+        )
+    text = manifest_path.read_text(encoding="utf-8")
+    if "variants_47_input.csv" not in text:
+        raise FileNotFoundError(
+            f"{manifest_path} was read but does not document variants_47_input.csv "
+            "(Activity A.2.1.8.1 July annotation inputs)."
+        )
+    missing = [
+        rel for rel in JULY_MANIFEST_REQUIRED if not (repo_root / rel).is_file()
+    ]
+    if missing:
+        raise FileNotFoundError(
+            "Required July annotation input(s) listed in INPUT_MANIFEST.md are missing:\n  - "
+            + "\n  - ".join(missing)
+        )
+    logger.info("INPUT_MANIFEST.md verified for July annotation ({} required files)", len(JULY_MANIFEST_REQUIRED))
 
 
 def configure_logging(verbose: bool) -> None:
@@ -358,6 +401,12 @@ def load_prioritized_variants(path: Path) -> pl.DataFrame:
         ).alias("variant_key")
     )
     logger.info("Loaded {} prioritized variants from {}", frame.height, path)
+    if path.resolve() == DEFAULT_VARIANTS.resolve() or path.name == "variants_47_input.csv":
+        if frame.height != EXPECTED_VARIANT_COUNT:
+            raise ValueError(
+                f"Expected {EXPECTED_VARIANT_COUNT} production variants in {path.name}, "
+                f"found {frame.height}. Refusing truncated/demo input."
+            )
     return frame
 
 
@@ -1258,18 +1307,23 @@ def main(
         False,
         "--demo",
         help=(
-            "Write offline fixtures under data/ and run cache-only with local VEP "
-            "(no live APIs)."
+            "OFFLINE SMOKE TEST ONLY: write fixtures and run cache-only under "
+            "outputs/demo/. Not used on the default production path."
         ),
+    ),
+    skip_manifest_check: bool = typer.Option(
+        False,
+        "--skip-manifest-check",
+        help="Skip INPUT_MANIFEST.md required-file verification (ad-hoc runs).",
     ),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Debug logging."),
 ) -> None:
     """Execute the July functional annotation pipeline.
 
     Orchestrates score joins, GTEx/VEP annotation, high-impact filtering, and
-    Excel export. Network access is required on first run unless ``--cache-only``
-    is used with a warm cache (or ``--local-vep`` covers VEP). Pass ``--demo`` to
-    materialize synthetic fixtures and run fully offline.
+    Excel export. The default path is **production**: all 47 prioritized variants
+    → ``outputs/Supplementary_Table_1_Annotated_Variants.xlsx``. Network access
+    is required on first run unless ``--cache-only`` is used with a warm cache.
 
     Args:
         variants: Prioritized variant CSV path.
@@ -1279,7 +1333,8 @@ def main(
         cache_dir: Directory for cached GTEx/VEP JSON responses.
         local_vep: Optional local VEP JSONL.
         cache_only: Do not call live APIs on cache miss.
-        demo: Write fixtures and force an offline demo run.
+        demo: Write fixtures and force an offline demo run under ``outputs/demo/``.
+        skip_manifest_check: Bypass ``INPUT_MANIFEST.md`` checks.
         verbose: Enable DEBUG logging.
     """
     configure_logging(verbose)
@@ -1293,17 +1348,41 @@ def main(
         local_vep = fixtures["local_vep"]
         cache_dir = fixtures["cache_dir"]
         cache_only = True
-        if output == DEFAULT_OUTPUT:
-            output = REPO_ROOT / "outputs" / "demo" / "Supplementary_Table_1_Annotated_Variants.xlsx"
-        logger.info("Demo mode: fixtures written; running cache-only")
+        # Demo never overwrites the production Supplementary Table path.
+        output = REPO_ROOT / "outputs" / "demo" / "Supplementary_Table_1_Annotated_Variants.xlsx"
+        logger.info("Demo mode: fixtures written; running cache-only → {}", output)
+    else:
+        if not skip_manifest_check:
+            verify_july_input_manifest()
+        # Production always lands in outputs/ (never outputs/demo/).
+        if "outputs/demo" in str(output).replace("\\", "/"):
+            raise ValueError(
+                f"Production output must not use outputs/demo/: {output}. "
+                f"Expected {DEFAULT_OUTPUT}"
+            )
+        if output == DEFAULT_OUTPUT.parent / "demo" / DEFAULT_OUTPUT.name:
+            output = DEFAULT_OUTPUT
 
-    logger.info("Starting July annotation pipeline")
+    logger.info("Starting July annotation pipeline (production={} variants expected when using variants_47)", EXPECTED_VARIANT_COUNT)
     logger.info("GTEx dataset: {} | tissues: {}", GTEX_DATASET_ID, len(TARGET_TISSUES))
+    logger.info("Input variants: {} | output: {}", variants, output)
 
     variant_df = load_prioritized_variants(variants)
     ag_df = load_score_matrix(alphagenome, "alphagenome")
     am_df = load_score_matrix(alphamissense, "alphamissense")
     scored = join_scores(variant_df, ag_df, am_df)
+
+    # Prefer live Ensembl for production when local JSONL is a tiny demo fixture.
+    if not demo and local_vep == DEFAULT_LOCAL_VEP and local_vep.is_file():
+        local_lines = sum(1 for line in local_vep.open(encoding="utf-8") if line.strip())
+        if local_lines < EXPECTED_VARIANT_COUNT:
+            logger.warning(
+                "Ignoring incomplete local VEP fixture {} ({} lines < {}); using Ensembl/cache",
+                local_vep,
+                local_lines,
+                EXPECTED_VARIANT_COUNT,
+            )
+            local_vep = REPO_ROOT / "data" / "processed" / "_no_local_vep.jsonl"
 
     vep_gtex, gtex_long = annotate_variants(
         variant_df,
@@ -1313,6 +1392,22 @@ def main(
     )
     master = build_master_table(scored, vep_gtex)
     high_impact = filter_high_impact(master)
+
+    # Halt on unexpected losses relative to the input set.
+    if not demo and master.height != variant_df.height:
+        raise RuntimeError(
+            f"Master table has {master.height} rows but input had {variant_df.height}"
+        )
+    missing_vep = (
+        master.filter(pl.col("vep_most_severe_consequence").is_null())["rsid"].to_list()
+        if "vep_most_severe_consequence" in master.columns
+        else []
+    )
+    if not demo and missing_vep:
+        logger.error("VEP consequence missing for {} variants: {}", len(missing_vep), missing_vep)
+        raise RuntimeError(
+            f"Unexpected null VEP consequences for {len(missing_vep)} variants: {missing_vep}"
+        )
 
     write_excel_workbook(output, master, high_impact, gtex_long)
 

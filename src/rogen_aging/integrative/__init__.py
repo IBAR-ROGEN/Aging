@@ -11,6 +11,12 @@ from typing import Any
 
 import polars as pl
 
+from rogen_aging.integrative.io import (
+    DEFAULT_OUTPUT_DIR,
+    ensure_july_parquet_cache,
+    load_production_eqtls,
+    load_production_variants,
+)
 from rogen_aging.integrative.phenotype_integrator import (
     ALPHAMISSENSE_HIGH_THRESHOLD,
     DEFAULT_WEIGHTS,
@@ -105,12 +111,16 @@ def run_integrative_pipeline(
 
 __all__ = [
     "ALPHAMISSENSE_HIGH_THRESHOLD",
+    "DEFAULT_OUTPUT_DIR",
     "DEFAULT_TARGET_TISSUES",
     "DEFAULT_WEIGHTS",
     "PhenotypeIntegrator",
     "VEP_IMPACT_SCORES",
     "VariantTissueMapper",
+    "ensure_july_parquet_cache",
     "gtex_chromosome",
+    "load_production_eqtls",
+    "load_production_variants",
     "normalize_chrom",
     "normalize_rsid",
     "run_integrative_pipeline",

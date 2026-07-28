@@ -28,53 +28,49 @@ AlphaGenome 0.25, AlphaMissense 0.25, GTEx 0.15, epigenetic 0.10
 
 | Table | Required columns | Notes |
 |-------|------------------|-------|
-| Annotated variants | `chrom`, `pos`, `ref`, `alt` | Optional: `rsid`, `gene_symbol`, `vep_impact`, Alpha*/GTEx columns, `age_acceleration` |
-| Long eQTL table | `rsid`, `tissue`, `nes`, `p_value` | Optional: `gene_symbol` / `eqtl_gene_symbol`, `gtex_variant_id` |
-| AlphaGenome scores (optional) | `rsid` or coordinates | Aliases `diff`, `perc_change`, `snp`, … normalised to `alphagenome_*` |
+| Annotated variants | `chrom`, `pos`, `ref`, `alt` | Production default: July `Combined_Master` (GTEx summary cols stripped, then rebuilt) |
+| Long eQTL table | `rsid`, `tissue`, `nes`, `p_value` | Production default: July `GTEx_eQTL_Summary` (`slope`→`nes`); aliases `rsID` accepted |
+| AlphaGenome scores (optional) | `rsid` or coordinates | Usually already present on Combined_Master |
 | Probe annotation (optional) | `IlmnID`, `UCSC_RefGene_Name` | Semicolon-separated gene lists exploded on join |
 | Sample genotypes (optional) | `sample_id`, `rsid`, `alt_dosage` | Extra phenotype columns are carried through aggregation |
 
-Typical upstream sources: July annotation workbook / GTEx CSV under
-`analysis/gtex_annotation/`, AlphaGenome matrices under `data/scores/` or
-`analysis/alphagenome/`.
+Typical upstream sources: July annotation workbook
+(`outputs/Supplementary_Table_1_Annotated_Variants.xlsx`) or parquet siblings
+`Supplementary_Table_1_Combined_Master.parquet` /
+`Supplementary_Table_1_GTEx_eQTL_Summary.parquet`.
 
 ## Outputs
 
-Written under `analysis/integrative/` by the CLIs (Parquet):
+Written under `analysis/integrative/results/` by the production CLIs (Parquet):
 
 | Artefact | Contents |
 |----------|----------|
-| `annotated` / `annotated_variants.parquet` | Variants + GTEx summary (+ optional AlphaGenome) |
+| `annotated_variants.parquet` | Variants + GTEx summary (+ optional AlphaGenome) |
 | `eqtl_summary.parquet` | One row per rsID: best tissue, n hits, tissue list |
 | `variant_risks.parquet` | Channel scores + `composite_risk` ∈ [0, 1] |
 | `methylation_links.parquet` | Variant–probe links via gene symbol (optional) |
 | `sample_profiles.parquet` | Dosage-weighted `sample_risk` per sample (optional) |
+
+Demo / fixture smoke tests write under `analysis/integrative/demo/` when `--demo` is passed.
 
 ## CLI usage
 
 ```bash
 uv sync --extra dev
 
-# End-to-end: tissue map + composite risk (+ optional samples / probes)
-uv run python scripts/integrative/run_pipeline.py \
-  --variants data/processed/prioritized_variants.csv \
-  --eqtls analysis/gtex_annotation/la_snp_gtex_eqtls.csv \
-  --alphagenome data/scores/alphagenome_raw.parquet \
-  --probes data/annotation/hm450_probe_genes.csv \
-  --samples data/processed/sample_genotypes.csv \
-  --output-dir analysis/integrative/
+# Production (Activity A.2.1.11.1): July Combined_Master × GTEx → results/
+# Requires outputs/Supplementary_Table_1_Annotated_Variants.xlsx (or parquet siblings).
+uv run python scripts/integrative/run_pipeline.py
+# → analysis/integrative/results/{annotated_variants,eqtl_summary,variant_risks}.parquet
 
-# Tissue map only
-uv run python scripts/integrative/map_variant_tissues.py \
-  --variants data/processed/prioritized_variants.csv \
-  --eqtls analysis/gtex_annotation/la_snp_gtex_eqtls.csv \
-  -o analysis/integrative/
+# Tissue map only (same production defaults)
+uv run python scripts/integrative/map_variant_tissues.py
 
-# Risk scores from an already-mapped table
-uv run python scripts/integrative/integrate_phenotypes.py \
-  --annotated analysis/integrative/annotated_variants.parquet \
-  --samples data/processed/sample_genotypes.csv \
-  -o analysis/integrative/
+# Risk scores from the production tissue map
+uv run python scripts/integrative/integrate_phenotypes.py
+
+# Offline fixture smoke test
+uv run python scripts/integrative/run_pipeline.py --demo
 ```
 
 ## Library usage
@@ -82,10 +78,11 @@ uv run python scripts/integrative/integrate_phenotypes.py \
 ```python
 import polars as pl
 from rogen_aging.integrative import run_integrative_pipeline
+from rogen_aging.integrative.io import load_production_eqtls, load_production_variants
 
 result = run_integrative_pipeline(
-    pl.read_csv("data/processed/prioritized_variants.csv"),
-    pl.read_csv("analysis/gtex_annotation/la_snp_gtex_eqtls.csv"),
+    load_production_variants(),
+    load_production_eqtls(),
 )
 risks = result["variant_risks"].sort("composite_risk", descending=True)
 ```

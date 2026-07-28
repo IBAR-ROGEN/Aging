@@ -1,4 +1,31 @@
-# Input Manifest — Methylation Clock Validation
+# Input Manifest — ROGEN Aging Pipelines
+
+## Activity A.2.1.8.1 — July prioritized-variant functional annotation
+
+Required inputs for [`scripts/ukb/run_july_annotation_pipeline.py`](scripts/ukb/run_july_annotation_pipeline.py)
+(production run: 47 prioritized GRCh38 variants → Supplementary Table 1).
+
+| Path | Role | Required |
+|------|------|----------|
+| `data/processed/variants_47_input.csv` | 47 prioritized variants (`chrom`, `pos`, `ref`, `alt`, `rsid`, `gene_symbol`) | yes |
+| `data/scores/alphagenome_raw.parquet` | Pre-computed AlphaGenome score matrix | yes |
+| `data/scores/alphamissense_raw.parquet` | Pre-computed AlphaMissense score matrix | yes |
+
+### Outputs (written by the annotation script)
+
+| Path | Description |
+|------|-------------|
+| `outputs/Supplementary_Table_1_Annotated_Variants.xlsx` | Three-sheet workbook: Combined_Master, High_Impact_Functional, GTEx_eQTL_Summary |
+
+### Notes
+
+- Default CLI paths target **production** (`outputs/`), not `outputs/demo/`.
+- Pass `--demo` only for offline fixture smoke tests (writes under `outputs/demo/`).
+- GTEx Portal API uses `datasetId=gtex_v8`; Ensembl VEP uses GRCh38 REST (`hgvs=1`).
+
+---
+
+## Methylation Clock Validation
 
 Required inputs for [`scripts/clock/evaluate_methylation_clock.py`](scripts/clock/evaluate_methylation_clock.py)
 (activity 2.1.10.1: GSE40279-trained ElasticNet clock, GSE87571 external validation).
@@ -26,3 +53,24 @@ Required inputs for [`scripts/clock/evaluate_methylation_clock.py`](scripts/cloc
   pickle via `uv run python scripts/dev/write_pipeline_fixtures.py` or
   `uv run python scripts/clock/evaluate_methylation_clock.py --demo`.
 - Optional annotation falls back to Horvath S3 (`test_data/gb-2013-14-10-r115-S3.csv`) when absent.
+
+---
+
+## Activity A.2.1.11.1 — Integrative multi-omics (variant × tissue × phenotype)
+
+Required upstream artefact for [`scripts/integrative/run_pipeline.py`](scripts/integrative/run_pipeline.py)
+(production defaults; not `--demo`).
+
+| Path | Role | Required |
+|------|------|----------|
+| `outputs/Supplementary_Table_1_Annotated_Variants.xlsx` | July workbook (`Combined_Master` + `GTEx_eQTL_Summary`) | yes (or parquet siblings below) |
+| `outputs/Supplementary_Table_1_Combined_Master.parquet` | Parsed Combined_Master (auto-written from Excel if missing) | preferred |
+| `outputs/Supplementary_Table_1_GTEx_eQTL_Summary.parquet` | Parsed long eQTL table (`slope`→`nes`) | preferred |
+
+### Outputs
+
+| Path | Description |
+|------|-------------|
+| `analysis/integrative/results/annotated_variants.parquet` | Variants remapped to tissue eQTL summaries |
+| `analysis/integrative/results/eqtl_summary.parquet` | Per-rsID GTEx summary |
+| `analysis/integrative/results/variant_risks.parquet` | Channel scores + `composite_risk` |
