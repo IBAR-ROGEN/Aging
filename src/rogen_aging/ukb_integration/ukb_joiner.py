@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import logging
 import math
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Final
 
@@ -188,7 +188,7 @@ def write_join_audit_log(
         halted: Whether the join was aborted due to excess drop rate.
     """
     path.parent.mkdir(parents=True, exist_ok=True)
-    stamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    stamp = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
     lines = [
         f"[{stamp}] Activity {ACTIVITY_ID} UKB phenotype–genotype eid join audit",
         f"phenotype_unique_eids={pheno_n}",
