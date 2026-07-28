@@ -25,7 +25,7 @@ from openpyxl.utils import get_column_letter
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 
 INPUT_CSV = REPO_ROOT / "analysis" / "variant_consequence_predictions.csv"
-OUTPUT_STEM = REPO_ROOT / "figures" / "variant_consequence_summary"
+OUTPUT_STEM = REPO_ROOT / "outputs" / "figures" / "variant_consequence_summary"
 
 MODE = "summary"  # "summary" | "table" | "stacked_bar"
 

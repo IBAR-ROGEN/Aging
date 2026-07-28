@@ -17,12 +17,26 @@ import typer
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 DEFAULT_INPUT = REPO_ROOT / "overlapping_genes_with_snps.xlsx"
-DEFAULT_OUTPUT = REPO_ROOT / "figures" / "Fig_LA_SNPs_per_gene.png"
+DEFAULT_OUTPUT = REPO_ROOT / "outputs" / "figures" / "Fig_LA_SNPs_per_gene.png"
 HIGHLIGHT_THRESHOLD = 3
 COLOR_DEFAULT = "#5B7C99"
 COLOR_HIGHLIGHT = "#C45C3E"
 
+# Column aliases accepted by the default Excel workbook and related tables.
+_GENE_COLUMN_CANDIDATES = ("Gene", "Gene Symbol", "gene_symbol", "gene")
+_SNP_COLUMN_CANDIDATES = ("SNP_rsID", "SNP Identifier", "rsid", "rsID")
+
 app = typer.Typer(add_completion=False, help=__doc__)
+
+
+def _resolve_column(columns: list[str], preferred: str, candidates: tuple[str, ...]) -> str:
+    """Return ``preferred`` if present, else the first matching alias."""
+    if preferred in columns:
+        return preferred
+    for name in candidates:
+        if name in columns:
+            return name
+    return preferred
 
 
 @app.command()
@@ -44,17 +58,28 @@ def main(
 ) -> None:
     """Write a horizontal bar chart of unique LA-SNPs per gene."""
     logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
+    if not input.is_file():
+        logging.error("Required input not found: %s", input)
+        raise SystemExit(1)
     df = pd.read_excel(input)
-    gcol, scol = gene_column, snp_column
-    missing = {gcol, scol} - set(df.columns)
+    available = list(df.columns.astype(str))
+    gcol = _resolve_column(available, gene_column, _GENE_COLUMN_CANDIDATES)
+    scol = _resolve_column(available, snp_column, _SNP_COLUMN_CANDIDATES)
+    missing = {gcol, scol} - set(available)
     if missing:
-        logging.error("Missing columns %s (available: %s)", sorted(missing), list(df.columns))
+        logging.error("Missing columns %s (available: %s)", sorted(missing), available)
         raise SystemExit(1)
     counts = df.groupby(gcol, sort=False)[scol].nunique().sort_values(ascending=False)
     counts = counts.iloc[::-1]  # barh: largest count at top
     genes, vals = counts.index.astype(str).tolist(), counts.to_numpy()
     colors = [COLOR_HIGHLIGHT if v >= HIGHLIGHT_THRESHOLD else COLOR_DEFAULT for v in vals]
-    logging.info("Genes: %d, unique SNPs (table-wide): %d", df[gcol].nunique(), df[scol].nunique())
+    logging.info(
+        "Using columns gene=%s snp=%s; genes=%d, unique SNPs (table-wide)=%d",
+        gcol,
+        scol,
+        df[gcol].nunique(),
+        df[scol].nunique(),
+    )
 
     plt.rcParams.update(
         {

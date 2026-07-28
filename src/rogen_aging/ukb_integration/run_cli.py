@@ -11,7 +11,10 @@ import typer
 
 from rogen_aging.ukb_integration.ukb_joiner import (
     ACTIVITY_ID,
+    DEFAULT_AUDIT_LOG,
+    MAX_JOIN_DROP_RATE,
     SYNTHETIC_DISCLAIMER,
+    JoinDropRateError,
     run_integration_pipeline,
 )
 
@@ -48,6 +51,19 @@ def integrate(
         path_type=Path,
         help="Directory for assoc_la_snp_*.csv outputs.",
     ),
+    audit_log: Path = typer.Option(
+        DEFAULT_AUDIT_LOG,
+        "--audit-log",
+        path_type=Path,
+        help="Log path for dropped records and eid schema mismatches.",
+    ),
+    max_drop_rate: float = typer.Option(
+        MAX_JOIN_DROP_RATE,
+        "--max-drop-rate",
+        min=0.0,
+        max=1.0,
+        help="Halt if unmatched eid fraction of the ID union exceeds this value.",
+    ),
     verbose: bool = typer.Option(
         False,
         "-v",
@@ -61,10 +77,12 @@ def integrate(
         pheno: Mock UKB phenotype CSV (``eid`` + v2 fields).
         vcf: Mock LA-SNP VCF with sample IDs equal to ``eid``.
         output_dir: Directory for ``assoc_la_snp_*.csv`` outputs.
+        audit_log: Destination for dropped-ID / schema mismatch audit logging.
+        max_drop_rate: Maximum allowed unmatched ``eid`` fraction before halt.
         verbose: When true, enable debug logging.
 
     Returns:
-        Process exit code (``0`` on success, ``1`` if inputs are missing).
+        Process exit code (``0`` on success, ``1`` on missing inputs or excess drops).
     """
     logging.basicConfig(
         level=logging.DEBUG if verbose else logging.INFO,
@@ -77,11 +95,23 @@ def integrate(
         print(f"VCF not found: {vcf}", file=sys.stderr)
         return 1
 
-    joined, parental, ad = run_integration_pipeline(pheno, vcf, output_dir)
+    try:
+        joined, parental, ad = run_integration_pipeline(
+            pheno,
+            vcf,
+            output_dir,
+            audit_log=audit_log,
+            max_drop_rate=max_drop_rate,
+        )
+    except JoinDropRateError as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 1
+
     print(f"Activity {ACTIVITY_ID} — {SYNTHETIC_DISCLAIMER}")
     print(f"Joined cohort: {joined.height} rows")
     print(f"Parental longevity associations: {parental.height} SNPs → {output_dir}")
     print(f"AD diagnosis associations: {ad.height} SNPs → {output_dir}")
+    print(f"eid join audit log: {audit_log}")
     return 0
 
 

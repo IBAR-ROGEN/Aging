@@ -23,10 +23,12 @@ API responses are cached under `data/cache/july_annotation/`. Progress uses
 
 | Path | Role | Required columns |
 |------|------|------------------|
-| `data/processed/prioritized_variants.csv` | Candidate variants | `chrom`, `pos`, `ref`, `alt`, `rsid`, `gene_symbol` |
+| `data/processed/variants_47_input.csv` | Production 47-variant set (Activity A.2.1.8.1) | `chrom`, `pos`, `ref`, `alt`, `rsid`, `gene_symbol` |
 | `data/scores/alphagenome_raw.parquet` | AlphaGenome scores | locus and/or `rsid` + `alphagenome_*` (aliases such as `ref_score` accepted) |
 | `data/scores/alphamissense_raw.parquet` | AlphaMissense scores | locus and/or `rsid` + `alphamissense_score` / `alphamissense_class` |
 | `data/processed/vep_local.jsonl` (optional) | Offline VEP payloads | JSONL keyed by `rsid` / `variant_key` |
+
+Required paths are also listed in [`INPUT_MANIFEST.md`](../INPUT_MANIFEST.md).
 
 ## Output
 
@@ -42,14 +44,18 @@ API responses are cached under `data/cache/july_annotation/`. Progress uses
 
 ```bash
 uv sync
+# Production (all 47 variants → outputs/Supplementary_Table_1_Annotated_Variants.xlsx)
 uv run python scripts/ukb/run_july_annotation_pipeline.py
 
 # Warm-cache / offline mode (no live API on cache miss)
 uv run python scripts/ukb/run_july_annotation_pipeline.py --cache-only
 
+# Offline demo fixtures only (writes under outputs/demo/)
+uv run python scripts/ukb/run_july_annotation_pipeline.py --demo
+
 # Custom paths
 uv run python scripts/ukb/run_july_annotation_pipeline.py \
-  --variants data/processed/prioritized_variants.csv \
+  --variants data/processed/variants_47_input.csv \
   --alphagenome data/scores/alphagenome_raw.parquet \
   --alphamissense data/scores/alphamissense_raw.parquet \
   --output outputs/Supplementary_Table_1_Annotated_Variants.xlsx \
