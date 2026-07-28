@@ -23,7 +23,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 
 INPUT_CSV = REPO_ROOT / "analysis" / "la_snp_af_1kg_vs_gnomad.csv"
 MANIFEST_CSV = REPO_ROOT / "analysis" / "ukb_snp_manifest_v0.1.csv"
-OUTPUT_DIR = REPO_ROOT / "figures"
+OUTPUT_DIR = REPO_ROOT / "outputs" / "figures"
 FIG_BASENAME = "af_1kg_vs_gnomad_comparison"
 
 DIFF_THRESHOLD = 0.05

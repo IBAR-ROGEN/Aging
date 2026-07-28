@@ -25,5 +25,18 @@ jobs:
       - name: Run pytest
         run: uv run pytest -q
 
+      - name: Regenerate integrative analysis parquets
+        run: |
+          # Production Excel is gitignored; materialize it offline for CI, then
+          # regenerate analysis/integrative/results/*.parquet from that workbook.
+          uv run python scripts/ukb/run_july_annotation_pipeline.py --demo
+          mkdir -p outputs
+          cp outputs/demo/Supplementary_Table_1_Annotated_Variants.xlsx \
+            outputs/Supplementary_Table_1_Annotated_Variants.xlsx
+          uv run python scripts/integrative/run_pipeline.py
+          test -f analysis/integrative/results/annotated_variants.parquet
+          test -f analysis/integrative/results/eqtl_summary.parquet
+          test -f analysis/integrative/results/variant_risks.parquet
+
       - name: UKB repository compliance audit
         run: ./scripts/dev/ukbb_ci_compliance_audit.sh
