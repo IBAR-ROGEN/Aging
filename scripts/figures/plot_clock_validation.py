@@ -22,7 +22,7 @@ from sklearn.metrics import mean_absolute_error, r2_score
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 
 INPUT_CSV = REPO_ROOT / "figures" / "validation_gse40279" / "per_sample_predictions.csv"
-OUTPUT_STEM = REPO_ROOT / "figures" / "validation_gse40279" / "clock_validation_gse40279"
+OUTPUT_STEM = REPO_ROOT / "outputs" / "figures" / "clock_validation_gse40279"
 
 DATASET_LABEL = "GSE40279"
 
