@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import logging
 import math
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Final
 
@@ -27,6 +28,13 @@ ACTIVITY_ID: Final[str] = "2.1.11.1"
 SYNTHETIC_DISCLAIMER: Final[str] = (
     "Synthetic-data validation only (Activity 2.1.11.1); do not interpret biologically."
 )
+DEFAULT_AUDIT_LOG: Final[Path] = Path("outputs/logs/ukb_integration_audit.log")
+MAX_JOIN_DROP_RATE: Final[float] = 0.01
+_EID_AUDIT_SAMPLE_LIMIT: Final[int] = 50
+
+
+class JoinDropRateError(ValueError):
+    """Raised when phenotype–genotype ``eid`` join drop rate exceeds the allowed threshold."""
 
 LA_SNP_ASSOC_COLUMNS: Final[tuple[str, ...]] = (
     "rsID",
@@ -120,35 +128,179 @@ def load_genotype_matrix_from_vcf(path: Path) -> pl.DataFrame:
     return pl.DataFrame({"eid": sample_ids, **dosage_by_snp})
 
 
+def _eid_dtype_name(frame: pl.DataFrame) -> str:
+    """Return the Polars dtype name of the ``eid`` column."""
+    return str(frame.schema["eid"])
+
+
+def _normalize_eid_frame(frame: pl.DataFrame) -> pl.DataFrame:
+    """Cast ``eid`` to Utf8 and strip surrounding whitespace for stable joins."""
+    return frame.with_columns(
+        pl.col("eid").cast(pl.Utf8).str.strip_chars().alias("eid")
+    )
+
+
+def _sorted_unique_eids(frame: pl.DataFrame) -> list[str]:
+    """Return sorted unique non-null ``eid`` values as strings."""
+    return sorted(frame.get_column("eid").drop_nulls().unique().to_list())
+
+
+def _format_eid_sample(eids: list[str], *, limit: int = _EID_AUDIT_SAMPLE_LIMIT) -> str:
+    """Format a capped sample of EIDs for the audit log."""
+    if not eids:
+        return "(none)"
+    shown = eids[:limit]
+    suffix = f" … (+{len(eids) - limit} more)" if len(eids) > limit else ""
+    return ", ".join(shown) + suffix
+
+
+def write_join_audit_log(
+    path: Path,
+    *,
+    pheno_n: int,
+    geno_n: int,
+    matched_n: int,
+    pheno_only: list[str],
+    geno_only: list[str],
+    pheno_dtype: str,
+    geno_dtype: str,
+    schema_mismatch: bool,
+    schema_normalized: bool,
+    drop_rate: float,
+    max_drop_rate: float,
+    halted: bool,
+) -> None:
+    """Write phenotype–genotype ``eid`` join diagnostics to ``path``.
+
+    Args:
+        path: Destination audit log path; parent directories are created as needed.
+        pheno_n: Unique phenotype ``eid`` count before join.
+        geno_n: Unique genotype sample-ID count before join.
+        matched_n: Size of the ``eid`` intersection after normalization.
+        pheno_only: Phenotype ``eid`` values absent from genotypes.
+        geno_only: Genotype sample IDs absent from phenotypes.
+        pheno_dtype: Original phenotype ``eid`` Polars dtype name.
+        geno_dtype: Original genotype ``eid`` Polars dtype name.
+        schema_mismatch: Whether original ``eid`` dtypes differed.
+        schema_normalized: Whether both sides were cast to Utf8 before joining.
+        drop_rate: Fraction of union IDs that failed to match.
+        max_drop_rate: Threshold above which the pipeline must halt.
+        halted: Whether the join was aborted due to excess drop rate.
+    """
+    path.parent.mkdir(parents=True, exist_ok=True)
+    stamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    lines = [
+        f"[{stamp}] Activity {ACTIVITY_ID} UKB phenotype–genotype eid join audit",
+        f"phenotype_unique_eids={pheno_n}",
+        f"genotype_unique_eids={geno_n}",
+        f"matched_eids={matched_n}",
+        f"pheno_only_dropped={len(pheno_only)}",
+        f"geno_only_dropped={len(geno_only)}",
+        f"drop_rate={drop_rate:.6f}",
+        f"max_drop_rate={max_drop_rate:.6f}",
+        f"eid_schema_phenotype={pheno_dtype}",
+        f"eid_schema_genotype={geno_dtype}",
+        f"eid_schema_mismatch={schema_mismatch}",
+        f"eid_schema_normalized_to_utf8={schema_normalized}",
+        f"halted={halted}",
+        f"pheno_only_eids_sample={_format_eid_sample(pheno_only)}",
+        f"geno_only_eids_sample={_format_eid_sample(geno_only)}",
+        "",
+    ]
+    path.write_text("\n".join(lines), encoding="utf-8")
+    LOG.info("Wrote eid join audit log → %s (drop_rate=%.4f)", path, drop_rate)
+
+
 def join_phenotypes_genotypes(
     phenotypes: pl.DataFrame,
     genotypes: pl.DataFrame,
+    *,
+    audit_log: Path | None = DEFAULT_AUDIT_LOG,
+    max_drop_rate: float = MAX_JOIN_DROP_RATE,
 ) -> pl.DataFrame:
     """Inner-join phenotype table and genotype matrix on ``eid`` (one row per participant).
+
+    Normalizes ``eid`` to stripped Utf8 on both sides so Int/Utf8 schema mismatches
+    do not silently zero the join. When ``audit_log`` is set, dropped IDs and schema
+    diagnostics are written there. The pipeline halts if the union drop rate exceeds
+    ``max_drop_rate`` (default 1%).
 
     Args:
         phenotypes: Phenotype frame with an ``eid`` column.
         genotypes: Genotype matrix with an ``eid`` column and SNP dosage columns.
+        audit_log: Path for the join audit log, or ``None`` to skip file output.
+        max_drop_rate: Maximum allowed fraction of unmatched union ``eid`` values.
 
     Returns:
-        Inner join of ``phenotypes`` and ``genotypes`` on ``eid``.
+        Inner join of ``phenotypes`` and ``genotypes`` on normalized ``eid``.
 
     Raises:
-        ValueError: If either frame lacks ``eid``, or the join drops phenotype rows
-            (``eid`` sets do not match).
+        ValueError: If either frame lacks ``eid``.
+        JoinDropRateError: If the unmatched-ID drop rate exceeds ``max_drop_rate``.
     """
     if "eid" not in phenotypes.columns:
         raise ValueError("Phenotype table missing column: eid")
     if "eid" not in genotypes.columns:
         raise ValueError("Genotype matrix missing column: eid")
 
-    joined = phenotypes.join(genotypes, on="eid", how="inner")
-    if joined.height != phenotypes.height:
-        raise ValueError(
-            f"Join row count {joined.height} != phenotype rows {phenotypes.height}; "
-            "eid sets may not match."
+    pheno_dtype = _eid_dtype_name(phenotypes)
+    geno_dtype = _eid_dtype_name(genotypes)
+    schema_mismatch = pheno_dtype != geno_dtype
+    schema_normalized = schema_mismatch or pheno_dtype != "String" or geno_dtype != "String"
+
+    pheno_norm = _normalize_eid_frame(phenotypes)
+    geno_norm = _normalize_eid_frame(genotypes)
+
+    pheno_eids = set(_sorted_unique_eids(pheno_norm))
+    geno_eids = set(_sorted_unique_eids(geno_norm))
+    matched = pheno_eids & geno_eids
+    pheno_only = sorted(pheno_eids - geno_eids)
+    geno_only = sorted(geno_eids - pheno_eids)
+    union_n = len(pheno_eids | geno_eids)
+    drop_rate = (len(pheno_only) + len(geno_only)) / union_n if union_n else 1.0
+    halted = drop_rate > max_drop_rate
+
+    if schema_mismatch:
+        LOG.warning(
+            "eid schema mismatch: phenotype=%s genotype=%s; normalizing both to Utf8",
+            pheno_dtype,
+            geno_dtype,
         )
-    return joined
+    if pheno_only or geno_only:
+        LOG.warning(
+            "eid join orphans: pheno_only=%d geno_only=%d drop_rate=%.4f",
+            len(pheno_only),
+            len(geno_only),
+            drop_rate,
+        )
+
+    if audit_log is not None:
+        write_join_audit_log(
+            audit_log,
+            pheno_n=len(pheno_eids),
+            geno_n=len(geno_eids),
+            matched_n=len(matched),
+            pheno_only=pheno_only,
+            geno_only=geno_only,
+            pheno_dtype=pheno_dtype,
+            geno_dtype=geno_dtype,
+            schema_mismatch=schema_mismatch,
+            schema_normalized=schema_normalized,
+            drop_rate=drop_rate,
+            max_drop_rate=max_drop_rate,
+            halted=halted,
+        )
+
+    if halted:
+        raise JoinDropRateError(
+            f"eid join drop rate {drop_rate:.4%} exceeds {max_drop_rate:.4%} "
+            f"(pheno_only={len(pheno_only)}, geno_only={len(geno_only)}, "
+            f"matched={len(matched)}, schema_mismatch={schema_mismatch}; "
+            f"phenotype_dtype={pheno_dtype}, genotype_dtype={geno_dtype}). "
+            f"Audit log: {audit_log}"
+        )
+
+    return pheno_norm.join(geno_norm, on="eid", how="inner")
 
 
 def ad_diagnosis_from_code(code: str | None) -> int:
@@ -401,6 +553,9 @@ def run_integration_pipeline(
     pheno_path: Path,
     vcf_path: Path,
     output_dir: Path,
+    *,
+    audit_log: Path = DEFAULT_AUDIT_LOG,
+    max_drop_rate: float = MAX_JOIN_DROP_RATE,
 ) -> tuple[pl.DataFrame, pl.DataFrame, pl.DataFrame]:
     """Load mock inputs, join on ``eid``, run LA-SNP scans, write association CSVs under ``output_dir``.
 
@@ -408,13 +563,20 @@ def run_integration_pipeline(
         pheno_path: Mock UKB phenotype CSV path.
         vcf_path: Mock LA-SNP VCF path with sample IDs equal to ``eid``.
         output_dir: Directory for ``assoc_la_snp_*.csv`` outputs.
+        audit_log: Path for dropped-ID / schema mismatch audit logging.
+        max_drop_rate: Maximum allowed unmatched ``eid`` fraction (default 1%).
 
     Returns:
         Tuple ``(joined, parental_longevity_results, ad_results)``.
     """
     phenotypes = load_phenotype_table(pheno_path)
     genotypes = load_genotype_matrix_from_vcf(vcf_path)
-    joined = join_phenotypes_genotypes(phenotypes, genotypes)
+    joined = join_phenotypes_genotypes(
+        phenotypes,
+        genotypes,
+        audit_log=audit_log,
+        max_drop_rate=max_drop_rate,
+    )
 
     ad_outcome = pl.Series(
         "ad_diagnosis",
