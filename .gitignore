@@ -123,6 +123,7 @@ models/*
 make_pontaj.py
 *pontaj*
 
-# Regenerable offline pipeline fixtures / demo outputs
+# Regenerable offline pipeline fixtures / demo outputs / production results
 analysis/integrative/demo/
 analysis/integrative/fixtures/
+analysis/integrative/results/
