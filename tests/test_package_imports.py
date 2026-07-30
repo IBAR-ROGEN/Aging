@@ -21,6 +21,7 @@ def test_import_submodules() -> None:
     import rogen_aging.vcf  # noqa: PLC0415
 
     assert "train_clock" in rogen_aging.clock.__all__
+    assert "validate_methylation_matrix" in rogen_aging.clock.__all__
     assert "generate_ukb_rap_mock" in rogen_aging.ukb.__all__
     assert "run_integrative_pipeline" in rogen_aging.integrative.__all__
     assert "run_integration_pipeline" in rogen_aging.ukb_integration.__all__

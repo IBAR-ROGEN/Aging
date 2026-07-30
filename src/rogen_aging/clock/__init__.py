@@ -11,8 +11,15 @@ from rogen_aging.clock.data import (
 from rogen_aging.clock.evaluate import evaluate_clock
 from rogen_aging.clock.model import make_clock_pipeline
 from rogen_aging.clock.train import train_clock
+from rogen_aging.clock.validate_matrix import (
+    MissingValuePolicy,
+    ValidationReport,
+    validate_methylation_matrix,
+)
 
 __all__ = [
+    "MissingValuePolicy",
+    "ValidationReport",
     "evaluate_clock",
     "load_gse87571",
     "load_romanian_cohort",
@@ -21,5 +28,6 @@ __all__ = [
     "save_as_parquet",
     "split_features_target",
     "train_clock",
+    "validate_methylation_matrix",
     "write_mock_romanian_cohort",
 ]
