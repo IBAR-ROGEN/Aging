@@ -54,9 +54,7 @@ def generate_synthetic_ukb_data(
     p_2 = snp_maf**2
     probs = [p_0, p_1, p_2]
 
-    snp_cols = {
-        snp_id: rng.choice([0, 1, 2], size=n_samples, p=probs) for snp_id in DUMMY_SNP_IDS
-    }
+    snp_cols = {snp_id: rng.choice([0, 1, 2], size=n_samples, p=probs) for snp_id in DUMMY_SNP_IDS}
 
     return pd.DataFrame(
         {
@@ -88,7 +86,6 @@ def main(
         Path("test_data/mock_clinical_data.csv"),
         "--output",
         "-o",
-        path_type=Path,
         help="Output CSV path.",
     ),
     seed: int | None = typer.Option(

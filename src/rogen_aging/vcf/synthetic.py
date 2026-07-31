@@ -273,25 +273,19 @@ def write_vcf_headers(
     out.write(
         '##INFO=<ID=END,Number=1,Type=Integer,Description="End position of the variant described in this record">\n'
     )
-    out.write(
-        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
-    )
+    out.write('##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n')
     out.write(
         '##FORMAT=<ID=AD,Number=R,Type=Integer,Description="Allelic depths for the ref and alt alleles in the order listed">\n'
     )
     out.write(
         '##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Approximate read depth (reads with MQ=255 or with bad mates are filtered)">\n'
     )
-    out.write(
-        '##FORMAT=<ID=GQ,Number=1,Type=Integer,Description="Genotype Quality">\n'
-    )
+    out.write('##FORMAT=<ID=GQ,Number=1,Type=Integer,Description="Genotype Quality">\n')
     for chrom, length in GRCH38_CHROM_LENGTHS.items():
         out.write(f"##contig=<ID={chrom},length={length}>\n")
 
     tabs = "\t".join(sample_ids)
-    out.write(
-        f"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t{tabs}\n"
-    )
+    out.write(f"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t{tabs}\n")
 
 
 def romanian_cohort_sample_ids(n_samples: int, prefix: str = "RO_EUR") -> list[str]:
@@ -365,11 +359,7 @@ def iter_variant_lines(
             fmt,
         ]
         for sample_idx in range(n_samples):
-            parts.append(
-                format_sample_column(
-                    rng, int(genotypes[sample_idx]), mean_depth
-                )
-            )
+            parts.append(format_sample_column(rng, int(genotypes[sample_idx]), mean_depth))
         line = "\t".join(parts) + "\n"
         if variant_index > 0 and variant_index % 10_000 == 0:
             log.info("Emitted %d variant lines", variant_index)
@@ -402,7 +392,6 @@ def generate(
     output: Path = typer.Option(
         ...,
         "--output",
-        path_type=Path,
         help="Output path for uncompressed VCF (tab-delimited text).",
     ),
     seed: int | None = typer.Option(

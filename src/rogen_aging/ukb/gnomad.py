@@ -284,10 +284,14 @@ class GnomadClient:
         while True:
             attempt += 1
             try:
-                response = self._session.post(GNOMAD_API_URL, json=payload, timeout=self.timeout_sec)
+                response = self._session.post(
+                    GNOMAD_API_URL, json=payload, timeout=self.timeout_sec
+                )
             except requests.RequestException as exc:
                 if attempt > self.max_retries:
-                    raise RuntimeError(f"gnomAD request failed after {self.max_retries} attempts: {exc}") from exc
+                    raise RuntimeError(
+                        f"gnomAD request failed after {self.max_retries} attempts: {exc}"
+                    ) from exc
                 sleep_s = self.min_interval_sec * (2 ** (attempt - 1))
                 LOG.warning("gnomAD request error (%s); retrying in %.2fs", exc, sleep_s)
                 time.sleep(sleep_s)
@@ -299,15 +303,23 @@ class GnomadClient:
                 if attempt > self.max_retries:
                     response.raise_for_status()
                 retry_after = response.headers.get("Retry-After")
-                sleep_s = float(retry_after) if retry_after else self.min_interval_sec * (2 ** (attempt - 1))
+                sleep_s = (
+                    float(retry_after)
+                    if retry_after
+                    else self.min_interval_sec * (2 ** (attempt - 1))
+                )
                 LOG.warning("gnomAD HTTP %s; sleeping %.2fs", response.status_code, sleep_s)
                 time.sleep(sleep_s)
                 continue
 
             response.raise_for_status()
             body = response.json()
+            if not isinstance(body, dict):
+                raise RuntimeError("gnomAD GraphQL response was not a JSON object")
             if "errors" in body and body.get("data") in (None, {}):
-                messages = "; ".join(error.get("message", "unknown error") for error in body["errors"])
+                messages = "; ".join(
+                    error.get("message", "unknown error") for error in body["errors"]
+                )
                 raise RuntimeError(f"gnomAD GraphQL error: {messages}")
             return body
 
@@ -393,6 +405,8 @@ class GnomadClient:
             rsids = variant.get("rsids") or []
             normalized = {normalize_rsid(value).lower() for value in rsids}
             if target in normalized:
+                if not isinstance(variant, dict):
+                    raise RuntimeError(f"Unexpected gnomAD variant payload for {rsid}")
                 return variant
         return None
 
@@ -513,7 +527,9 @@ def fetch_gnomad_afs(
             continue
         if not plan.chromosome or plan.position is None:
             continue
-        LOG.info("Region fallback lookup for %s at %s:%s", plan.rsid, plan.chromosome, plan.position)
+        LOG.info(
+            "Region fallback lookup for %s at %s:%s", plan.rsid, plan.chromosome, plan.position
+        )
         variant = client.fetch_variant_by_region(plan.chromosome, plan.position, plan.rsid)
         cache[plan.rsid] = cache_entry_from_variant(variant, lookup_method="region_rsid")
         if variant is None:
@@ -523,7 +539,9 @@ def fetch_gnomad_afs(
     return cache
 
 
-def build_comparison_table(plans: list[LookupPlan], cache: dict[str, dict[str, Any]]) -> pd.DataFrame:
+def build_comparison_table(
+    plans: list[LookupPlan], cache: dict[str, dict[str, Any]]
+) -> pd.DataFrame:
     """Merge lookup plans with cached gnomAD responses into a comparison table.
 
     Args:
@@ -573,7 +591,14 @@ def plot_scatter(comparison: pd.DataFrame, output_path: Path) -> None:
     normal = plotted[~plotted["large_diff"]]
     flagged = plotted[plotted["large_diff"]]
 
-    ax.scatter(normal["AF_1kg"], normal["AF_gnomad_nfe"], s=36, color="#5B7C99", alpha=0.85, label="|diff| < 0.05")
+    ax.scatter(
+        normal["AF_1kg"],
+        normal["AF_gnomad_nfe"],
+        s=36,
+        color="#5B7C99",
+        alpha=0.85,
+        label="|diff| < 0.05",
+    )
     if not flagged.empty:
         ax.scatter(
             flagged["AF_1kg"],
@@ -640,7 +665,9 @@ def read_comparison_table(path: Path) -> pd.DataFrame:
         paired = df["AF_1kg"].notna() & df["AF_gnomad_nfe"].notna()
         df = df.copy()
         df["abs_diff"] = None
-        df.loc[paired, "abs_diff"] = (df.loc[paired, "AF_1kg"] - df.loc[paired, "AF_gnomad_nfe"]).abs()
+        df.loc[paired, "abs_diff"] = (
+            df.loc[paired, "AF_1kg"] - df.loc[paired, "AF_gnomad_nfe"]
+        ).abs()
     return df
 
 
@@ -887,19 +914,25 @@ def summarize_main(
 
 @app.command("compare")
 def compare_cmd(
-    input_path: Path = typer.Option(DEFAULT_INPUT, "--input", path_type=Path, help="1KG frequency CSV"),
-    output: Path = typer.Option(DEFAULT_OUTPUT, "--output", path_type=Path, help="Comparison CSV"),
-    scatter: Path = typer.Option(DEFAULT_SCATTER, "--scatter", path_type=Path, help="Scatter PNG path"),
-    cache: Path = typer.Option(DEFAULT_CACHE, "--cache", path_type=Path, help="JSON cache path"),
-    refresh_cache: bool = typer.Option(False, "--refresh-cache", help="Ignore cached rsIDs and re-query gnomAD"),
-    batch_size: int = typer.Option(DEFAULT_BATCH_SIZE, "--batch-size", help="Variants per GraphQL request"),
+    input_path: Path = typer.Option(DEFAULT_INPUT, "--input", help="1KG frequency CSV"),
+    output: Path = typer.Option(DEFAULT_OUTPUT, "--output", help="Comparison CSV"),
+    scatter: Path = typer.Option(DEFAULT_SCATTER, "--scatter", help="Scatter PNG path"),
+    cache: Path = typer.Option(DEFAULT_CACHE, "--cache", help="JSON cache path"),
+    refresh_cache: bool = typer.Option(
+        False, "--refresh-cache", help="Ignore cached rsIDs and re-query gnomAD"
+    ),
+    batch_size: int = typer.Option(
+        DEFAULT_BATCH_SIZE, "--batch-size", help="Variants per GraphQL request"
+    ),
     min_interval: float = typer.Option(
         DEFAULT_MIN_INTERVAL_SEC,
         "--min-interval",
         help="Minimum seconds between gnomAD HTTP requests",
     ),
     timeout: float = typer.Option(DEFAULT_TIMEOUT_SEC, "--timeout", help="HTTP timeout in seconds"),
-    max_retries: int = typer.Option(DEFAULT_MAX_RETRIES, "--max-retries", help="Retries per HTTP request"),
+    max_retries: int = typer.Option(
+        DEFAULT_MAX_RETRIES, "--max-retries", help="Retries per HTTP request"
+    ),
     log_level: str = typer.Option(
         "INFO",
         "--log-level",
@@ -927,13 +960,11 @@ def summarize_cmd(
     input_path: Path = typer.Option(
         DEFAULT_OUTPUT,
         "--input",
-        path_type=Path,
         help="Comparison CSV from the compare step",
     ),
     output: Path = typer.Option(
         DEFAULT_SUMMARY,
         "--output",
-        path_type=Path,
         help="Markdown summary path",
     ),
     diff_threshold: float = typer.Option(

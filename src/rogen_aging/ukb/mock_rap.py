@@ -22,9 +22,7 @@ from rogen_aging.vcf import (
     write_vcf_headers,
 )
 
-ACTIVITY_HEADER = (
-    "Activity 2.1.8.1 synthetic UKB-RAP mock cohort - safe for GitHub (no real EIDs)"
-)
+ACTIVITY_HEADER = "Activity 2.1.8.1 synthetic UKB-RAP mock cohort - safe for GitHub (no real EIDs)"
 
 # v2 phenotype dictionary fields (excluding join key ``eid``).
 PHENOTYPE_V2_FIELDS: tuple[str, ...] = (
@@ -173,12 +171,8 @@ def generate_phenotype_table(
 
     ad_flag = rng.binomial(1, 0.02, size=n_samples)
     pd_flag = rng.binomial(1, 0.008, size=n_samples)
-    ad_codes = [
-        rng.choice(AD_ICD10_CODES) if flag else "" for flag in ad_flag
-    ]
-    pd_codes = [
-        rng.choice(PD_ICD10_CODES) if flag else "" for flag in pd_flag
-    ]
+    ad_codes = [rng.choice(AD_ICD10_CODES) if flag else "" for flag in ad_flag]
+    pd_codes = [rng.choice(PD_ICD10_CODES) if flag else "" for flag in pd_flag]
 
     frailty_probs = rng.uniform(0.05, 0.25, size=5)
     frailty_cols = {
@@ -266,9 +260,7 @@ def iter_manifest_variant_lines(
             fmt,
         ]
         for sample_idx in range(n_samples):
-            parts.append(
-                format_sample_column(rng, int(genotypes[sample_idx]), mean_depth)
-            )
+            parts.append(format_sample_column(rng, int(genotypes[sample_idx]), mean_depth))
         yield "\t".join(parts) + "\n"
 
 
@@ -303,9 +295,7 @@ def write_la_snp_vcf(
                 "##synthetic_data=true",
             ),
         )
-        for line in iter_manifest_variant_lines(
-            rng, manifest, sample_ids, mean_depth
-        ):
+        for line in iter_manifest_variant_lines(rng, manifest, sample_ids, mean_depth):
             out.write(line)
 
 
@@ -370,14 +360,12 @@ def main(
         DEFAULT_MANIFEST,
         "--snp-manifest",
         exists=False,
-        path_type=Path,
         help="UKB LA-SNP manifest CSV (rsID + GRCh38 coordinates).",
     ),
     output_dir: Path = typer.Option(
         DEFAULT_OUTPUT_DIR,
         "--output-dir",
         "-o",
-        path_type=Path,
         help="Root directory for UKB-RAP-style layout.",
     ),
     seed: int | None = typer.Option(
