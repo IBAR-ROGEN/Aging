@@ -5,8 +5,17 @@ on:
     branches: [main, master]
   pull_request:
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  MPLCONFIGDIR: /tmp/matplotlib
+  UV_LINK_MODE: copy
+
 jobs:
-  test-and-audit:
+  generate-fixtures:
+    name: Generate offline pipeline fixtures
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -15,18 +24,182 @@ jobs:
         uses: astral-sh/setup-uv@v5
         with:
           enable-cache: true
+          cache-dependency-glob: |
+            **/uv.lock
+            **/pyproject.toml
+            **/requirements*.txt
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('uv.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
 
       - name: Sync dependencies
-        run: uv sync --extra dev
+        run: uv sync --frozen --extra dev
+
+      - name: Write offline pipeline fixtures
+        # Materializes July / integrative / clock mock inputs described in
+        # INPUT_MANIFEST.md so offline CI can run without production data/APIs.
+        run: uv run python scripts/dev/write_pipeline_fixtures.py
+
+      - name: Verify fixture artefacts
+        run: |
+          set -euo pipefail
+          test -f data/processed/prioritized_variants.csv
+          test -f data/scores/alphagenome_raw.parquet
+          test -f data/scores/alphamissense_raw.parquet
+          test -f analysis/integrative/fixtures/annotated_variants.parquet
+          test -f analysis/integrative/fixtures/eqtls.parquet
+          test -f models/ro_clock_elasticnet_gse40279.pkl
+
+      - name: Upload pipeline fixtures
+        uses: actions/upload-artifact@v4
+        with:
+          name: pipeline-fixtures
+          retention-days: 1
+          if-no-files-found: error
+          path: |
+            data/processed/
+            data/scores/
+            data/cache/july_annotation/
+            data/methylation/
+            analysis/integrative/fixtures/
+            models/ro_clock_elasticnet_gse40279.pkl
+
+  lint:
+    name: Ruff lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: |
+            **/uv.lock
+            **/pyproject.toml
+            **/requirements*.txt
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('uv.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Sync dependencies
+        run: uv sync --frozen --extra dev
 
       - name: Ruff lint
         run: uv run ruff check src scripts tests
 
+  test:
+    name: pytest (${{ matrix.suite }})
+    needs: generate-fixtures
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # VariantTissueMapper + PhenotypeIntegrator — require 100% pass
+          - suite: integrative
+            paths: tests/test_integrative.py
+          - suite: ukb
+            paths: >-
+              tests/test_ukb_integration.py
+              tests/test_ukb_mock_gen.py
+              tests/test_mock_clinical_csv.py
+              tests/test_synthetic_vcf.py
+              tests/test_ukbb_ci_compliance_audit.py
+          - suite: clock
+            paths: >-
+              tests/test_clock_regression.py
+              tests/test_evaluate_methylation_clock.py
+          - suite: core
+            paths: >-
+              tests/test_package_imports.py
+              tests/test_root_shims.py
+              tests/test_ensembl_client.py
+              tests/test_af_comparison_summary.py
+              tests/test_overlap_enrichment.py
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: |
+            **/uv.lock
+            **/pyproject.toml
+            **/requirements*.txt
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('uv.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Sync dependencies
+        run: uv sync --frozen --extra dev
+
+      - name: Download pipeline fixtures
+        uses: actions/download-artifact@v4
+        with:
+          name: pipeline-fixtures
+          path: .
+
       - name: Run pytest
-        run: uv run pytest -q
+        run: |
+          set -euo pipefail
+          uv run pytest -q --tb=short --strict-markers ${{ matrix.paths }}
+          if [ "${{ matrix.suite }}" = "integrative" ]; then
+            echo "Integrative suite (VariantTissueMapper / PhenotypeIntegrator) passed with 100% success."
+          fi
+
+  pipeline-smoke:
+    name: Integrative parquet regeneration
+    needs: generate-fixtures
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: |
+            **/uv.lock
+            **/pyproject.toml
+            **/requirements*.txt
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('uv.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Sync dependencies
+        run: uv sync --frozen --extra dev
+
+      - name: Download pipeline fixtures
+        uses: actions/download-artifact@v4
+        with:
+          name: pipeline-fixtures
+          path: .
 
       - name: Regenerate integrative analysis parquets
         run: |
+          set -euo pipefail
           # Production Excel is gitignored; materialize it offline for CI, then
           # regenerate analysis/integrative/results/*.parquet from that workbook.
           uv run python scripts/ukb/run_july_annotation_pipeline.py --demo
@@ -38,5 +211,47 @@ jobs:
           test -f analysis/integrative/results/eqtl_summary.parquet
           test -f analysis/integrative/results/variant_risks.parquet
 
-      - name: UKB repository compliance audit
-        run: ./scripts/dev/ukbb_ci_compliance_audit.sh
+  compliance-audit:
+    name: UKB compliance audit (strict)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Strict UKB repository compliance audit
+        # Hard-fail on disallowed absolute paths, restricted genomic/clinical
+        # artefacts, and other tree violations that enable non-compliant
+        # participant/EID handling in version control.
+        run: |
+          set -euo pipefail
+          chmod +x scripts/dev/ukbb_ci_compliance_audit.sh
+          ./scripts/dev/ukbb_ci_compliance_audit.sh
+        env:
+          MIN_SENSITIVE_BYTES: "1048576"
+
+  ci-success:
+    name: CI gate
+    if: always()
+    needs:
+      - generate-fixtures
+      - lint
+      - test
+      - pipeline-smoke
+      - compliance-audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require all jobs to succeed
+        run: |
+          set -euo pipefail
+          for result in \
+            "${{ needs.generate-fixtures.result }}" \
+            "${{ needs.lint.result }}" \
+            "${{ needs.test.result }}" \
+            "${{ needs.pipeline-smoke.result }}" \
+            "${{ needs.compliance-audit.result }}"
+          do
+            if [ "$result" != "success" ]; then
+              echo "CI gate failed: dependent job result was '$result'"
+              exit 1
+            fi
+          done
+          echo "All CI jobs succeeded."
