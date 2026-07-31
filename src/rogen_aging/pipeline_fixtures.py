@@ -17,28 +17,32 @@ import numpy as np
 import polars as pl
 from sklearn.linear_model import ElasticNet, ElasticNetCV
 
-REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+from rogen_aging.config import cfg_path, find_repo_root, get_config
 
-JULY_VARIANTS = REPO_ROOT / "data" / "processed" / "prioritized_variants.csv"
-JULY_ALPHAGENOME = REPO_ROOT / "data" / "scores" / "alphagenome_raw.parquet"
-JULY_ALPHAMISSENSE = REPO_ROOT / "data" / "scores" / "alphamissense_raw.parquet"
-JULY_LOCAL_VEP = REPO_ROOT / "data" / "processed" / "vep_local.jsonl"
-JULY_CACHE_DIR = REPO_ROOT / "data" / "cache" / "july_annotation"
+REPO_ROOT = find_repo_root()
 
-INTEGRATIVE_DIR = REPO_ROOT / "analysis" / "integrative" / "fixtures"
+_cfg = get_config()
+JULY_VARIANTS = cfg_path(_cfg, "paths", "july", "fixture_variants")
+JULY_ALPHAGENOME = cfg_path(_cfg, "paths", "july", "alphagenome")
+JULY_ALPHAMISSENSE = cfg_path(_cfg, "paths", "july", "alphamissense")
+JULY_LOCAL_VEP = cfg_path(_cfg, "paths", "july", "local_vep")
+JULY_CACHE_DIR = cfg_path(_cfg, "paths", "july", "cache_dir")
+
+INTEGRATIVE_DIR = cfg_path(_cfg, "paths", "integrative", "fixtures_dir")
 INTEGRATIVE_VARIANTS = INTEGRATIVE_DIR / "annotated_variants.parquet"
 INTEGRATIVE_EQTLS = INTEGRATIVE_DIR / "eqtls.parquet"
 INTEGRATIVE_PROBES = INTEGRATIVE_DIR / "probe_annotation.parquet"
 INTEGRATIVE_SAMPLES = INTEGRATIVE_DIR / "sample_genotypes.parquet"
 
-CLOCK_MODEL_PKL = REPO_ROOT / "models" / "ro_clock_elasticnet_gse40279.pkl"
-CLOCK_MODEL_JOBLIB = REPO_ROOT / "models" / "methylation_clock_v1.joblib"
-CLOCK_METH = REPO_ROOT / "data" / "methylation" / "GSE87571_processed.parquet"
-CLOCK_META = REPO_ROOT / "data" / "methylation" / "GSE87571_meta.csv"
+CLOCK_MODEL_PKL = cfg_path(_cfg, "paths", "models", "clock_elasticnet")
+CLOCK_MODEL_JOBLIB = cfg_path(_cfg, "paths", "models", "clock_joblib_fallback")
+CLOCK_METH = cfg_path(_cfg, "paths", "methylation", "gse87571_processed")
+CLOCK_META = cfg_path(_cfg, "paths", "methylation", "gse87571_meta")
 
-VEP_SOURCE = REPO_ROOT / "analysis" / "vep_annotation" / "la_snp_vep_annotations.csv"
-AG_SOURCE = REPO_ROOT / "analysis" / "alphagenome" / "alphagenome_impact_analysis.csv"
-GTEX_SOURCE = REPO_ROOT / "analysis" / "gtex_annotation" / "la_snp_gtex_eqtls.csv"
+VEP_SOURCE = cfg_path(_cfg, "paths", "annotation", "vep_dir") / "la_snp_vep_annotations.csv"
+AG_SOURCE = cfg_path(_cfg, "paths", "annotation", "alphagenome_impact")
+GTEX_SOURCE = cfg_path(_cfg, "paths", "integrative", "eqtls_csv")
+del _cfg
 
 _DEMO_CPGS = ("cg00000001", "cg00000002", "cg00000003")
 

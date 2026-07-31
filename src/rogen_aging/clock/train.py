@@ -16,6 +16,7 @@ from sklearn.model_selection import train_test_split
 
 from rogen_aging.clock.data import load_wide_table, split_features_target
 from rogen_aging.clock.model import make_clock_pipeline
+from rogen_aging.config import get_config
 
 logger = logging.getLogger(__name__)
 
@@ -25,8 +26,8 @@ def train_clock(
     output_model: Path,
     output_metrics: Path,
     *,
-    test_size: float = 0.2,
-    random_state: int = 42,
+    test_size: float | None = None,
+    random_state: int | None = None,
 ) -> dict[str, Any]:
     """Fit a clock pipeline on a wide table and write model + metrics JSON.
 
@@ -35,8 +36,10 @@ def train_clock(
             with ``cg*`` feature columns and ``chronological_age``.
         output_model: Destination path for the fitted joblib pipeline.
         output_metrics: Destination path for the metrics JSON file.
-        test_size: Fraction of rows held out for the test split.
-        random_state: Seed for the train/test split and ElasticNetCV.
+        test_size: Fraction of rows held out for the test split. Defaults to
+            ``clock.test_size`` from the active config.
+        random_state: Seed for the train/test split and ElasticNetCV. Defaults
+            to ``clock.random_state`` from the active config.
 
     Returns:
         The metrics dictionary written to ``output_metrics``.
@@ -47,19 +50,25 @@ def train_clock(
         FileNotFoundError: If ``input_data`` does not exist.
         KeyError: If ``chronological_age`` is missing from the table.
     """
+    cfg = get_config().clock
+    resolved_test_size = float(cfg.test_size if test_size is None else test_size)
+    resolved_random_state = int(cfg.random_state if random_state is None else random_state)
+
     df = load_wide_table(input_data)
     x, y = split_features_target(df)
     y = pd.to_numeric(y, errors="coerce")
     if y.isna().any():
-        raise ValueError("chronological_age contains non-numeric or missing values; drop or fix rows first.")
+        raise ValueError(
+            "chronological_age contains non-numeric or missing values; drop or fix rows first."
+        )
 
     x_train, x_test, y_train, y_test = train_test_split(
         x,
         y,
-        test_size=test_size,
-        random_state=random_state,
+        test_size=resolved_test_size,
+        random_state=resolved_random_state,
     )
-    pipe = make_clock_pipeline(random_state=random_state)
+    pipe = make_clock_pipeline(random_state=resolved_random_state)
     logger.info("Fitting Pipeline(imputer, ElasticNetCV) …")
     pipe.fit(x_train, y_train)
     y_pred = pipe.predict(x_test)
@@ -83,8 +92,8 @@ def train_clock(
         "n_cpgs_features": len(names),
         "n_cpgs_selected_nonzero": len(selected),
         "selected_cpgs": selected,
-        "test_size": test_size,
-        "random_state": random_state,
+        "test_size": resolved_test_size,
+        "random_state": resolved_random_state,
     }
     output_metrics.parent.mkdir(parents=True, exist_ok=True)
     output_metrics.write_text(json.dumps(metrics, indent=2), encoding="utf-8")

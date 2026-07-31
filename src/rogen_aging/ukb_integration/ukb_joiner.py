@@ -29,12 +29,27 @@ SYNTHETIC_DISCLAIMER: Final[str] = (
     "Synthetic-data validation only (Activity 2.1.11.1); do not interpret biologically."
 )
 DEFAULT_AUDIT_LOG: Final[Path] = Path("outputs/logs/ukb_integration_audit.log")
-MAX_JOIN_DROP_RATE: Final[float] = 0.01
+
+
+def max_join_drop_rate() -> float:
+    """Return the configured maximum phenotype–genotype join drop rate."""
+    from rogen_aging.config import get_config
+
+    return float(get_config().ukb.max_join_drop_rate)
+
+
+# Backward-compatible module alias (refreshed when config is loaded).
+MAX_JOIN_DROP_RATE: float = 0.01
+try:
+    MAX_JOIN_DROP_RATE = max_join_drop_rate()
+except Exception:  # noqa: BLE001 — tolerate import-time config edge cases
+    pass
 _EID_AUDIT_SAMPLE_LIMIT: Final[int] = 50
 
 
 class JoinDropRateError(ValueError):
     """Raised when phenotype–genotype ``eid`` join drop rate exceeds the allowed threshold."""
+
 
 LA_SNP_ASSOC_COLUMNS: Final[tuple[str, ...]] = (
     "rsID",
@@ -135,9 +150,7 @@ def _eid_dtype_name(frame: pl.DataFrame) -> str:
 
 def _normalize_eid_frame(frame: pl.DataFrame) -> pl.DataFrame:
     """Cast ``eid`` to Utf8 and strip surrounding whitespace for stable joins."""
-    return frame.with_columns(
-        pl.col("eid").cast(pl.Utf8).str.strip_chars().alias("eid")
-    )
+    return frame.with_columns(pl.col("eid").cast(pl.Utf8).str.strip_chars().alias("eid"))
 
 
 def _sorted_unique_eids(frame: pl.DataFrame) -> list[str]:
@@ -335,14 +348,7 @@ def genotype_phenotype_contingency(
     """
     g = np.asarray(genotype, dtype=float)
     y = np.asarray(outcome, dtype=float)
-    valid = (
-        np.isfinite(g)
-        & np.isfinite(y)
-        & (g >= 0)
-        & (g <= 2)
-        & (y >= 0)
-        & (y <= 1)
-    )
+    valid = np.isfinite(g) & np.isfinite(y) & (g >= 0) & (g <= 2) & (y >= 0) & (y <= 1)
     g_i = g[valid].astype(np.int64)
     y_i = y[valid].astype(np.int64)
     if g_i.size == 0:
@@ -583,9 +589,7 @@ def run_integration_pipeline(
         [ad_diagnosis_from_code(v) for v in joined["ad_diagnosis_code"].to_list()],
     )
 
-    parental_results = run_association_scan(
-        joined, phenotype_col="parental_longevity"
-    )
+    parental_results = run_association_scan(joined, phenotype_col="parental_longevity")
     ad_results = run_association_scan(joined, phenotype_col="ad_diagnosis_code", outcome=ad_outcome)
 
     write_association_results(parental_results, output_dir / PARENTAL_LONGEVITY_OUT)

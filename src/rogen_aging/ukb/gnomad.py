@@ -36,23 +36,58 @@ import pandas as pd
 import requests
 import typer
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
-DEFAULT_INPUT = REPO_ROOT / "analysis" / "la_snp_1kg_frequencies.csv"
-DEFAULT_OUTPUT = REPO_ROOT / "analysis" / "la_snp_af_1kg_vs_gnomad.csv"
-DEFAULT_SCATTER = REPO_ROOT / "figures" / "af_1kg_vs_gnomad_scatter.png"
+from rogen_aging.config import cfg_path, find_repo_root, get_config
+from rogen_aging.config.cli import config_option, load_cli_config
+
+REPO_ROOT = find_repo_root()
+
+
+@dataclass(frozen=True)
+class _GnomadDefaults:
+    input: Path
+    output: Path
+    scatter: Path
+    cache: Path
+    batch_size: int
+    min_interval_sec: float
+    timeout_sec: float
+    max_retries: int
+    diff_threshold: float
+
+
+def _gnomad_defaults() -> _GnomadDefaults:
+    cfg = get_config()
+    return _GnomadDefaults(
+        input=cfg_path(cfg, "paths", "ukb", "frequencies_1kg"),
+        output=cfg_path(cfg, "paths", "ukb", "af_compare"),
+        scatter=cfg_path(cfg, "paths", "ukb", "af_scatter"),
+        cache=cfg_path(cfg, "paths", "ukb", "gnomad_cache"),
+        batch_size=int(cfg.ukb.gnomad.batch_size),
+        min_interval_sec=float(cfg.ukb.gnomad.min_interval_sec),
+        timeout_sec=float(cfg.ukb.gnomad.timeout_sec),
+        max_retries=int(cfg.ukb.gnomad.max_retries),
+        diff_threshold=float(cfg.ukb.gnomad.diff_threshold),
+    )
+
+
+_defaults = _gnomad_defaults()
+DEFAULT_INPUT = _defaults.input
+DEFAULT_OUTPUT = _defaults.output
+DEFAULT_SCATTER = _defaults.scatter
 DEFAULT_SUMMARY = REPO_ROOT / "analysis" / "af_comparison_summary.md"
-DEFAULT_CACHE = REPO_ROOT / "data" / "geo" / "gnomad_r4_nfe_cache.json"
+DEFAULT_CACHE = _defaults.cache
 
 GNOMAD_API_URL = "https://gnomad.broadinstitute.org/api"
 GNOMAD_DATASET = "gnomad_r4"
 GNOMAD_POPULATION = "nfe"
 REFERENCE_GENOME = "GRCh38"
 
-DEFAULT_BATCH_SIZE = 8
-DEFAULT_MIN_INTERVAL_SEC = 0.75
-DEFAULT_TIMEOUT_SEC = 45.0
-DEFAULT_MAX_RETRIES = 4
-DIFF_THRESHOLD = 0.05
+DEFAULT_BATCH_SIZE = _defaults.batch_size
+DEFAULT_MIN_INTERVAL_SEC = _defaults.min_interval_sec
+DEFAULT_TIMEOUT_SEC = _defaults.timeout_sec
+DEFAULT_MAX_RETRIES = _defaults.max_retries
+DIFF_THRESHOLD = _defaults.diff_threshold
+del _defaults
 
 LOG = logging.getLogger(__name__)
 
@@ -914,24 +949,35 @@ def summarize_main(
 
 @app.command("compare")
 def compare_cmd(
-    input_path: Path = typer.Option(DEFAULT_INPUT, "--input", help="1KG frequency CSV"),
-    output: Path = typer.Option(DEFAULT_OUTPUT, "--output", help="Comparison CSV"),
-    scatter: Path = typer.Option(DEFAULT_SCATTER, "--scatter", help="Scatter PNG path"),
-    cache: Path = typer.Option(DEFAULT_CACHE, "--cache", help="JSON cache path"),
+    input_path: Path | None = typer.Option(
+        None, "--input", help="1KG frequency CSV. Default: from config."
+    ),
+    output: Path | None = typer.Option(
+        None, "--output", help="Comparison CSV. Default: from config."
+    ),
+    scatter: Path | None = typer.Option(
+        None, "--scatter", help="Scatter PNG path. Default: from config."
+    ),
+    cache: Path | None = typer.Option(
+        None, "--cache", help="JSON cache path. Default: from config."
+    ),
+    config: Path | None = config_option(),
     refresh_cache: bool = typer.Option(
         False, "--refresh-cache", help="Ignore cached rsIDs and re-query gnomAD"
     ),
-    batch_size: int = typer.Option(
-        DEFAULT_BATCH_SIZE, "--batch-size", help="Variants per GraphQL request"
+    batch_size: int | None = typer.Option(
+        None, "--batch-size", help="Variants per GraphQL request. Default: from config."
     ),
-    min_interval: float = typer.Option(
-        DEFAULT_MIN_INTERVAL_SEC,
+    min_interval: float | None = typer.Option(
+        None,
         "--min-interval",
-        help="Minimum seconds between gnomAD HTTP requests",
+        help="Minimum seconds between gnomAD HTTP requests. Default: from config.",
     ),
-    timeout: float = typer.Option(DEFAULT_TIMEOUT_SEC, "--timeout", help="HTTP timeout in seconds"),
-    max_retries: int = typer.Option(
-        DEFAULT_MAX_RETRIES, "--max-retries", help="Retries per HTTP request"
+    timeout: float | None = typer.Option(
+        None, "--timeout", help="HTTP timeout in seconds. Default: from config."
+    ),
+    max_retries: int | None = typer.Option(
+        None, "--max-retries", help="Retries per HTTP request. Default: from config."
     ),
     log_level: str = typer.Option(
         "INFO",
@@ -941,36 +987,39 @@ def compare_cmd(
     ),
 ) -> int:
     """Fetch gnomAD v4 NFE AFs and compare to 1KG frequencies."""
+    load_cli_config(config)
+    defaults = _gnomad_defaults()
     return compare_main(
-        input_path=input_path,
-        output=output,
-        scatter=scatter,
-        cache=cache,
+        input_path=input_path or defaults.input,
+        output=output or defaults.output,
+        scatter=scatter or defaults.scatter,
+        cache=cache or defaults.cache,
         refresh_cache=refresh_cache,
-        batch_size=batch_size,
-        min_interval=min_interval,
-        timeout=timeout,
-        max_retries=max_retries,
+        batch_size=defaults.batch_size if batch_size is None else batch_size,
+        min_interval=defaults.min_interval_sec if min_interval is None else min_interval,
+        timeout=defaults.timeout_sec if timeout is None else timeout,
+        max_retries=defaults.max_retries if max_retries is None else max_retries,
         log_level=cast(LogLevel, log_level),
     )
 
 
 @app.command("summarize")
 def summarize_cmd(
-    input_path: Path = typer.Option(
-        DEFAULT_OUTPUT,
+    input_path: Path | None = typer.Option(
+        None,
         "--input",
-        help="Comparison CSV from the compare step",
+        help="Comparison CSV from the compare step. Default: from config.",
     ),
-    output: Path = typer.Option(
-        DEFAULT_SUMMARY,
+    output: Path | None = typer.Option(
+        None,
         "--output",
-        help="Markdown summary path",
+        help="Markdown summary path. Default: analysis/af_comparison_summary.md.",
     ),
-    diff_threshold: float = typer.Option(
-        DIFF_THRESHOLD,
+    config: Path | None = config_option(),
+    diff_threshold: float | None = typer.Option(
+        None,
         "--diff-threshold",
-        help="Concordance cutoff; discordant when |ΔAF| is at or above this value",
+        help="Concordance cutoff; discordant when |ΔAF| is at or above this value. Default: from config.",
     ),
     log_level: str = typer.Option(
         "INFO",
@@ -979,11 +1028,15 @@ def summarize_cmd(
         help="Logging verbosity",
     ),
 ) -> int:
-    """Summarize a 1KG vs gnomAD comparison CSV for reporting."""
+    """Summarize an existing comparison CSV as Markdown."""
+    load_cli_config(config)
+    defaults = _gnomad_defaults()
     return summarize_main(
-        input_path=input_path,
-        output=output,
-        diff_threshold=diff_threshold,
+        input_path=input_path or defaults.output,
+        output=output or DEFAULT_SUMMARY,
+        diff_threshold=(
+            defaults.diff_threshold if diff_threshold is None else float(diff_threshold)
+        ),
         log_level=cast(LogLevel, log_level),
     )
 
