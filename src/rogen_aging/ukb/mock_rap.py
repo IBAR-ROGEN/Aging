@@ -11,6 +11,8 @@ import numpy as np
 import polars as pl
 import typer
 
+from rogen_aging.config import cfg_path, get_config
+from rogen_aging.config.cli import config_option, load_cli_config
 from rogen_aging.vcf import (
     GRCH38_CHROM_LENGTHS,
     allele_counts_from_genotypes,
@@ -350,23 +352,24 @@ def generate_ukb_rap_mock(
 
 @app.command()
 def main(
-    n_samples: int = typer.Option(
-        1000,
+    config: Path | None = config_option(),
+    n_samples: int | None = typer.Option(
+        None,
         "--n-samples",
         "-n",
-        help="Number of synthetic participants.",
+        help="Number of synthetic participants. Default: from config.",
     ),
-    snp_manifest: Path = typer.Option(
-        DEFAULT_MANIFEST,
+    snp_manifest: Path | None = typer.Option(
+        None,
         "--snp-manifest",
         exists=False,
-        help="UKB LA-SNP manifest CSV (rsID + GRCh38 coordinates).",
+        help="UKB LA-SNP manifest CSV (rsID + GRCh38 coordinates). Default: from config.",
     ),
-    output_dir: Path = typer.Option(
-        DEFAULT_OUTPUT_DIR,
+    output_dir: Path | None = typer.Option(
+        None,
         "--output-dir",
         "-o",
-        help="Root directory for UKB-RAP-style layout.",
+        help="Root directory for UKB-RAP-style layout. Default: from config.",
     ),
     seed: int | None = typer.Option(
         None,
@@ -374,10 +377,10 @@ def main(
         "-s",
         help="Random seed for reproducibility.",
     ),
-    mean_depth: float = typer.Option(
-        32.0,
+    mean_depth: float | None = typer.Option(
+        None,
         "--mean-depth",
-        help="Mean simulated read depth per sample per site (Poisson mean).",
+        help="Mean simulated read depth per sample per site (Poisson mean). Default: from config.",
     ),
     verbose: bool = typer.Option(
         False,
@@ -387,20 +390,27 @@ def main(
     ),
 ) -> None:
     """Generate synthetic UKB-RAP phenotype table and LA-SNP VCF."""
+    load_cli_config(config)
+    cfg = get_config()
+    resolved_n = int(cfg.ukb.mock_n_samples if n_samples is None else n_samples)
+    resolved_manifest = snp_manifest or cfg_path(cfg, "paths", "ukb", "manifest")
+    resolved_output = output_dir or cfg_path(cfg, "paths", "ukb", "mock_rap_dir")
+    resolved_depth = float(cfg.ukb.mean_depth if mean_depth is None else mean_depth)
+
     configure_logging(logging.DEBUG if verbose else logging.INFO)
     log = logging.getLogger(__name__)
 
     phenotype_path, genotype_path = generate_ukb_rap_mock(
-        n_samples=n_samples,
-        snp_manifest=snp_manifest,
-        output_dir=output_dir,
+        n_samples=resolved_n,
+        snp_manifest=resolved_manifest,
+        output_dir=resolved_output,
         seed=seed,
-        mean_depth=mean_depth,
+        mean_depth=resolved_depth,
     )
-    manifest = load_snp_manifest(snp_manifest)
+    manifest = load_snp_manifest(resolved_manifest)
     log.info(
         "Wrote %d samples, %d LA-SNPs → %s and %s",
-        n_samples,
+        resolved_n,
         len(manifest),
         phenotype_path,
         genotype_path,

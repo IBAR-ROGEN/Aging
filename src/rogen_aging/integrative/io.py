@@ -10,19 +10,19 @@ from pathlib import Path
 
 import polars as pl
 
-REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
+from rogen_aging.config import cfg_path, find_repo_root, get_config
 
-# July annotation artefacts (production).
-DEFAULT_JULY_XLSX = REPO_ROOT / "outputs" / "Supplementary_Table_1_Annotated_Variants.xlsx"
-DEFAULT_VARIANTS_PARQUET = (
-    REPO_ROOT / "outputs" / "Supplementary_Table_1_Combined_Master.parquet"
-)
-DEFAULT_EQTLS_PARQUET = (
-    REPO_ROOT / "outputs" / "Supplementary_Table_1_GTEx_eQTL_Summary.parquet"
-)
-DEFAULT_EQTLS_CSV = REPO_ROOT / "analysis" / "gtex_annotation" / "la_snp_gtex_eqtls.csv"
-DEFAULT_ALPHAGENOME = REPO_ROOT / "data" / "scores" / "alphagenome_raw.parquet"
-DEFAULT_OUTPUT_DIR = REPO_ROOT / "analysis" / "integrative" / "results"
+REPO_ROOT = find_repo_root()
+
+# July annotation artefacts (production). Seeded from config; refreshed by set_config.
+_cfg = get_config()
+DEFAULT_JULY_XLSX = cfg_path(_cfg, "paths", "integrative", "july_xlsx")
+DEFAULT_VARIANTS_PARQUET = cfg_path(_cfg, "paths", "integrative", "variants_parquet")
+DEFAULT_EQTLS_PARQUET = cfg_path(_cfg, "paths", "integrative", "eqtls_parquet")
+DEFAULT_EQTLS_CSV = cfg_path(_cfg, "paths", "integrative", "eqtls_csv")
+DEFAULT_ALPHAGENOME = cfg_path(_cfg, "paths", "integrative", "alphagenome")
+DEFAULT_OUTPUT_DIR = cfg_path(_cfg, "paths", "integrative", "output_dir")
+del _cfg
 
 # Pre-summarised GTEx columns on Combined_Master; dropped so the mapper rebuilds them.
 _GTEX_SUMMARY_COLS = (

@@ -12,22 +12,10 @@ from typing import Final
 
 import polars as pl
 
-DEFAULT_TARGET_TISSUES: Final[tuple[str, ...]] = (
-    "Brain_Amygdala",
-    "Brain_Anterior_cingulate_cortex_BA24",
-    "Brain_Caudate_basal_ganglia",
-    "Brain_Cerebellar_Hemisphere",
-    "Brain_Cerebellum",
-    "Brain_Cortex",
-    "Brain_Frontal_Cortex_BA9",
-    "Brain_Hippocampus",
-    "Brain_Hypothalamus",
-    "Brain_Nucleus_accumbens_basal_ganglia",
-    "Brain_Putamen_basal_ganglia",
-    "Brain_Spinal_cord_cervical_c-1",
-    "Brain_Substantia_nigra",
-    "Whole_Blood",
-)
+from rogen_aging.config import target_tissues
+
+# Seeded from config/default.yaml; refreshed by rogen_aging.config.set_config.
+DEFAULT_TARGET_TISSUES: tuple[str, ...] = target_tissues()
 
 RSID_RE: Final[re.Pattern[str]] = re.compile(r"^rs\d+$", re.IGNORECASE)
 
@@ -137,7 +125,9 @@ class VariantTissueMapper:
             target_tissues: Tissues to retain when filtering eQTL tables.
                 Defaults to brain regions plus whole blood.
         """
-        tissues = target_tissues if target_tissues is not None else DEFAULT_TARGET_TISSUES
+        from rogen_aging.config import target_tissues as configured_tissues
+
+        tissues = target_tissues if target_tissues is not None else configured_tissues()
         self.target_tissues: tuple[str, ...] = tuple(tissues)
         self._target_set: frozenset[str] = frozenset(self.target_tissues)
 

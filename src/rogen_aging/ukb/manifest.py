@@ -50,14 +50,42 @@ import pandas as pd
 import requests
 import typer
 
+from rogen_aging.config import cfg_path, get_config
+from rogen_aging.config.cli import config_option, load_cli_config
+
 ENSEMBL_VARIATION_BASE = "https://rest.ensembl.org/variation/human"
-DEFAULT_ASSEMBLY = "GRCh38"
-# Conservative pacing; Ensembl recommends modest parallelism and polite usage.
-DEFAULT_MIN_INTERVAL_SEC = 0.34
-DEFAULT_TIMEOUT_SEC = 30.0
-DEFAULT_MAX_RETRIES = 4
-DEFAULT_MANIFEST_CSV = Path("analysis/ukb_snp_manifest_v0.1.csv")
-DEFAULT_1KG_FREQ_CSV = Path("analysis/la_snp_1kg_frequencies.csv")
+
+
+@dataclass(frozen=True)
+class _UkbManifestDefaults:
+    assembly: str
+    min_interval_sec: float
+    timeout_sec: float
+    max_retries: int
+    manifest_csv: Path
+    freq_csv: Path
+
+
+def _ukb_manifest_defaults() -> _UkbManifestDefaults:
+    cfg = get_config()
+    return _UkbManifestDefaults(
+        assembly=str(cfg.ukb.assembly),
+        min_interval_sec=float(cfg.ukb.ensembl.min_interval_sec),
+        timeout_sec=float(cfg.ukb.ensembl.timeout_sec),
+        max_retries=int(cfg.ukb.ensembl.max_retries),
+        manifest_csv=cfg_path(cfg, "paths", "ukb", "manifest"),
+        freq_csv=cfg_path(cfg, "paths", "ukb", "frequencies_1kg"),
+    )
+
+
+_defaults = _ukb_manifest_defaults()
+DEFAULT_ASSEMBLY = _defaults.assembly
+DEFAULT_MIN_INTERVAL_SEC = _defaults.min_interval_sec
+DEFAULT_TIMEOUT_SEC = _defaults.timeout_sec
+DEFAULT_MAX_RETRIES = _defaults.max_retries
+DEFAULT_MANIFEST_CSV = _defaults.manifest_csv
+DEFAULT_1KG_FREQ_CSV = _defaults.freq_csv
+del _defaults
 _VCF_GLOB_SUFFIXES = ("*.vcf.gz", "*.vcf.bgz", "*.bcf")
 _CHROM_IN_FILENAME_RE = re.compile(
     r"(?:^|[_.-])((?:chr)?(?:[1-9]|1[0-9]|2[0-2]|X|Y|MT|M))(?:[_.-]|\.|$)",
@@ -773,25 +801,26 @@ def build_cmd(
         "--input",
         help="Path to overlapping_genes_with_snps.xlsx",
     ),
-    output: Path = typer.Option(
-        DEFAULT_MANIFEST_CSV,
+    output: Path | None = typer.Option(
+        None,
         "--output",
-        help="Output CSV manifest path",
+        help="Output CSV manifest path. Default: from config.",
     ),
-    min_interval: float = typer.Option(
-        DEFAULT_MIN_INTERVAL_SEC,
+    config: Path | None = config_option(),
+    min_interval: float | None = typer.Option(
+        None,
         "--min-interval",
-        help="Minimum seconds between Ensembl HTTP request completions",
+        help="Minimum seconds between Ensembl HTTP request completions. Default: from config.",
     ),
-    timeout: float = typer.Option(
-        DEFAULT_TIMEOUT_SEC,
+    timeout: float | None = typer.Option(
+        None,
         "--timeout",
-        help="Per-request timeout in seconds",
+        help="Per-request timeout in seconds. Default: from config.",
     ),
-    max_retries: int = typer.Option(
-        DEFAULT_MAX_RETRIES,
+    max_retries: int | None = typer.Option(
+        None,
         "--max-retries",
-        help="Maximum retries per rs ID for transient HTTP failures",
+        help="Maximum retries per rs ID for transient HTTP failures. Default: from config.",
     ),
     log_level: str = typer.Option(
         "INFO",
@@ -801,6 +830,14 @@ def build_cmd(
     ),
 ) -> int:
     """Resolve rsIDs via Ensembl and write a GRCh38 manifest CSV."""
+    load_cli_config(config)
+    defaults = _ukb_manifest_defaults()
+    resolved_output = output or defaults.manifest_csv
+    resolved_min_interval = (
+        defaults.min_interval_sec if min_interval is None else float(min_interval)
+    )
+    resolved_timeout = defaults.timeout_sec if timeout is None else float(timeout)
+    resolved_max_retries = defaults.max_retries if max_retries is None else int(max_retries)
     logging.basicConfig(
         level=getattr(logging, str(log_level)),
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
@@ -808,30 +845,31 @@ def build_cmd(
     )
     return run_build(
         input_path=input_path,
-        output_path=output,
-        min_interval=min_interval,
-        timeout=timeout,
-        max_retries=max_retries,
+        output_path=resolved_output,
+        min_interval=resolved_min_interval,
+        timeout=resolved_timeout,
+        max_retries=resolved_max_retries,
     )
 
 
 @app.command("extract")
 def extract_cmd(
-    manifest: Path = typer.Option(
-        DEFAULT_MANIFEST_CSV,
+    manifest: Path | None = typer.Option(
+        None,
         "--manifest",
-        help="Manifest CSV from the build subcommand",
+        help="Manifest CSV from the build subcommand. Default: from config.",
     ),
     vcf_glob: str = typer.Option(
         ...,
         "--vcf-glob",
         help="Path or glob to 1000 Genomes GRCh38 VCFs (bgzipped + tabix-indexed)",
     ),
-    output: Path = typer.Option(
-        DEFAULT_1KG_FREQ_CSV,
+    output: Path | None = typer.Option(
+        None,
         "--output",
-        help="Output per-SNP allele-frequency table",
+        help="Output per-SNP allele-frequency table. Default: from config.",
     ),
+    config: Path | None = config_option(),
     log_level: str = typer.Option(
         "INFO",
         "--log-level",
@@ -840,15 +878,19 @@ def extract_cmd(
     ),
 ) -> int:
     """Extract 1KG allele frequencies for manifest SNPs from indexed VCFs."""
+    load_cli_config(config)
+    defaults = _ukb_manifest_defaults()
+    resolved_manifest = manifest or defaults.manifest_csv
+    resolved_output = output or defaults.freq_csv
     logging.basicConfig(
         level=getattr(logging, str(log_level)),
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
         datefmt="%Y-%m-%dT%H:%M:%S",
     )
     return run_extract(
-        manifest_path=manifest,
+        manifest_path=resolved_manifest,
         vcf_glob=vcf_glob,
-        output_path=output,
+        output_path=resolved_output,
     )
 
 

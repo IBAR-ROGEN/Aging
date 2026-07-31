@@ -46,6 +46,7 @@ while IFS= read -r file; do
 
   case "$file" in
     docs/*|README.md|pyproject.toml|*security_check*|*install_pre_commit*) continue ;;
+    config/*|tests/fixtures/*|tests/test_config.py) continue ;;
     scripts/mock_ukb_generator.py|scripts/ukb/*) continue ;;
     scripts/ukb_mock_gen.py|scripts/ukb/mock_rap_folder.py) continue ;;
     tests/test_mock_clinical_csv.py|tests/test_package_imports.py|tests/test_ukb_mock_gen.py|tests/test_ukb_integration.py) continue ;;

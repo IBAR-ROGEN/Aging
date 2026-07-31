@@ -7,26 +7,20 @@ per-variant or per-sample risk table.
 
 from __future__ import annotations
 
-from typing import Final
-
 import polars as pl
 
-DEFAULT_WEIGHTS: Final[dict[str, float]] = {
-    "vep_impact": 0.25,
-    "alphagenome": 0.25,
-    "alphamissense": 0.25,
-    "gtex_eqtl": 0.15,
-    "epigenetic": 0.10,
-}
+from rogen_aging.config import (
+    alphamissense_high_threshold,
+    risk_weights,
+    vep_impact_scores,
+)
 
-VEP_IMPACT_SCORES: Final[dict[str, float]] = {
-    "HIGH": 1.0,
-    "MODERATE": 0.7,
-    "LOW": 0.3,
-    "MODIFIER": 0.1,
-}
-
-ALPHAMISSENSE_HIGH_THRESHOLD: Final[float] = 0.5
+# Module-level aliases kept for public API / test imports. Values are seeded from
+# config/default.yaml via :func:`rogen_aging.config.get_config` and refreshed when
+# :func:`rogen_aging.config.set_config` / ``load_config`` runs.
+DEFAULT_WEIGHTS: dict[str, float] = risk_weights()
+VEP_IMPACT_SCORES: dict[str, float] = vep_impact_scores()
+ALPHAMISSENSE_HIGH_THRESHOLD: float = alphamissense_high_threshold()
 
 
 class PhenotypeIntegrator:
@@ -42,9 +36,9 @@ class PhenotypeIntegrator:
 
         Args:
             weights: Optional overrides for channel weights. Missing keys fall
-                back to :data:`DEFAULT_WEIGHTS`.
+                back to configured :data:`DEFAULT_WEIGHTS`.
         """
-        merged = dict(DEFAULT_WEIGHTS)
+        merged = dict(risk_weights())
         if weights is not None:
             merged.update(weights)
         self.weights: dict[str, float] = merged
@@ -60,17 +54,16 @@ class PhenotypeIntegrator:
         """
         if "vep_impact" not in frame.columns:
             return pl.Series("vep_impact_score", [0.0] * frame.height)
+        scores = vep_impact_scores()
         mapping = pl.DataFrame(
             {
-                "vep_impact": list(VEP_IMPACT_SCORES.keys()),
-                "vep_impact_score": list(VEP_IMPACT_SCORES.values()),
+                "vep_impact": list(scores.keys()),
+                "vep_impact_score": list(scores.values()),
             }
         )
-        joined = (
-            frame.select(
-                pl.col("vep_impact").cast(pl.Utf8).str.to_uppercase().alias("vep_impact")
-            ).join(mapping, on="vep_impact", how="left")
-        )
+        joined = frame.select(
+            pl.col("vep_impact").cast(pl.Utf8).str.to_uppercase().alias("vep_impact")
+        ).join(mapping, on="vep_impact", how="left")
         return joined["vep_impact_score"].fill_null(0.0)
 
     def score_alphagenome(self, frame: pl.DataFrame) -> pl.Series:
@@ -90,14 +83,10 @@ class PhenotypeIntegrator:
         n = frame.height
         if "alphagenome_abs_perc_change" in frame.columns:
             raw = frame["alphagenome_abs_perc_change"].cast(pl.Float64, strict=False)
-            return (raw.fill_null(0.0).abs() / 50.0).clip(0.0, 1.0).alias(
-                "alphagenome_score"
-            )
+            return (raw.fill_null(0.0).abs() / 50.0).clip(0.0, 1.0).alias("alphagenome_score")
         if "alphagenome_perc_change" in frame.columns:
             raw = frame["alphagenome_perc_change"].cast(pl.Float64, strict=False)
-            return (raw.fill_null(0.0).abs() / 50.0).clip(0.0, 1.0).alias(
-                "alphagenome_score"
-            )
+            return (raw.fill_null(0.0).abs() / 50.0).clip(0.0, 1.0).alias("alphagenome_score")
         if "alphagenome_diff" in frame.columns:
             raw = frame["alphagenome_diff"].cast(pl.Float64, strict=False)
             return raw.fill_null(0.0).abs().clip(0.0, 1.0).alias("alphagenome_score")
@@ -253,7 +242,9 @@ class PhenotypeIntegrator:
                 has not been computed.
         """
         if "composite_risk" not in variant_risks.columns:
-            raise ValueError("variant_risks must include composite_risk; call compute_composite_risk first")
+            raise ValueError(
+                "variant_risks must include composite_risk; call compute_composite_risk first"
+            )
         for col, label in (
             (sample_id_col, "sample_phenotypes"),
             (variant_id_col, "sample_phenotypes"),
@@ -264,9 +255,9 @@ class PhenotypeIntegrator:
         if variant_id_col not in variant_risks.columns:
             raise ValueError(f"variant_risks missing column: {variant_id_col}")
 
-        risk_cols = variant_risks.select(
-            [variant_id_col, "composite_risk"]
-        ).unique(subset=[variant_id_col], keep="first")
+        risk_cols = variant_risks.select([variant_id_col, "composite_risk"]).unique(
+            subset=[variant_id_col], keep="first"
+        )
 
         joined = sample_phenotypes.join(risk_cols, on=variant_id_col, how="left")
         joined = joined.with_columns(
@@ -274,9 +265,7 @@ class PhenotypeIntegrator:
                 pl.col(genotype_col).cast(pl.Float64, strict=False).fill_null(0.0)
                 * pl.col("composite_risk").fill_null(0.0)
             ).alias("_weighted_risk"),
-            pl.col(genotype_col).cast(pl.Float64, strict=False).fill_null(0.0).alias(
-                "_dosage"
-            ),
+            pl.col(genotype_col).cast(pl.Float64, strict=False).fill_null(0.0).alias("_dosage"),
         )
 
         phenotype_cols = [
@@ -325,9 +314,7 @@ class PhenotypeIntegrator:
             Dictionary with ``variant_risks`` and, when samples are provided,
             ``sample_profiles``.
         """
-        variant_risks = self.compute_composite_risk(
-            annotated_variants, age_accel_col=age_accel_col
-        )
+        variant_risks = self.compute_composite_risk(annotated_variants, age_accel_col=age_accel_col)
         result: dict[str, pl.DataFrame] = {"variant_risks": variant_risks}
         if sample_phenotypes is not None:
             result["sample_profiles"] = self.integrate_sample_profiles(

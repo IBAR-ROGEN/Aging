@@ -36,48 +36,62 @@ from openpyxl.utils.dataframe import dataframe_to_rows
 from openpyxl.worksheet.worksheet import Worksheet
 from tqdm import tqdm
 
+from rogen_aging.config import cfg_path, find_repo_root, get_config, target_tissues
+from rogen_aging.config.cli import config_option, load_cli_config
+
 ScoreKind = Literal["alphagenome", "alphamissense"]
 JsonDict = dict[str, Any]
 JsonPayload = Any
 
-REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+REPO_ROOT = find_repo_root()
 INPUT_MANIFEST = REPO_ROOT / "INPUT_MANIFEST.md"
 
-DEFAULT_VARIANTS = REPO_ROOT / "data" / "processed" / "variants_47_input.csv"
-DEFAULT_ALPHAGENOME = REPO_ROOT / "data" / "scores" / "alphagenome_raw.parquet"
-DEFAULT_ALPHAMISSENSE = REPO_ROOT / "data" / "scores" / "alphamissense_raw.parquet"
-DEFAULT_OUTPUT = REPO_ROOT / "outputs" / "Supplementary_Table_1_Annotated_Variants.xlsx"
-DEFAULT_CACHE_DIR = REPO_ROOT / "data" / "cache" / "july_annotation"
-DEFAULT_LOCAL_VEP = REPO_ROOT / "data" / "processed" / "vep_local.jsonl"
+
+def _july_defaults() -> dict[str, Any]:
+    """Resolve July annotation defaults from the active config."""
+    cfg = get_config()
+    return {
+        "variants": cfg_path(cfg, "paths", "july", "variants"),
+        "alphagenome": cfg_path(cfg, "paths", "july", "alphagenome"),
+        "alphamissense": cfg_path(cfg, "paths", "july", "alphamissense"),
+        "output": cfg_path(cfg, "paths", "july", "output_xlsx"),
+        "cache_dir": cfg_path(cfg, "paths", "july", "cache_dir"),
+        "local_vep": cfg_path(cfg, "paths", "july", "local_vep"),
+        "expected_variant_count": int(cfg.july.expected_variant_count),
+        "gtex_dataset_id": str(cfg.july.gtex_dataset_id),
+        "gtex_api_base": str(cfg.apis.gtex_api_base),
+        "ensembl_rest": str(cfg.apis.ensembl_rest),
+        "request_timeout_sec": float(cfg.july.request_timeout_sec),
+        "gtex_delay_sec": float(cfg.july.gtex_delay_sec),
+        "vep_delay_sec": float(cfg.july.vep_delay_sec),
+        "max_retries": int(cfg.july.max_retries),
+        "items_per_page": int(cfg.july.items_per_page),
+        "alphamissense_high_threshold": float(cfg.july.alphamissense_high_threshold),
+        "target_tissues": list(target_tissues(cfg)),
+    }
+
+
+_defaults = _july_defaults()
+DEFAULT_VARIANTS = _defaults["variants"]
+DEFAULT_ALPHAGENOME = _defaults["alphagenome"]
+DEFAULT_ALPHAMISSENSE = _defaults["alphamissense"]
+DEFAULT_OUTPUT = _defaults["output"]
+DEFAULT_CACHE_DIR = _defaults["cache_dir"]
+DEFAULT_LOCAL_VEP = _defaults["local_vep"]
 
 REQUIRED_VARIANT_COLS = ("chrom", "pos", "ref", "alt", "rsid", "gene_symbol")
-EXPECTED_VARIANT_COUNT = 47
+EXPECTED_VARIANT_COUNT = int(_defaults["expected_variant_count"])
 JULY_MANIFEST_REQUIRED: tuple[str, ...] = (
     "data/processed/variants_47_input.csv",
     "data/scores/alphagenome_raw.parquet",
     "data/scores/alphamissense_raw.parquet",
 )
 
-GTEX_API_BASE = "https://gtexportal.org/api/v2"
-GTEX_DATASET_ID = "gtex_v8"
-ENSEMBL_REST = "https://rest.ensembl.org"
+GTEX_API_BASE = str(_defaults["gtex_api_base"])
+GTEX_DATASET_ID = str(_defaults["gtex_dataset_id"])
+ENSEMBL_REST = str(_defaults["ensembl_rest"])
 
-TARGET_TISSUES: list[str] = [
-    "Brain_Amygdala",
-    "Brain_Anterior_cingulate_cortex_BA24",
-    "Brain_Caudate_basal_ganglia",
-    "Brain_Cerebellar_Hemisphere",
-    "Brain_Cerebellum",
-    "Brain_Cortex",
-    "Brain_Frontal_Cortex_BA9",
-    "Brain_Hippocampus",
-    "Brain_Hypothalamus",
-    "Brain_Nucleus_accumbens_basal_ganglia",
-    "Brain_Putamen_basal_ganglia",
-    "Brain_Spinal_cord_cervical_c-1",
-    "Brain_Substantia_nigra",
-    "Whole_Blood",
-]
+TARGET_TISSUES: list[str] = list(_defaults["target_tissues"])
 
 IMPACT_RANK: dict[str, int] = {
     "HIGH": 0,
@@ -87,13 +101,14 @@ IMPACT_RANK: dict[str, int] = {
 }
 
 HIGH_IMPACT_LEVELS = frozenset({"HIGH", "MODERATE"})
-ALPHAMISSENSE_HIGH_THRESHOLD = 0.5
+ALPHAMISSENSE_HIGH_THRESHOLD = float(_defaults["alphamissense_high_threshold"])
 
-REQUEST_TIMEOUT_SEC = 30.0
-GTEX_DELAY_SEC = 0.5
-VEP_DELAY_SEC = 0.34
-MAX_RETRIES = 4
-ITEMS_PER_PAGE = 250
+REQUEST_TIMEOUT_SEC = float(_defaults["request_timeout_sec"])
+GTEX_DELAY_SEC = float(_defaults["gtex_delay_sec"])
+VEP_DELAY_SEC = float(_defaults["vep_delay_sec"])
+MAX_RETRIES = int(_defaults["max_retries"])
+ITEMS_PER_PAGE = int(_defaults["items_per_page"])
+del _defaults
 
 RSID_RE = re.compile(r"^rs\d+$", re.IGNORECASE)
 
@@ -129,15 +144,16 @@ def verify_july_input_manifest(
             f"{manifest_path} was read but does not document variants_47_input.csv "
             "(Activity A.2.1.8.1 July annotation inputs)."
         )
-    missing = [
-        rel for rel in JULY_MANIFEST_REQUIRED if not (repo_root / rel).is_file()
-    ]
+    missing = [rel for rel in JULY_MANIFEST_REQUIRED if not (repo_root / rel).is_file()]
     if missing:
         raise FileNotFoundError(
             "Required July annotation input(s) listed in INPUT_MANIFEST.md are missing:\n  - "
             + "\n  - ".join(missing)
         )
-    logger.info("INPUT_MANIFEST.md verified for July annotation ({} required files)", len(JULY_MANIFEST_REQUIRED))
+    logger.info(
+        "INPUT_MANIFEST.md verified for July annotation ({} required files)",
+        len(JULY_MANIFEST_REQUIRED),
+    )
 
 
 def configure_logging(verbose: bool) -> None:
@@ -322,8 +338,10 @@ def fetch_json_with_retry(
         if response.status_code in {429, 503}:
             retry_after = response.headers.get("Retry-After")
             try:
-                sleep_s = float(retry_after) if retry_after is not None else min_interval_sec * (
-                    2 ** (attempt - 1)
+                sleep_s = (
+                    float(retry_after)
+                    if retry_after is not None
+                    else min_interval_sec * (2 ** (attempt - 1))
                 )
             except ValueError:
                 sleep_s = min_interval_sec * (2 ** (attempt - 1))
@@ -373,19 +391,11 @@ def load_prioritized_variants(path: Path) -> pl.DataFrame:
         )
 
     frame = frame.with_columns(
-        pl.col("chrom")
-        .cast(pl.Utf8)
-        .str.replace(r"(?i)^chr", "")
-        .alias("chrom"),
+        pl.col("chrom").cast(pl.Utf8).str.replace(r"(?i)^chr", "").alias("chrom"),
         pl.col("pos").cast(pl.Int64),
         pl.col("ref").cast(pl.Utf8).str.to_uppercase(),
         # Keep a single alt allele so GTEx / score joins remain unambiguous.
-        pl.col("alt")
-        .cast(pl.Utf8)
-        .str.split(",")
-        .list.first()
-        .str.to_uppercase()
-        .alias("alt"),
+        pl.col("alt").cast(pl.Utf8).str.split(",").list.first().str.to_uppercase().alias("alt"),
         pl.col("rsid").cast(pl.Utf8),
         pl.col("gene_symbol").cast(pl.Utf8),
     )
@@ -421,7 +431,9 @@ def _rename_score_columns(frame: pl.DataFrame, mapping: dict[str, str]) -> pl.Da
         Frame with applicable renames applied (no-op when none match).
     """
     renames = {
-        src: dst for src, dst in mapping.items() if src in frame.columns and dst not in frame.columns
+        src: dst
+        for src, dst in mapping.items()
+        if src in frame.columns and dst not in frame.columns
     }
     return frame.rename(renames) if renames else frame
 
@@ -481,12 +493,7 @@ def load_score_matrix(path: Path, kind: ScoreKind) -> pl.DataFrame:
             pl.col("chrom").cast(pl.Utf8).str.replace(r"(?i)^chr", "").alias("chrom"),
             pl.col("pos").cast(pl.Int64),
             pl.col("ref").cast(pl.Utf8).str.to_uppercase(),
-            pl.col("alt")
-            .cast(pl.Utf8)
-            .str.split(",")
-            .list.first()
-            .str.to_uppercase()
-            .alias("alt"),
+            pl.col("alt").cast(pl.Utf8).str.split(",").list.first().str.to_uppercase().alias("alt"),
         )
         frame = frame.with_columns(
             (
@@ -530,10 +537,16 @@ def join_scores(
 
     def _score_subset(scores: pl.DataFrame, keep_prefixes: tuple[str, ...]) -> pl.DataFrame:
         """Keep join keys plus score columns matching ``keep_prefixes``."""
-        keep = [col for col in scores.columns if col.startswith(keep_prefixes) or col in {
-            "variant_key",
-            "rsid",
-        }]
+        keep = [
+            col
+            for col in scores.columns
+            if col.startswith(keep_prefixes)
+            or col
+            in {
+                "variant_key",
+                "rsid",
+            }
+        ]
         # Prefer locus join when available; otherwise rsid.
         if "variant_key" in scores.columns:
             cols = ["variant_key", *[c for c in keep if c not in {"variant_key", "rsid"}]]
@@ -1187,7 +1200,9 @@ def filter_high_impact(master: pl.DataFrame) -> pl.DataFrame:
     if am_col in master.columns:
         exprs.append(pl.col(am_col).cast(pl.Float64, strict=False) > ALPHAMISSENSE_HIGH_THRESHOLD)
     if impact_col in master.columns:
-        exprs.append(pl.col(impact_col).cast(pl.Utf8).str.to_uppercase().is_in(list(HIGH_IMPACT_LEVELS)))
+        exprs.append(
+            pl.col(impact_col).cast(pl.Utf8).str.to_uppercase().is_in(list(HIGH_IMPACT_LEVELS))
+        )
     if not exprs:
         logger.warning("No AlphaMissense or VEP impact columns available for high-impact filter")
         return master.head(0)
@@ -1267,36 +1282,37 @@ def write_excel_workbook(
 
 @app.command()
 def main(
-    variants: Path = typer.Option(
-        DEFAULT_VARIANTS,
+    config: Path | None = config_option(),
+    variants: Path | None = typer.Option(
+        None,
         "--variants",
-        help="Prioritized variant CSV (chrom,pos,ref,alt,rsid,gene_symbol).",
+        help="Prioritized variant CSV (chrom,pos,ref,alt,rsid,gene_symbol). Default: from config.",
     ),
-    alphagenome: Path = typer.Option(
-        DEFAULT_ALPHAGENOME,
+    alphagenome: Path | None = typer.Option(
+        None,
         "--alphagenome",
-        help="Pre-computed AlphaGenome score parquet.",
+        help="Pre-computed AlphaGenome score parquet. Default: from config.",
     ),
-    alphamissense: Path = typer.Option(
-        DEFAULT_ALPHAMISSENSE,
+    alphamissense: Path | None = typer.Option(
+        None,
         "--alphamissense",
-        help="Pre-computed AlphaMissense score parquet.",
+        help="Pre-computed AlphaMissense score parquet. Default: from config.",
     ),
-    output: Path = typer.Option(
-        DEFAULT_OUTPUT,
+    output: Path | None = typer.Option(
+        None,
         "--output",
         "-o",
-        help="Output multi-sheet Excel path.",
+        help="Output multi-sheet Excel path. Default: from config.",
     ),
-    cache_dir: Path = typer.Option(
-        DEFAULT_CACHE_DIR,
+    cache_dir: Path | None = typer.Option(
+        None,
         "--cache-dir",
-        help="JSON response cache directory for GTEx/VEP.",
+        help="JSON response cache directory for GTEx/VEP. Default: from config.",
     ),
-    local_vep: Path = typer.Option(
-        DEFAULT_LOCAL_VEP,
+    local_vep: Path | None = typer.Option(
+        None,
         "--local-vep",
-        help="Optional local VEP JSONL (skips Ensembl for matching keys).",
+        help="Optional local VEP JSONL (skips Ensembl for matching keys). Default: from config.",
     ),
     cache_only: bool = typer.Option(
         False,
@@ -1326,6 +1342,7 @@ def main(
     is required on first run unless ``--cache-only`` is used with a warm cache.
 
     Args:
+        config: Optional YAML config override.
         variants: Prioritized variant CSV path.
         alphagenome: AlphaGenome score parquet path.
         alphamissense: AlphaMissense score parquet path.
@@ -1338,6 +1355,33 @@ def main(
         verbose: Enable DEBUG logging.
     """
     configure_logging(verbose)
+    load_cli_config(config)
+    defaults = _july_defaults()
+    variants = variants or Path(str(defaults["variants"]))
+    alphagenome = alphagenome or Path(str(defaults["alphagenome"]))
+    alphamissense = alphamissense or Path(str(defaults["alphamissense"]))
+    output = output or Path(str(defaults["output"]))
+    cache_dir = cache_dir or Path(str(defaults["cache_dir"]))
+    local_vep = local_vep or Path(str(defaults["local_vep"]))
+    default_output = Path(str(defaults["output"]))
+    default_local_vep = Path(str(defaults["local_vep"]))
+
+    # Refresh module-level knobs that downstream helpers still read.
+    global GTEX_DATASET_ID, GTEX_API_BASE, ENSEMBL_REST, TARGET_TISSUES
+    global REQUEST_TIMEOUT_SEC, GTEX_DELAY_SEC, VEP_DELAY_SEC, MAX_RETRIES
+    global ITEMS_PER_PAGE, ALPHAMISSENSE_HIGH_THRESHOLD, EXPECTED_VARIANT_COUNT
+    GTEX_DATASET_ID = str(defaults["gtex_dataset_id"])
+    GTEX_API_BASE = str(defaults["gtex_api_base"])
+    ENSEMBL_REST = str(defaults["ensembl_rest"])
+    TARGET_TISSUES = list(defaults["target_tissues"])
+    REQUEST_TIMEOUT_SEC = float(defaults["request_timeout_sec"])
+    GTEX_DELAY_SEC = float(defaults["gtex_delay_sec"])
+    VEP_DELAY_SEC = float(defaults["vep_delay_sec"])
+    MAX_RETRIES = int(defaults["max_retries"])
+    ITEMS_PER_PAGE = int(defaults["items_per_page"])
+    ALPHAMISSENSE_HIGH_THRESHOLD = float(defaults["alphamissense_high_threshold"])
+    EXPECTED_VARIANT_COUNT = int(defaults["expected_variant_count"])
+
     if demo:
         from rogen_aging.pipeline_fixtures import write_july_fixtures
 
@@ -1358,12 +1402,15 @@ def main(
         if "outputs/demo" in str(output).replace("\\", "/"):
             raise ValueError(
                 f"Production output must not use outputs/demo/: {output}. "
-                f"Expected {DEFAULT_OUTPUT}"
+                f"Expected {default_output}"
             )
-        if output == DEFAULT_OUTPUT.parent / "demo" / DEFAULT_OUTPUT.name:
-            output = DEFAULT_OUTPUT
+        if output == default_output.parent / "demo" / default_output.name:
+            output = default_output
 
-    logger.info("Starting July annotation pipeline (production={} variants expected when using variants_47)", EXPECTED_VARIANT_COUNT)
+    logger.info(
+        "Starting July annotation pipeline (production={} variants expected when using variants_47)",
+        EXPECTED_VARIANT_COUNT,
+    )
     logger.info("GTEx dataset: {} | tissues: {}", GTEX_DATASET_ID, len(TARGET_TISSUES))
     logger.info("Input variants: {} | output: {}", variants, output)
 
@@ -1373,7 +1420,7 @@ def main(
     scored = join_scores(variant_df, ag_df, am_df)
 
     # Prefer live Ensembl for production when local JSONL is a tiny demo fixture.
-    if not demo and local_vep == DEFAULT_LOCAL_VEP and local_vep.is_file():
+    if not demo and local_vep == default_local_vep and local_vep.is_file():
         local_lines = sum(1 for line in local_vep.open(encoding="utf-8") if line.strip())
         if local_lines < EXPECTED_VARIANT_COUNT:
             logger.warning(

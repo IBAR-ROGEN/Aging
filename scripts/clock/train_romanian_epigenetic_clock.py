@@ -24,24 +24,26 @@ from sklearn.preprocessing import StandardScaler
 from typer import Option, Typer
 
 from rogen_aging.clock.data import load_romanian_cohort
+from rogen_aging.config import cfg_path, find_repo_root, get_config
+from rogen_aging.config.cli import config_option, load_cli_config
 
 app = Typer(add_completion=False, no_args_is_help=True)
-
-REPO_ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_DATA_DIR = REPO_ROOT / "data" / "mock_romanian_cohort"
 
 
 @app.command()
 def main(
-    data_dir: Path = Option(
-        DEFAULT_DATA_DIR,
-        help="Directory containing methylation_matrix.csv and metadata.csv.",
+    config: Path | None = config_option(),
+    data_dir: Path | None = Option(
+        None,
+        help="Directory containing methylation_matrix.csv and metadata.csv. Default: from config.",
     ),
-    test_size: float = Option(0.2, min=0.05, max=0.5, help="Fraction held out for evaluation."),
-    random_state: int = Option(42, help="Random seed for the train/test split."),
-    output_plot: Path = Option(
-        REPO_ROOT / "figures" / "romanian_mock_epigenetic_clock_scatter.png",
-        help="Where to save the scatter plot (PNG).",
+    test_size: float | None = Option(
+        None, min=0.05, max=0.5, help="Fraction held out for evaluation. Default: from config."
+    ),
+    random_state: int | None = Option(None, help="Random seed. Default: from config."),
+    output_plot: Path | None = Option(
+        None,
+        help="Where to save the scatter plot (PNG). Default: from config.",
     ),
     regenerate_mock: bool = Option(
         False,
@@ -49,15 +51,30 @@ def main(
         help="Overwrite mock CSVs in data_dir with freshly simulated values.",
     ),
 ) -> None:
-    x, y, _sample_ids = load_romanian_cohort(data_dir, regenerate_mock=regenerate_mock, random_state=random_state)
+    cfg = load_cli_config(config)
+    repo_root = find_repo_root()
+    resolved_data_dir = data_dir or cfg_path(cfg, "paths", "methylation", "romanian_mock_dir")
+    # Historical bug used scripts/ as root; keep resolving against real repo root.
+    if not resolved_data_dir.is_absolute():
+        resolved_data_dir = repo_root / resolved_data_dir
+    resolved_test_size = float(cfg.clock.test_size if test_size is None else test_size)
+    resolved_random_state = int(cfg.clock.random_state if random_state is None else random_state)
+    resolved_plot = output_plot or cfg_path(cfg, "paths", "clock_eval", "romanian_plot")
+    romanian = cfg.clock.romanian
+    l1_ratios = [float(x) for x in romanian.l1_ratio]
+
+    x, y, _sample_ids = load_romanian_cohort(
+        resolved_data_dir,
+        regenerate_mock=regenerate_mock,
+        random_state=resolved_random_state,
+    )
     x_train, x_test, y_train, y_test = train_test_split(
         x,
         y,
-        test_size=test_size,
-        random_state=random_state,
+        test_size=resolved_test_size,
+        random_state=resolved_random_state,
     )
 
-    l1_ratios = [0.1, 0.3, 0.5, 0.7, 0.9, 0.95, 0.99, 1.0]
     model = Pipeline(
         steps=[
             ("scale", StandardScaler()),
@@ -65,9 +82,9 @@ def main(
                 "enet",
                 ElasticNetCV(
                     l1_ratio=l1_ratios,
-                    cv=5,
-                    random_state=random_state,
-                    max_iter=20000,
+                    cv=int(romanian.cv),
+                    random_state=resolved_random_state,
+                    max_iter=int(romanian.max_iter),
                     n_jobs=-1,
                 ),
             ),
@@ -91,11 +108,17 @@ def main(
     x_line = np.linspace(float(np.min(y_test)), float(np.max(y_test)), 200)
     y_line = slope * x_line + intercept
 
-    output_plot.parent.mkdir(parents=True, exist_ok=True)
+    resolved_plot.parent.mkdir(parents=True, exist_ok=True)
     fig, ax = plt.subplots(figsize=(7.0, 6.5))
     ax.scatter(y_test, y_pred, alpha=0.75, edgecolors="black", linewidths=0.3, s=42)
     ax.plot(x_line, y_line, color="crimson", linewidth=2.0, label="Line of best fit")
-    ax.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], "k--", linewidth=1.0, label="Identity (y = x)")
+    ax.plot(
+        [y_test.min(), y_test.max()],
+        [y_test.min(), y_test.max()],
+        "k--",
+        linewidth=1.0,
+        label="Identity (y = x)",
+    )
     ax.set_xlabel("Chronological age (years)")
     ax.set_ylabel("Predicted epigenetic age (years)")
     ax.set_title("Mock Romanian cohort: chronological vs predicted age")
@@ -113,9 +136,9 @@ def main(
         bbox={"boxstyle": "round", "facecolor": "white", "alpha": 0.88, "edgecolor": "#333333"},
     )
     fig.tight_layout()
-    fig.savefig(output_plot, dpi=160)
+    fig.savefig(resolved_plot, dpi=int(get_config().clock.figure_dpi))
     plt.close(fig)
-    print(f"  Saved plot: {output_plot}")
+    print(f"  Saved plot: {resolved_plot}")
 
 
 if __name__ == "__main__":

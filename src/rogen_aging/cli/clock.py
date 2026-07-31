@@ -10,34 +10,45 @@ import typer
 
 from rogen_aging.clock.evaluate import evaluate_clock
 from rogen_aging.clock.train import train_clock
+from rogen_aging.config import get_config
+from rogen_aging.config.cli import config_option, load_cli_config
 
-app = typer.Typer(add_completion=False, no_args_is_help=True, help="Train or evaluate an epigenetic clock.")
+app = typer.Typer(
+    add_completion=False, no_args_is_help=True, help="Train or evaluate an epigenetic clock."
+)
 
 
 @app.command("train")
 def train_cmd(
-    input_data: Path = typer.Option(..., "--input_data", help="Parquet/CSV with cg* + chronological_age."),
-    output_model: Path = typer.Option(..., "--output_model", help="Path for fitted pipeline (.pkl/.joblib)."),
-    output_metrics: Path = typer.Option(..., "--output_metrics", help="Training metrics JSON path."),
-    test_size: float = typer.Option(0.2, "--test_size", help="Held-out test fraction."),
-    random_state: int = typer.Option(42, "--random_state", help="Random seed."),
+    input_data: Path = typer.Option(
+        ..., "--input_data", help="Parquet/CSV with cg* + chronological_age."
+    ),
+    output_model: Path = typer.Option(
+        ..., "--output_model", help="Path for fitted pipeline (.pkl/.joblib)."
+    ),
+    output_metrics: Path = typer.Option(
+        ..., "--output_metrics", help="Training metrics JSON path."
+    ),
+    config: Path | None = config_option(),
+    test_size: float | None = typer.Option(
+        None, "--test_size", help="Held-out test fraction. Default: from config."
+    ),
+    random_state: int | None = typer.Option(
+        None, "--random_state", help="Random seed. Default: from config."
+    ),
 ) -> None:
-    """Train an epigenetic clock and write model plus metrics.
-
-    Args:
-        input_data: Parquet/CSV with ``cg*`` columns and ``chronological_age``.
-        output_model: Destination path for the fitted pipeline (``.pkl``/``.joblib``).
-        output_metrics: Destination path for training metrics JSON.
-        test_size: Held-out test fraction.
-        random_state: Random seed for the train/test split.
-    """
+    """Train an epigenetic clock and write model plus metrics."""
+    load_cli_config(config)
+    cfg = get_config().clock
+    resolved_test_size = float(cfg.test_size if test_size is None else test_size)
+    resolved_random_state = int(cfg.random_state if random_state is None else random_state)
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
     metrics = train_clock(
         input_data,
         output_model,
         output_metrics,
-        test_size=test_size,
-        random_state=random_state,
+        test_size=resolved_test_size,
+        random_state=resolved_random_state,
     )
     typer.echo(
         f"# CpGs used: {metrics['n_cpgs_features']} | alpha: {metrics['alpha']:.6g} | "
@@ -50,15 +61,13 @@ def train_cmd(
 def evaluate_cmd(
     model_path: Path = typer.Option(..., "--model_path", help="Trained model (.pkl or .joblib)."),
     test_data: Path = typer.Option(..., "--test_data", help="Test table (.parquet or .csv)."),
-    output_dir: Path = typer.Option(..., "--output_dir", help="Directory for figures and metrics JSON."),
+    output_dir: Path = typer.Option(
+        ..., "--output_dir", help="Directory for figures and metrics JSON."
+    ),
+    config: Path | None = config_option(),
 ) -> None:
-    """Evaluate a trained clock on held-out data and write figures/metrics.
-
-    Args:
-        model_path: Trained model path (``.pkl`` or ``.joblib``).
-        test_data: Test table path (``.parquet`` or ``.csv``).
-        output_dir: Directory for figures and metrics JSON.
-    """
+    """Evaluate a trained clock on held-out data and write figures/metrics."""
+    load_cli_config(config)
     result = evaluate_clock(model_path, test_data, output_dir)
     imputed = result.pop("imputed_missing_cpgs", [])
     typer.echo(json.dumps(result, indent=2))
