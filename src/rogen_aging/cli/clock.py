@@ -10,13 +10,17 @@ import typer
 
 from rogen_aging.clock.evaluate import evaluate_clock
 from rogen_aging.clock.train import train_clock
+from rogen_aging.clock.validate_matrix import (
+    MissingValuePolicy,
+    validate_methylation_matrix,
+    write_validation_outputs,
+)
 from rogen_aging.config import get_config
 from rogen_aging.config.cli import config_option, load_cli_config
 
 app = typer.Typer(
     add_completion=False, no_args_is_help=True, help="Train or evaluate an epigenetic clock."
 )
-
 
 @app.command("train")
 def train_cmd(
@@ -78,10 +82,89 @@ def evaluate_cmd(
         )
 
 
+@app.command("validate-matrix")
+def validate_matrix_cmd(
+    matrix: Path = typer.Option(..., "--matrix", help="Wide beta matrix (.parquet/.csv/.tsv)."),
+    metadata: Path = typer.Option(..., "--metadata", help="Sample metadata manifest."),
+    expected_cpgs: Path | None = typer.Option(
+        None,
+        "--expected-cpgs",
+        help="Optional text/CSV list of expected CpG IDs (one per line).",
+    ),
+    missing_policy: MissingValuePolicy = typer.Option(
+        MissingValuePolicy.REPORT,
+        "--missing-policy",
+        help="How to handle missing betas: report|fail|impute_column_mean|drop_sites.",
+    ),
+    sample_id_col: str | None = typer.Option(
+        None,
+        "--sample-id-col",
+        help="Sample ID column in the matrix (auto-detected if omitted).",
+    ),
+    metadata_sample_id_col: str | None = typer.Option(
+        None,
+        "--metadata-sample-id-col",
+        help="Sample ID column in metadata (auto-detected if omitted).",
+    ),
+    allow_inclusive_beta: bool = typer.Option(
+        False,
+        "--allow-inclusive-beta",
+        help="Allow beta values of exactly 0 or 1 (default requires strict (0, 1)).",
+    ),
+    log_out: Path | None = typer.Option(
+        None,
+        "--log-out",
+        help="Write the human-readable diagnostic log to this path.",
+    ),
+    report_json: Path | None = typer.Option(
+        None,
+        "--report-json",
+        help="Write the machine-readable validation report JSON.",
+    ),
+    cleaned_matrix: Path | None = typer.Option(
+        None,
+        "--cleaned-matrix",
+        help="Optional path for the cleaned matrix after missing-value handling.",
+    ),
+) -> None:
+    """Pre-flight check a methylation matrix before clock inference/training.
+
+    Args:
+        matrix: Wide beta matrix path.
+        metadata: Metadata manifest path.
+        expected_cpgs: Optional expected CpG list.
+        missing_policy: Missing-value handling policy.
+        sample_id_col: Optional matrix sample ID column name.
+        metadata_sample_id_col: Optional metadata sample ID column name.
+        allow_inclusive_beta: If true, accept betas in ``[0, 1]`` instead of ``(0, 1)``.
+        log_out: Optional diagnostic log path.
+        report_json: Optional JSON report path.
+        cleaned_matrix: Optional cleaned matrix output path.
+    """
+    report, cleaned = validate_methylation_matrix(
+        matrix,
+        metadata,
+        expected_cpgs=expected_cpgs,
+        sample_id_col=sample_id_col,
+        metadata_sample_id_col=metadata_sample_id_col,
+        missing_policy=missing_policy,
+        require_strict_beta=not allow_inclusive_beta,
+    )
+    write_validation_outputs(
+        report,
+        cleaned,
+        log_path=log_out,
+        report_json_path=report_json,
+        cleaned_matrix_path=cleaned_matrix,
+    )
+    typer.echo(report.format_log())
+    if not report.passed:
+        raise typer.Exit(code=1)
+
+
 def main() -> None:
     """Console entry for ``rogen-clock``."""
     app()
-
 
 if __name__ == "__main__":
     main()
