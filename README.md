@@ -195,14 +195,17 @@ Default risk-channel weights are VEP 0.25, AlphaGenome 0.25, AlphaMissense 0.25,
 
 | Topic | Document |
 |-------|----------|
-| Epigenetic clock library | [docs/CLOCK_LIBRARY.md](docs/CLOCK_LIBRARY.md) · [GSE40279 training](docs/GSE40279_CLOCK_TRAINING.md) · [eval figures](docs/CLOCK_EVAL_FIGURES.md) |
+| Epigenetic clock library | [docs/CLOCK_LIBRARY.md](docs/CLOCK_LIBRARY.md) · [GSE40279 training](docs/GSE40279_CLOCK_TRAINING.md) · [eval figures](docs/CLOCK_EVAL_FIGURES.md) · [Romanian clock](docs/ROMANIAN_EPIGENETIC_CLOCK.md) |
 | LA-SNP VEP / GTEx annotation | [docs/LA_SNP_VEP_ANNOTATION.md](docs/LA_SNP_VEP_ANNOTATION.md) · [docs/LA_SNP_GTEX_ANNOTATION.md](docs/LA_SNP_GTEX_ANNOTATION.md) |
 | LA-SNP public allele-frequency validation | [docs/LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md](docs/LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md) · [AF figures](docs/AF_COMPARISON_FIGURES.md) |
 | Genomics validation (GRCh38) | [docs/GENOMICS_ANALYSIS.md](docs/GENOMICS_ANALYSIS.md) |
-| Synthetic UKB integration | [docs/UKB_INTEGRATION_PIPELINE.md](docs/UKB_INTEGRATION_PIPELINE.md) |
-| Methylation (Oxford Nanopore) pipeline | [docs/METHYLATION_PIPELINE_README.md](docs/METHYLATION_PIPELINE_README.md) |
+| Synthetic UKB integration | [docs/UKB_INTEGRATION_PIPELINE.md](docs/UKB_INTEGRATION_PIPELINE.md) · [generators](docs/SYNTHETIC_UKB_GENERATOR.md) · [RAP fixtures](docs/SYNTHETIC_UKB_RAP_GENERATOR.md) |
+| Synthetic Romanian VCF | [docs/SYNTHETIC_ROMANIAN_VCF_GENERATOR.md](docs/SYNTHETIC_ROMANIAN_VCF_GENERATOR.md) |
+| Methylation (Oxford Nanopore) pipeline | [docs/METHYLATION_PIPELINE_README.md](docs/METHYLATION_PIPELINE_README.md) · [usage](docs/METHYLATION_PIPELINE_USAGE.md) · [quick reference](docs/METHYLATION_PIPELINE_QUICK_REFERENCE.md) |
+| EDA dashboard | [docs/EDA_DASHBOARD.md](docs/EDA_DASHBOARD.md) · [mock integration](docs/EDA_MOCK_INTEGRATION.md) |
 | AlphaGenome analysis notes | [docs/ALPHAGENOME_ANALYSIS_EXPLANATION.md](docs/ALPHAGENOME_ANALYSIS_EXPLANATION.md) |
-| UKB CI compliance audit | [docs/UKBB_CI_COMPLIANCE_AUDIT.md](docs/UKBB_CI_COMPLIANCE_AUDIT.md) |
+| UKB CI compliance audit | [docs/UKBB_CI_COMPLIANCE_AUDIT.md](docs/UKBB_CI_COMPLIANCE_AUDIT.md) · [auditor](docs/UKB_COMPLIANCE_AUDITOR.md) · [pre-commit hook](docs/UKB_PRE_COMMIT_HOOK.md) |
+| Contributing (hooks, git workflow) | [CONTRIBUTING.md](CONTRIBUTING.md) · [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) |
 
 ---
 

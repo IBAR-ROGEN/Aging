@@ -14,6 +14,34 @@ uv sync --extra dev
 
 This repository sets `core.hooksPath=.githooks`, so the installer enables
 `.githooks/pre-commit` (it does not call `pre-commit install` into `.git/hooks`).
+Re-run `./scripts/dev/install_pre_commit_hook.sh` after cloning if hooks are missing.
+
+## Git workflow
+
+### Branch naming
+
+Use standard git-flow prefixes with a concise hyphen-separated description.
+Do **not** use a `cursor/` prefix.
+
+| Prefix | Use for |
+|--------|---------|
+| `feature/` | New functionality |
+| `fix/` | Bug fixes |
+| `refactor/` | Restructuring without behavior change |
+| `docs/` | Documentation only |
+| `chore/` | Tooling, CI, deps, housekeeping |
+
+Examples: `feature/methylation-matrix-preflight`, `fix/ukb-eid-join-audit`,
+`chore/pre-commit-hooks`.
+
+### Commits and attribution
+
+- Configure `user.name` / `user.email` to match a **verified** email on your GitHub
+  account (or your GitHub noreply address) so contributions attribute correctly.
+- Do not add AI / agent attribution trailers (`Co-authored-by: Cursor`,
+  `Made-with: Cursor`, and similar). Subject and body only.
+- `.githooks/prepare-commit-msg` strips common Cursor attribution trailers if they
+  are injected by the environment.
 
 ## What runs on commit
 
@@ -62,14 +90,10 @@ git commit -n -m "emergency: reason"
 Do **not** use `--no-verify` to push past UK Biobank security failures. Fix the
 staged content instead (see [UKB_PRE_COMMIT_HOOK.md](UKB_PRE_COMMIT_HOOK.md)).
 
-To temporarily disable hooks in the current shell without uninstalling:
+To re-enable hooks after a local disable, re-run:
 
 ```bash
-export PRE_COMMIT_ALLOW_NO_CONFIG=1   # only if .pre-commit-config.yaml is missing
-# Prefer uninstalling cleanly when needed:
-uv run pre-commit uninstall
-# Re-enable later:
-uv run pre-commit install
+./scripts/dev/install_pre_commit_hook.sh
 ```
 
 ## Typing notes
