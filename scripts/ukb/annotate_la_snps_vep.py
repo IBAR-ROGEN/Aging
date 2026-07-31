@@ -17,22 +17,42 @@ from urllib.parse import quote
 
 import pandas as pd
 import requests
+import typer
+
+from rogen_aging.config import cfg_path, get_config
+from rogen_aging.config.cli import config_option, load_cli_config
+
+app = typer.Typer(add_completion=False, help=__doc__)
 
 # ---------------------------------------------------------------------------
-# CONSTANTS — edit these paths and tuning knobs before running
+# Defaults are loaded from config; module aliases kept for helpers / tests.
 # ---------------------------------------------------------------------------
 
-# Curated ~70 LA-SNP set (58 unique rsIDs) from AlphaGenome analysis output.
-INPUT_RSID_FILE = Path("analysis/alphagenome/alphagenome_impact_analysis.csv")
-RSID_COLUMN = "snp"  # column name when INPUT_RSID_FILE is CSV; ignored for plain .txt
 
-OUTPUT_DIR = Path("analysis/vep_annotation")
-REST_BASE_URL = "https://rest.ensembl.org"
-REQUEST_DELAY_SEC = 0.34
-CACHE_DIR = Path("analysis/vep_cache")  # one {rsid}.json file per cached response
+def _annotation_vep_defaults() -> dict[str, object]:
+    cfg = get_config()
+    return {
+        "input_rsid_file": cfg_path(cfg, "paths", "annotation", "alphagenome_impact"),
+        "rsid_column": str(cfg.annotation.vep.rsid_column),
+        "output_dir": cfg_path(cfg, "paths", "annotation", "vep_dir"),
+        "rest_base_url": str(cfg.apis.ensembl_rest),
+        "request_delay_sec": float(cfg.annotation.vep.request_delay_sec),
+        "cache_dir": cfg_path(cfg, "paths", "annotation", "vep_cache"),
+        "request_timeout_sec": float(cfg.annotation.vep.request_timeout_sec),
+        "max_retries": int(cfg.annotation.vep.max_retries),
+    }
 
-REQUEST_TIMEOUT_SEC = 30.0
-MAX_RETRIES = 4
+
+_defaults = _annotation_vep_defaults()
+INPUT_RSID_FILE = Path(str(_defaults["input_rsid_file"]))
+RSID_COLUMN = str(_defaults["rsid_column"])
+OUTPUT_DIR = Path(str(_defaults["output_dir"]))
+REST_BASE_URL = str(_defaults["rest_base_url"])
+REQUEST_DELAY_SEC = float(_defaults["request_delay_sec"])  # type: ignore[arg-type]
+CACHE_DIR = Path(str(_defaults["cache_dir"]))
+REQUEST_TIMEOUT_SEC = float(_defaults["request_timeout_sec"])  # type: ignore[arg-type]
+MAX_RETRIES = int(_defaults["max_retries"])  # type: ignore[arg-type]
+del _defaults
 
 # Ensembl VEP impact rank (lower = more severe) for picking SIFT/PolyPhen source transcript.
 IMPACT_RANK: dict[str, int] = {
@@ -185,11 +205,7 @@ def extract_annotation(rsid: str, payload: list[dict[str, Any]]) -> dict[str, st
         transcripts = []
 
     gene_symbols = sorted(
-        {
-            str(tc.get("gene_symbol")).strip()
-            for tc in transcripts
-            if tc.get("gene_symbol")
-        }
+        {str(tc.get("gene_symbol")).strip() for tc in transcripts if tc.get("gene_symbol")}
     )
     ref, alt = parse_allele_string(str(variant.get("allele_string", "")))
     sift, polyphen = pick_sift_polyphen(transcripts)
@@ -207,7 +223,9 @@ def extract_annotation(rsid: str, payload: list[dict[str, Any]]) -> dict[str, st
     }
 
 
-def build_output_table(rsids: list[str], session: requests.Session) -> tuple[pd.DataFrame, list[str]]:
+def build_output_table(
+    rsids: list[str], session: requests.Session
+) -> tuple[pd.DataFrame, list[str]]:
     """Query (or load from cache) every rsID and assemble the annotation table."""
     rows: list[dict[str, str]] = []
     not_found: list[str] = []
@@ -247,8 +265,25 @@ def build_output_table(rsids: list[str], session: requests.Session) -> tuple[pd.
     return pd.DataFrame(rows), not_found
 
 
-def main() -> None:
+@app.command()
+def main(
+    config: Path | None = config_option(),
+) -> None:
     """Run VEP annotation for all LA-SNPs and write CSV + Excel outputs."""
+    global INPUT_RSID_FILE, RSID_COLUMN, OUTPUT_DIR, REST_BASE_URL
+    global REQUEST_DELAY_SEC, CACHE_DIR, REQUEST_TIMEOUT_SEC, MAX_RETRIES
+
+    load_cli_config(config)
+    defaults = _annotation_vep_defaults()
+    INPUT_RSID_FILE = Path(str(defaults["input_rsid_file"]))
+    RSID_COLUMN = str(defaults["rsid_column"])
+    OUTPUT_DIR = Path(str(defaults["output_dir"]))
+    REST_BASE_URL = str(defaults["rest_base_url"])
+    REQUEST_DELAY_SEC = float(defaults["request_delay_sec"])  # type: ignore[arg-type]
+    CACHE_DIR = Path(str(defaults["cache_dir"]))
+    REQUEST_TIMEOUT_SEC = float(defaults["request_timeout_sec"])  # type: ignore[arg-type]
+    MAX_RETRIES = int(defaults["max_retries"])  # type: ignore[arg-type]
+
     rsids = load_rsids(INPUT_RSID_FILE, RSID_COLUMN)
     if not rsids:
         raise SystemExit(f"No rsIDs loaded from {INPUT_RSID_FILE}")
@@ -294,4 +329,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    app()

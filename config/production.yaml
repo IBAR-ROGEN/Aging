@@ -1,0 +1,21 @@
+# Production overrides for the rogen_aging pipeline.
+# Merged on top of default.yaml when selected via --config config/production.yaml
+# or load_config(..., profile="production").
+
+july:
+  expected_variant_count: 47
+  gtex_dataset_id: gtex_v8
+
+paths:
+  july:
+    variants: data/processed/variants_47_input.csv
+    output_xlsx: outputs/Supplementary_Table_1_Annotated_Variants.xlsx
+  integrative:
+    output_dir: analysis/integrative/results
+
+ukb:
+  max_join_drop_rate: 0.01
+
+apis:
+  # Pin Ensembl REST to the dated mirror used in production annotation runs.
+  ensembl_rest: https://jun2026.rest.ensembl.org

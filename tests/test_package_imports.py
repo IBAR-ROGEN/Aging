@@ -13,6 +13,8 @@ def test_import_package() -> None:
 
 def test_import_submodules() -> None:
     import rogen_aging.clock  # noqa: PLC0415
+    import rogen_aging.config  # noqa: PLC0415
+    import rogen_aging.ensembl  # noqa: PLC0415
     import rogen_aging.integrative  # noqa: PLC0415
     import rogen_aging.methylation_visualizations  # noqa: PLC0415
     import rogen_aging.network_visualizer  # noqa: PLC0415
@@ -21,6 +23,9 @@ def test_import_submodules() -> None:
     import rogen_aging.vcf  # noqa: PLC0415
 
     assert "train_clock" in rogen_aging.clock.__all__
+    assert "load_config" in rogen_aging.config.__all__
+    assert "EnsemblClient" in rogen_aging.ensembl.__all__
+    assert "lookup_variants_cached" in rogen_aging.ensembl.__all__
     assert "generate_ukb_rap_mock" in rogen_aging.ukb.__all__
     assert "run_integrative_pipeline" in rogen_aging.integrative.__all__
     assert "run_integration_pipeline" in rogen_aging.ukb_integration.__all__

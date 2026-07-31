@@ -34,13 +34,24 @@ dependencies = [
     "cyvcf2>=0.33.0",
     "loguru>=0.7.3",
     "tqdm>=4.67.0",
+    "omegaconf>=2.3.1",
 ]
 requires-python = ">=3.12"
 readme = "README.md"
 license = {text = "MIT"}
 
 [project.optional-dependencies]
-dev = ["pytest>=8.0", "ruff>=0.9.0"]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.9.0",
+    "pre-commit>=4.5.1",
+    "black>=26.3.1",
+    "isort>=7.0.0",
+    "flake8>=7.3.0",
+    "mypy>=1.19.0",
+    "pandas-stubs>=2.2",
+    "types-requests>=2.32",
+]
 genomics = []
 
 [project.scripts]
@@ -58,6 +69,55 @@ where = ["src"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
+
+[tool.black]
+line-length = 100
+target-version = ["py312"]
+extend-exclude = '''
+/(
+  \.venv
+  | \.r-env
+  | \.tools
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 100
+src_paths = ["src", "scripts", "tests"]
+known_first_party = ["rogen_aging"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_unreachable = false
+warn_unused_ignores = true
+show_error_codes = true
+pretty = true
+files = ["src/rogen_aging"]
+mypy_path = ["src"]
+namespace_packages = true
+explicit_package_bases = true
+
+[[tool.mypy.overrides]]
+module = [
+    "alphagenome.*",
+    "adjustText.*",
+    "cyvcf2.*",
+    "diagrams.*",
+    "GEOparse.*",
+    "joblib.*",
+    "matplotlib.*",
+    "networkx.*",
+    "omegaconf.*",
+    "plotly.*",
+    "scipy.*",
+    "seaborn.*",
+    "sklearn.*",
+    "streamlit.*",
+    "loguru.*",
+]
+ignore_missing_imports = true
 
 [tool.ruff]
 line-length = 100

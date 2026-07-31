@@ -17,28 +17,32 @@ import numpy as np
 import polars as pl
 from sklearn.linear_model import ElasticNet, ElasticNetCV
 
-REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+from rogen_aging.config import cfg_path, find_repo_root, get_config
 
-JULY_VARIANTS = REPO_ROOT / "data" / "processed" / "prioritized_variants.csv"
-JULY_ALPHAGENOME = REPO_ROOT / "data" / "scores" / "alphagenome_raw.parquet"
-JULY_ALPHAMISSENSE = REPO_ROOT / "data" / "scores" / "alphamissense_raw.parquet"
-JULY_LOCAL_VEP = REPO_ROOT / "data" / "processed" / "vep_local.jsonl"
-JULY_CACHE_DIR = REPO_ROOT / "data" / "cache" / "july_annotation"
+REPO_ROOT = find_repo_root()
 
-INTEGRATIVE_DIR = REPO_ROOT / "analysis" / "integrative" / "fixtures"
+_cfg = get_config()
+JULY_VARIANTS = cfg_path(_cfg, "paths", "july", "fixture_variants")
+JULY_ALPHAGENOME = cfg_path(_cfg, "paths", "july", "alphagenome")
+JULY_ALPHAMISSENSE = cfg_path(_cfg, "paths", "july", "alphamissense")
+JULY_LOCAL_VEP = cfg_path(_cfg, "paths", "july", "local_vep")
+JULY_CACHE_DIR = cfg_path(_cfg, "paths", "july", "cache_dir")
+
+INTEGRATIVE_DIR = cfg_path(_cfg, "paths", "integrative", "fixtures_dir")
 INTEGRATIVE_VARIANTS = INTEGRATIVE_DIR / "annotated_variants.parquet"
 INTEGRATIVE_EQTLS = INTEGRATIVE_DIR / "eqtls.parquet"
 INTEGRATIVE_PROBES = INTEGRATIVE_DIR / "probe_annotation.parquet"
 INTEGRATIVE_SAMPLES = INTEGRATIVE_DIR / "sample_genotypes.parquet"
 
-CLOCK_MODEL_PKL = REPO_ROOT / "models" / "ro_clock_elasticnet_gse40279.pkl"
-CLOCK_MODEL_JOBLIB = REPO_ROOT / "models" / "methylation_clock_v1.joblib"
-CLOCK_METH = REPO_ROOT / "data" / "methylation" / "GSE87571_processed.parquet"
-CLOCK_META = REPO_ROOT / "data" / "methylation" / "GSE87571_meta.csv"
+CLOCK_MODEL_PKL = cfg_path(_cfg, "paths", "models", "clock_elasticnet")
+CLOCK_MODEL_JOBLIB = cfg_path(_cfg, "paths", "models", "clock_joblib_fallback")
+CLOCK_METH = cfg_path(_cfg, "paths", "methylation", "gse87571_processed")
+CLOCK_META = cfg_path(_cfg, "paths", "methylation", "gse87571_meta")
 
-VEP_SOURCE = REPO_ROOT / "analysis" / "vep_annotation" / "la_snp_vep_annotations.csv"
-AG_SOURCE = REPO_ROOT / "analysis" / "alphagenome" / "alphagenome_impact_analysis.csv"
-GTEX_SOURCE = REPO_ROOT / "analysis" / "gtex_annotation" / "la_snp_gtex_eqtls.csv"
+VEP_SOURCE = cfg_path(_cfg, "paths", "annotation", "vep_dir") / "la_snp_vep_annotations.csv"
+AG_SOURCE = cfg_path(_cfg, "paths", "annotation", "alphagenome_impact")
+GTEX_SOURCE = cfg_path(_cfg, "paths", "integrative", "eqtls_csv")
+del _cfg
 
 _DEMO_CPGS = ("cg00000001", "cg00000002", "cg00000003")
 
@@ -158,11 +162,7 @@ def _variants_from_vep_csv(path: Path, limit: int = 12) -> pl.DataFrame | None:
         return None
     frame = frame.select(list(needed)).with_columns(
         pl.col("alt").cast(pl.Utf8).str.split(",").list.first().alias("alt"),
-        pl.col("gene_symbol")
-        .cast(pl.Utf8)
-        .str.split(";")
-        .list.first()
-        .alias("gene_symbol"),
+        pl.col("gene_symbol").cast(pl.Utf8).str.split(";").list.first().alias("gene_symbol"),
     )
     return frame.drop_nulls(["chrom", "pos", "ref", "alt", "rsid"]).head(limit)
 
@@ -183,7 +183,9 @@ def write_july_fixtures(*, repo_root: Path = REPO_ROOT, limit: int = 12) -> dict
     vep_path = repo_root / "data" / "processed" / "vep_local.jsonl"
     cache_dir = repo_root / "data" / "cache" / "july_annotation"
 
-    variants = _variants_from_vep_csv(repo_root / "analysis" / "vep_annotation" / "la_snp_vep_annotations.csv", limit)
+    variants = _variants_from_vep_csv(
+        repo_root / "analysis" / "vep_annotation" / "la_snp_vep_annotations.csv", limit
+    )
     if variants is None:
         variants = _synthetic_variants(min(limit, 8))
 
@@ -229,9 +231,7 @@ def write_july_fixtures(*, repo_root: Path = REPO_ROOT, limit: int = 12) -> dict
         {
             "snp": variants["rsid"],
             "am_score": am_scores,
-            "am_class": [
-                "likely_pathogenic" if s > 0.5 else "likely_benign" for s in am_scores
-            ],
+            "am_class": ["likely_pathogenic" if s > 0.5 else "likely_benign" for s in am_scores],
         }
     )
     _ensure_parent(am_path)
@@ -282,12 +282,12 @@ def _write_local_vep_jsonl(
             ref = str(row["ref"]).upper()
             alt = str(row["alt"]).upper().split(",")[0]
             variant_key = f"{chrom}:{pos}:{ref}:{alt}"
-            src = by_rsid.get(rsid, {})
-            consequence = str(src.get("most_severe_consequence") or "intron_variant")
+            annotation = by_rsid.get(rsid, {})
+            consequence = str(annotation.get("most_severe_consequence") or "intron_variant")
             impact = impact_for.get(consequence, "MODIFIER")
             gene = str(row["gene_symbol"])
-            sift = src.get("SIFT") or src.get("sift") or ""
-            poly = src.get("PolyPhen") or src.get("polyphen") or ""
+            sift = annotation.get("SIFT") or annotation.get("sift") or ""
+            poly = annotation.get("PolyPhen") or annotation.get("polyphen") or ""
             payload = [
                 {
                     "id": rsid,
@@ -384,7 +384,9 @@ def _seed_gtex_cache(
                 }
             ]
         }
-        with _cache_path(cache_dir, "gtex_variant", rsid.lower()).open("w", encoding="utf-8") as handle:
+        with _cache_path(cache_dir, "gtex_variant", rsid.lower()).open(
+            "w", encoding="utf-8"
+        ) as handle:
             json.dump(variant_payload, handle)
 
         hits: list[dict[str, Any]] = []
@@ -504,12 +506,7 @@ def _fit_demo_elasticnet() -> ElasticNet:
             _DEMO_CPGS[2]: rng.uniform(0.1, 0.9, size=40),
         }
     ).to_pandas()
-    y = (
-        25.0
-        + 30.0 * x[_DEMO_CPGS[0]]
-        + 10.0 * x[_DEMO_CPGS[1]]
-        + rng.normal(0.0, 0.5, size=40)
-    )
+    y = 25.0 + 30.0 * x[_DEMO_CPGS[0]] + 10.0 * x[_DEMO_CPGS[1]] + rng.normal(0.0, 0.5, size=40)
     model = ElasticNet(alpha=0.01, l1_ratio=0.5, max_iter=10_000, random_state=0)
     model.fit(x, y)
     return model
@@ -578,21 +575,14 @@ def write_clock_fixtures(
         if not feature_names and hasattr(model, "named_steps"):
             feature_names = list(getattr(model, "feature_names_in_", ()))
         if not feature_names:
-            final = (
-                list(model.named_steps.values())[-1]
-                if hasattr(model, "named_steps")
-                else model
-            )
+            final = list(model.named_steps.values())[-1] if hasattr(model, "named_steps") else model
             n_feat = int(getattr(final, "n_features_in_", len(_DEMO_CPGS)))
             feature_names = [f"cg{i:08d}" for i in range(1, min(n_feat, 50) + 1)]
         feature_names = [str(c) for c in feature_names[:50]]
         meth = pl.DataFrame(
             {
                 "sample_id": ids,
-                **{
-                    name: rng.uniform(0.05, 0.95, size=n).tolist()
-                    for name in feature_names
-                },
+                **{name: rng.uniform(0.05, 0.95, size=n).tolist() for name in feature_names},
             }
         )
         ages = np.concatenate(
@@ -633,9 +623,7 @@ def write_all_pipeline_fixtures(
     """
     july = write_july_fixtures(repo_root=repo_root, limit=july_limit)
     integrative = write_integrative_fixtures(repo_root=repo_root)
-    clock = write_clock_fixtures(
-        repo_root=repo_root, force_synthetic=force_synthetic_clock
-    )
+    clock = write_clock_fixtures(repo_root=repo_root, force_synthetic=force_synthetic_clock)
     return FixturePaths(
         july_variants=july["variants"],
         july_alphagenome=july["alphagenome"],

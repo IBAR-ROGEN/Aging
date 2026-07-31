@@ -1,0 +1,152 @@
+# Default configuration for the rogen_aging pipeline.
+# Paths are relative to the repository root unless absolute.
+
+repo:
+  # Resolved at load time when omitted.
+  root: null
+
+paths:
+  models:
+    clock_elasticnet: models/ro_clock_elasticnet_gse40279.pkl
+    clock_joblib_fallback: models/methylation_clock_v1.joblib
+  methylation:
+    gse87571_processed: data/methylation/GSE87571_processed.parquet
+    gse87571_meta: data/methylation/GSE87571_meta.csv
+    probe_annotation: data/methylation/HM450_probe_annotation.csv
+    horvath_annotation: test_data/gb-2013-14-10-r115-S3.csv
+    geo_cache: data/geo
+    romanian_mock_dir: data/mock_romanian_cohort
+  july:
+    variants: data/processed/variants_47_input.csv
+    fixture_variants: data/processed/prioritized_variants.csv
+    alphagenome: data/scores/alphagenome_raw.parquet
+    alphamissense: data/scores/alphamissense_raw.parquet
+    local_vep: data/processed/vep_local.jsonl
+    cache_dir: data/cache/july_annotation
+    output_xlsx: outputs/Supplementary_Table_1_Annotated_Variants.xlsx
+  integrative:
+    july_xlsx: outputs/Supplementary_Table_1_Annotated_Variants.xlsx
+    variants_parquet: outputs/Supplementary_Table_1_Combined_Master.parquet
+    eqtls_parquet: outputs/Supplementary_Table_1_GTEx_eQTL_Summary.parquet
+    eqtls_csv: analysis/gtex_annotation/la_snp_gtex_eqtls.csv
+    alphagenome: data/scores/alphagenome_raw.parquet
+    output_dir: analysis/integrative/results
+    demo_dir: analysis/integrative/demo
+    fixtures_dir: analysis/integrative/fixtures
+  clock_eval:
+    metrics: outputs/clock_metrics.json
+    figure_stem: outputs/figures/Figure_Epigenetic_Clock_Panels
+    romanian_plot: figures/romanian_mock_epigenetic_clock_scatter.png
+  annotation:
+    alphagenome_impact: analysis/alphagenome/alphagenome_impact_analysis.csv
+    vep_dir: analysis/vep_annotation
+    vep_cache: analysis/vep_cache
+    vep_input_xlsx: analysis/vep_annotation/la_snp_vep_annotations.xlsx
+    gtex_dir: analysis/gtex_annotation
+    gtex_cache: analysis/gtex_cache
+  ukb:
+    manifest: analysis/ukb_snp_manifest_v0.1.csv
+    frequencies_1kg: analysis/la_snp_1kg_frequencies.csv
+    af_compare: analysis/la_snp_af_1kg_vs_gnomad.csv
+    af_scatter: figures/la_snp_af_1kg_vs_gnomad.png
+    gnomad_cache: data/geo/gnomad_r4_nfe_cache.json
+    mock_clinical: test_data/mock_clinical_data.csv
+    mock_rap_dir: test_data/mock_ukb_rap
+    mock_pheno: test_data/mock_ukb_rap/phenotypes/ukb_phenotypes.csv
+    mock_vcf: test_data/mock_ukb_rap/genotypes/ukb_la_snps.vcf
+    audit_log: outputs/logs/ukb_integration_audit.log
+    integration_output_dir: analysis
+
+integrative:
+  risk_weights:
+    vep_impact: 0.25
+    alphagenome: 0.25
+    alphamissense: 0.25
+    gtex_eqtl: 0.15
+    epigenetic: 0.10
+  vep_impact_scores:
+    HIGH: 1.0
+    MODERATE: 0.7
+    LOW: 0.3
+    MODIFIER: 0.1
+  alphamissense_high_threshold: 0.5
+  target_tissues:
+    - Brain_Amygdala
+    - Brain_Anterior_cingulate_cortex_BA24
+    - Brain_Caudate_basal_ganglia
+    - Brain_Cerebellar_Hemisphere
+    - Brain_Cerebellum
+    - Brain_Cortex
+    - Brain_Frontal_Cortex_BA9
+    - Brain_Hippocampus
+    - Brain_Hypothalamus
+    - Brain_Nucleus_accumbens_basal_ganglia
+    - Brain_Putamen_basal_ganglia
+    - Brain_Spinal_cord_cervical_c-1
+    - Brain_Substantia_nigra
+    - Whole_Blood
+
+clock:
+  test_size: 0.2
+  random_state: 42
+  eval_top_n_cpgs: 25
+  figure_dpi: 300
+  elasticnet:
+    l1_ratio: [0.1, 0.5, 0.7, 0.9, 0.95, 0.99, 1.0]
+    alphas: 20
+    cv: 10
+    max_iter: 5000
+  romanian:
+    l1_ratio: [0.1, 0.3, 0.5, 0.7, 0.9, 0.95, 0.99, 1.0]
+    cv: 5
+    max_iter: 20000
+
+ukb:
+  assembly: GRCh38
+  max_join_drop_rate: 0.01
+  mock_n_samples: 1000
+  mock_age_min: 40
+  mock_age_max: 80
+  mock_eaa_std: 5.0
+  mock_maf: 0.2
+  mean_depth: 32.0
+  ensembl:
+    min_interval_sec: 0.34
+    timeout_sec: 30.0
+    max_retries: 4
+  gnomad:
+    batch_size: 8
+    min_interval_sec: 0.75
+    timeout_sec: 45.0
+    max_retries: 4
+    diff_threshold: 0.05
+
+july:
+  expected_variant_count: 47
+  gtex_dataset_id: gtex_v8
+  request_timeout_sec: 30.0
+  gtex_delay_sec: 0.5
+  vep_delay_sec: 0.34
+  max_retries: 4
+  items_per_page: 250
+  alphamissense_high_threshold: 0.5
+
+annotation:
+  vep:
+    rsid_column: snp
+    request_delay_sec: 0.34
+    request_timeout_sec: 30.0
+    max_retries: 4
+  gtex:
+    impact_rsid_column: snp
+    vep_rsid_column: rsID
+    dataset_id: gtex_v10
+    request_delay_sec: 0.5
+    request_timeout_sec: 30.0
+    max_retries: 4
+    items_per_page: 250
+
+apis:
+  ensembl_rest: https://rest.ensembl.org
+  ensembl_rest_dated: https://jun2026.rest.ensembl.org
+  gtex_api_base: https://gtexportal.org/api/v2

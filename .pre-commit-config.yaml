@@ -1,0 +1,52 @@
+# Pre-commit hooks for rogen_aging.
+# Install: uv sync --extra dev && uv run pre-commit install
+# Run all: uv run pre-commit run --all-files
+# Bypass (emergency only): git commit --no-verify
+
+repos:
+  - repo: local
+    hooks:
+      - id: black
+        name: black
+        entry: uv run black
+        language: system
+        types_or: [python, pyi]
+        require_serial: true
+
+      - id: isort
+        name: isort
+        entry: uv run isort
+        language: system
+        types_or: [python, pyi]
+        require_serial: true
+
+      - id: flake8
+        name: flake8
+        entry: uv run flake8
+        language: system
+        types: [python]
+        require_serial: true
+
+      - id: mypy
+        name: mypy (strict, src/rogen_aging)
+        entry: uv run mypy
+        language: system
+        pass_filenames: false
+        args: [src/rogen_aging]
+        require_serial: true
+
+      - id: validate-genomics-tables
+        name: validate genomics tables (minimal fixture)
+        entry: >-
+          uv run python scripts/dev/validate_genomics_tables.py
+          --fixture test_data/genomics_overlap_minimal.csv
+        language: system
+        pass_filenames: false
+        always_run: true
+
+      - id: ukb-security-check
+        name: UK Biobank security check
+        entry: bash scripts/dev/security_check.sh
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]

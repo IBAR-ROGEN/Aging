@@ -7,6 +7,7 @@ and writes Parquet outputs under ``analysis/integrative/results/``.
 Example:
     uv run python scripts/integrative/map_variant_tissues.py
     uv run python scripts/integrative/map_variant_tissues.py --demo
+    uv run python scripts/integrative/map_variant_tissues.py --config config/production.yaml
 """
 
 from __future__ import annotations
@@ -15,10 +16,10 @@ from pathlib import Path
 
 import typer
 
+from rogen_aging.config import cfg_path, find_repo_root
+from rogen_aging.config.cli import config_option, load_cli_config
 from rogen_aging.integrative import VariantTissueMapper
 from rogen_aging.integrative.io import (
-    DEFAULT_OUTPUT_DIR,
-    REPO_ROOT,
     ensure_july_parquet_cache,
     load_production_eqtls,
     load_production_variants,
@@ -30,6 +31,7 @@ app = typer.Typer(add_completion=False, help=__doc__)
 
 @app.command()
 def main(
+    config: Path | None = config_option(),
     variants: Path | None = typer.Option(
         None,
         "--variants",
@@ -46,11 +48,11 @@ def main(
             "(or analysis/gtex_annotation/la_snp_gtex_eqtls.csv)."
         ),
     ),
-    output_dir: Path = typer.Option(
-        DEFAULT_OUTPUT_DIR,
+    output_dir: Path | None = typer.Option(
+        None,
         "--output-dir",
         "-o",
-        help="Directory for annotated + summary Parquet outputs.",
+        help="Directory for annotated + summary Parquet outputs. Default: from config.",
     ),
     alphagenome: Path | None = typer.Option(
         None, "--alphagenome", help="Optional AlphaGenome score matrix."
@@ -64,25 +66,22 @@ def main(
         help="Write offline fixtures and map variants against them.",
     ),
 ) -> None:
-    """Map annotated variants onto tissue eQTL (+ optional methylation) profiles.
+    """Map annotated variants onto tissue eQTL (+ optional methylation) profiles."""
+    cfg = load_cli_config(config)
+    repo_root = find_repo_root()
+    default_output = cfg_path(cfg, "paths", "integrative", "output_dir")
+    demo_output = cfg_path(cfg, "paths", "integrative", "demo_dir")
+    resolved_output = output_dir or default_output
 
-    Args:
-        variants: Path to the VEP/AlphaGenome annotated variant table.
-        eqtls: Path to the long GTEx eQTL hit table.
-        output_dir: Directory for ``annotated_variants`` / ``eqtl_summary`` Parquet.
-        alphagenome: Optional AlphaGenome score matrix path.
-        probes: Optional HM450/EPIC probe annotation path.
-        demo: Materialize fixtures and run offline.
-    """
     if demo:
         from rogen_aging.pipeline_fixtures import write_integrative_fixtures
 
-        fixtures = write_integrative_fixtures(repo_root=REPO_ROOT)
+        fixtures = write_integrative_fixtures(repo_root=repo_root)
         variants = fixtures["variants"]
         eqtls = fixtures["eqtls"]
         probes = fixtures["probes"]
-        if output_dir.resolve() == DEFAULT_OUTPUT_DIR.resolve():
-            output_dir = REPO_ROOT / "analysis" / "integrative" / "demo"
+        if output_dir is None or resolved_output.resolve() == default_output.resolve():
+            resolved_output = demo_output
         variant_df = read_table(variants)
         eqtl_df = read_table(eqtls)
         alphagenome_df = None
@@ -101,14 +100,14 @@ def main(
         alphagenome=alphagenome_df,
         probe_annotation=probe_df,
     )
-    output_dir.mkdir(parents=True, exist_ok=True)
-    result["annotated"].write_parquet(output_dir / "annotated_variants.parquet")
-    result["eqtl_summary"].write_parquet(output_dir / "eqtl_summary.parquet")
+    resolved_output.mkdir(parents=True, exist_ok=True)
+    result["annotated"].write_parquet(resolved_output / "annotated_variants.parquet")
+    result["eqtl_summary"].write_parquet(resolved_output / "eqtl_summary.parquet")
     if "methylation_links" in result:
-        result["methylation_links"].write_parquet(output_dir / "methylation_links.parquet")
+        result["methylation_links"].write_parquet(resolved_output / "methylation_links.parquet")
     typer.echo(
         f"Wrote integrative tissue map | variants={result['annotated'].height} "
-        f"| output={output_dir.resolve()}"
+        f"| output={resolved_output.resolve()}"
     )
 
 

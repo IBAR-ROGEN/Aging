@@ -21,47 +21,52 @@ from urllib.parse import quote
 
 import pandas as pd
 import requests
+import typer
+
+from rogen_aging.config import cfg_path, get_config, target_tissues
+from rogen_aging.config.cli import config_option, load_cli_config
+
+app = typer.Typer(add_completion=False, help=__doc__)
 
 # ---------------------------------------------------------------------------
-# CONSTANTS — edit these paths and tuning knobs before running
+# Defaults are loaded from config; module aliases kept for helpers / tests.
 # ---------------------------------------------------------------------------
 
-# Curated ~70 LA-SNP set (58 unique rsIDs) from AlphaGenome analysis output.
-INPUT_IMPACT_FILE = Path("analysis/alphagenome/alphagenome_impact_analysis.csv")
-IMPACT_RSID_COLUMN = "snp"
 
-# GRCh38 coordinates from the Ensembl VEP annotation pass (one row per rsID).
-INPUT_VEP_FILE = Path("analysis/vep_annotation/la_snp_vep_annotations.xlsx")
-VEP_RSID_COLUMN = "rsID"
+def _annotation_gtex_defaults() -> dict[str, object]:
+    cfg = get_config()
+    return {
+        "input_impact_file": cfg_path(cfg, "paths", "annotation", "alphagenome_impact"),
+        "impact_rsid_column": str(cfg.annotation.gtex.impact_rsid_column),
+        "input_vep_file": cfg_path(cfg, "paths", "annotation", "vep_input_xlsx"),
+        "vep_rsid_column": str(cfg.annotation.gtex.vep_rsid_column),
+        "output_dir": cfg_path(cfg, "paths", "annotation", "gtex_dir"),
+        "cache_dir": cfg_path(cfg, "paths", "annotation", "gtex_cache"),
+        "api_base_url": str(cfg.apis.gtex_api_base),
+        "dataset_id": str(cfg.annotation.gtex.dataset_id),
+        "target_tissues": list(target_tissues(cfg)),
+        "request_delay_sec": float(cfg.annotation.gtex.request_delay_sec),
+        "request_timeout_sec": float(cfg.annotation.gtex.request_timeout_sec),
+        "max_retries": int(cfg.annotation.gtex.max_retries),
+        "items_per_page": int(cfg.annotation.gtex.items_per_page),
+    }
 
-OUTPUT_DIR = Path("analysis/gtex_annotation")
-CACHE_DIR = Path("analysis/gtex_cache")
 
-API_BASE_URL = "https://gtexportal.org/api/v2"
-DATASET_ID = "gtex_v10"
-
-# Brain tissues + whole blood (neurodegeneration / peripheral immune angle).
-TARGET_TISSUES: list[str] = [
-    "Brain_Amygdala",
-    "Brain_Anterior_cingulate_cortex_BA24",
-    "Brain_Caudate_basal_ganglia",
-    "Brain_Cerebellar_Hemisphere",
-    "Brain_Cerebellum",
-    "Brain_Cortex",
-    "Brain_Frontal_Cortex_BA9",
-    "Brain_Hippocampus",
-    "Brain_Hypothalamus",
-    "Brain_Nucleus_accumbens_basal_ganglia",
-    "Brain_Putamen_basal_ganglia",
-    "Brain_Spinal_cord_cervical_c-1",
-    "Brain_Substantia_nigra",
-    "Whole_Blood",
-]
-
-REQUEST_DELAY_SEC = 0.5
-REQUEST_TIMEOUT_SEC = 30.0
-MAX_RETRIES = 4
-ITEMS_PER_PAGE = 250
+_defaults = _annotation_gtex_defaults()
+INPUT_IMPACT_FILE = Path(str(_defaults["input_impact_file"]))
+IMPACT_RSID_COLUMN = str(_defaults["impact_rsid_column"])
+INPUT_VEP_FILE = Path(str(_defaults["input_vep_file"]))
+VEP_RSID_COLUMN = str(_defaults["vep_rsid_column"])
+OUTPUT_DIR = Path(str(_defaults["output_dir"]))
+CACHE_DIR = Path(str(_defaults["cache_dir"]))
+API_BASE_URL = str(_defaults["api_base_url"])
+DATASET_ID = str(_defaults["dataset_id"])
+TARGET_TISSUES: list[str] = list(_defaults["target_tissues"])  # type: ignore[arg-type]
+REQUEST_DELAY_SEC = float(_defaults["request_delay_sec"])  # type: ignore[arg-type]
+REQUEST_TIMEOUT_SEC = float(_defaults["request_timeout_sec"])  # type: ignore[arg-type]
+MAX_RETRIES = int(_defaults["max_retries"])  # type: ignore[arg-type]
+ITEMS_PER_PAGE = int(_defaults["items_per_page"])  # type: ignore[arg-type]
+del _defaults
 
 RSID_PATTERN = re.compile(r"^rs\d+$", re.IGNORECASE)
 
@@ -283,9 +288,7 @@ def resolve_gtex_variant(
         variant = parse_variant_record(payload["data"][0])
         expected_pos = int(row["position_GRCh38"])
         if variant["pos"] and variant["pos"] != expected_pos:
-            print(
-                f"  warning: {rsid} GTEx pos {variant['pos']} != VEP pos {expected_pos}"
-            )
+            print(f"  warning: {rsid} GTEx pos {variant['pos']} != VEP pos {expected_pos}")
         return variant
 
     # Fallback: chromosome + position from merged VEP coordinates.
@@ -461,8 +464,31 @@ def build_eqtl_table(
     return table, unresolved, resolved_variant_ids
 
 
-def main() -> None:
+@app.command()
+def main(
+    config: Path | None = config_option(),
+) -> None:
     """Run GTEx eQTL annotation for all LA-SNPs and write CSV + Excel outputs."""
+    global INPUT_IMPACT_FILE, IMPACT_RSID_COLUMN, INPUT_VEP_FILE, VEP_RSID_COLUMN
+    global OUTPUT_DIR, CACHE_DIR, API_BASE_URL, DATASET_ID, TARGET_TISSUES
+    global REQUEST_DELAY_SEC, REQUEST_TIMEOUT_SEC, MAX_RETRIES, ITEMS_PER_PAGE
+
+    load_cli_config(config)
+    defaults = _annotation_gtex_defaults()
+    INPUT_IMPACT_FILE = Path(str(defaults["input_impact_file"]))
+    IMPACT_RSID_COLUMN = str(defaults["impact_rsid_column"])
+    INPUT_VEP_FILE = Path(str(defaults["input_vep_file"]))
+    VEP_RSID_COLUMN = str(defaults["vep_rsid_column"])
+    OUTPUT_DIR = Path(str(defaults["output_dir"]))
+    CACHE_DIR = Path(str(defaults["cache_dir"]))
+    API_BASE_URL = str(defaults["api_base_url"])
+    DATASET_ID = str(defaults["dataset_id"])
+    TARGET_TISSUES = list(defaults["target_tissues"])  # type: ignore[arg-type]
+    REQUEST_DELAY_SEC = float(defaults["request_delay_sec"])  # type: ignore[arg-type]
+    REQUEST_TIMEOUT_SEC = float(defaults["request_timeout_sec"])  # type: ignore[arg-type]
+    MAX_RETRIES = int(defaults["max_retries"])  # type: ignore[arg-type]
+    ITEMS_PER_PAGE = int(defaults["items_per_page"])  # type: ignore[arg-type]
+
     snp_table = load_and_merge_snp_table(
         INPUT_IMPACT_FILE,
         IMPACT_RSID_COLUMN,
@@ -517,4 +543,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    app()

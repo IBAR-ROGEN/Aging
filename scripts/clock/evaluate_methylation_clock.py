@@ -28,33 +28,54 @@ from typing import Any
 import matplotlib
 
 matplotlib.use("Agg")
-import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
-import seaborn as sns
-import typer
-from scipy.stats import pearsonr
-from sklearn.linear_model import ElasticNet, ElasticNetCV
-from sklearn.metrics import mean_absolute_error, median_absolute_error
+import matplotlib.pyplot as plt  # noqa: E402
+import numpy as np  # noqa: E402
+import pandas as pd  # noqa: E402
+import seaborn as sns  # noqa: E402
+import typer  # noqa: E402
+from scipy.stats import pearsonr  # noqa: E402
+from sklearn.linear_model import ElasticNet, ElasticNetCV  # noqa: E402
+from sklearn.metrics import mean_absolute_error, median_absolute_error  # noqa: E402
 
-from rogen_aging.clock.evaluate import build_feature_matrix
+from rogen_aging.clock.evaluate import build_feature_matrix  # noqa: E402
+from rogen_aging.config import cfg_path, find_repo_root, get_config, load_cli_config  # noqa: E402
+from rogen_aging.config.cli import config_option  # noqa: E402
 
-REPO_ROOT = Path(__file__).resolve().parent.parent.parent
-
+REPO_ROOT = find_repo_root()
 INPUT_MANIFEST = REPO_ROOT / "INPUT_MANIFEST.md"
-DEFAULT_METHYLATION = REPO_ROOT / "data" / "methylation" / "GSE87571_processed.parquet"
-DEFAULT_META = REPO_ROOT / "data" / "methylation" / "GSE87571_meta.csv"
-DEFAULT_MODEL_PKL = REPO_ROOT / "models" / "ro_clock_elasticnet_gse40279.pkl"
-DEFAULT_MODEL_JOBLIB = REPO_ROOT / "models" / "methylation_clock_v1.joblib"
+
+
+def _clock_defaults() -> dict[str, Path | int]:
+    """Resolve clock-evaluation defaults from the active config."""
+    cfg = get_config()
+    return {
+        "methylation": cfg_path(cfg, "paths", "methylation", "gse87571_processed"),
+        "meta": cfg_path(cfg, "paths", "methylation", "gse87571_meta"),
+        "model_pkl": cfg_path(cfg, "paths", "models", "clock_elasticnet"),
+        "model_joblib": cfg_path(cfg, "paths", "models", "clock_joblib_fallback"),
+        "metrics": cfg_path(cfg, "paths", "clock_eval", "metrics"),
+        "figure_stem": cfg_path(cfg, "paths", "clock_eval", "figure_stem"),
+        "annotation": cfg_path(cfg, "paths", "methylation", "probe_annotation"),
+        "horvath": cfg_path(cfg, "paths", "methylation", "horvath_annotation"),
+        "top_n": int(cfg.clock.eval_top_n_cpgs),
+        "figure_dpi": int(cfg.clock.figure_dpi),
+    }
+
+
+_defaults = _clock_defaults()
+DEFAULT_METHYLATION = _defaults["methylation"]
+DEFAULT_META = _defaults["meta"]
+DEFAULT_MODEL_PKL = _defaults["model_pkl"]
+DEFAULT_MODEL_JOBLIB = _defaults["model_joblib"]
 DEFAULT_MODEL = DEFAULT_MODEL_PKL
-DEFAULT_METRICS = REPO_ROOT / "outputs" / "clock_metrics.json"
-DEFAULT_FIGURE_STEM = REPO_ROOT / "outputs" / "figures" / "Figure_Epigenetic_Clock_Panels"
+DEFAULT_METRICS = _defaults["metrics"]
+DEFAULT_FIGURE_STEM = _defaults["figure_stem"]
+DEFAULT_ANNOTATION = _defaults["annotation"]
+HORVATH_ANNOTATION = _defaults["horvath"]
+TOP_N_CPGS = int(_defaults["top_n"])
+FIGURE_DPI = int(_defaults["figure_dpi"])
+del _defaults
 
-DEFAULT_ANNOTATION = REPO_ROOT / "data" / "methylation" / "HM450_probe_annotation.csv"
-HORVATH_ANNOTATION = REPO_ROOT / "test_data" / "gb-2013-14-10-r115-S3.csv"
-
-TOP_N_CPGS = 25
-FIGURE_DPI = 300
 POSITIVE_COLOR = "#2166ac"
 NEGATIVE_COLOR = "#b2182b"
 SCATTER_COLOR = "#404040"
@@ -70,8 +91,8 @@ _MANIFEST_REQUIRED_PATH_RE = re.compile(
 def resolve_clock_model_path(preferred: Path | None = None) -> Path:
     """Resolve a usable clock artifact path for local development.
 
-    Prefers ``models/ro_clock_elasticnet_gse40279.pkl``, then falls back to
-    ``models/methylation_clock_v1.joblib`` when the pickle is absent.
+    Prefers the configured ElasticNet pickle, then falls back to the joblib
+    artifact when the pickle is absent.
 
     Args:
         preferred: Explicit model path from the CLI. When provided and present,
@@ -79,18 +100,21 @@ def resolve_clock_model_path(preferred: Path | None = None) -> Path:
 
     Returns:
         Path to an existing model file when one of the defaults exists;
-        otherwise ``preferred`` or ``DEFAULT_MODEL_PKL`` (caller may still fail
-        later with a clear FileNotFoundError).
+        otherwise ``preferred`` or the configured pickle path (caller may still
+        fail later with a clear FileNotFoundError).
     """
-    if preferred is not None and preferred != DEFAULT_MODEL_PKL and preferred.is_file():
+    defaults = _clock_defaults()
+    model_pkl = Path(str(defaults["model_pkl"]))
+    model_joblib = Path(str(defaults["model_joblib"]))
+    if preferred is not None and preferred != model_pkl and preferred.is_file():
         return preferred
     if preferred is not None and preferred.is_file():
         return preferred
-    if DEFAULT_MODEL_PKL.is_file():
-        return DEFAULT_MODEL_PKL
-    if DEFAULT_MODEL_JOBLIB.is_file():
-        return DEFAULT_MODEL_JOBLIB
-    return preferred if preferred is not None else DEFAULT_MODEL_PKL
+    if model_pkl.is_file():
+        return model_pkl
+    if model_joblib.is_file():
+        return model_joblib
+    return preferred if preferred is not None else model_pkl
 
 
 def verify_input_manifest(
@@ -630,7 +654,12 @@ def plot_panel_a(
             "linewidths": 0.4,
             "zorder": 3,
         },
-        line_kws={"color": "#d95f02", "linewidth": 1.6, "label": "Linear fit (95% CI)", "zorder": 2},
+        line_kws={
+            "color": "#d95f02",
+            "linewidth": 1.6,
+            "label": "Linear fit (95% CI)",
+            "zorder": 2,
+        },
     )
 
     lo = float(min(chronological_age.min(), predicted_age.min()))
@@ -864,40 +893,41 @@ def run_validation(
 
 
 def main(
-    methylation: Path = typer.Option(
-        DEFAULT_METHYLATION,
+    config: Path | None = config_option(),
+    methylation: Path | None = typer.Option(
+        None,
         "--methylation",
-        help="Processed GSE87571 methylation parquet (samples × cg*).",
+        help="Processed GSE87571 methylation parquet (samples × cg*). Default: from config.",
     ),
-    meta: Path = typer.Option(
-        DEFAULT_META,
+    meta: Path | None = typer.Option(
+        None,
         "--meta",
-        help="Phenotype CSV with sample IDs and chronological age.",
+        help="Phenotype CSV with sample IDs and chronological age. Default: from config.",
     ),
-    model: Path = typer.Option(
-        DEFAULT_MODEL,
+    model: Path | None = typer.Option(
+        None,
         "--model",
-        help="Pickled ElasticNet or Pipeline clock (.pkl / .joblib).",
+        help="Pickled ElasticNet or Pipeline clock (.pkl / .joblib). Default: from config.",
     ),
-    metrics_out: Path = typer.Option(
-        DEFAULT_METRICS,
+    metrics_out: Path | None = typer.Option(
+        None,
         "--metrics-out",
-        help="Output path for clock_metrics.json.",
+        help="Output path for clock_metrics.json. Default: from config.",
     ),
-    figure_stem: Path = typer.Option(
-        DEFAULT_FIGURE_STEM,
+    figure_stem: Path | None = typer.Option(
+        None,
         "--figure-stem",
-        help="Output stem for Figure_Epigenetic_Clock_Panels (.png / .pdf).",
+        help="Output stem for Figure_Epigenetic_Clock_Panels (.png / .pdf). Default: from config.",
     ),
     annotation: Path | None = typer.Option(
         None,
         "--annotation",
         help="Optional Illumina probe→gene table (IlmnID + UCSC_RefGene_Name).",
     ),
-    top_n: int = typer.Option(
-        TOP_N_CPGS,
+    top_n: int | None = typer.Option(
+        None,
         "--top-n",
-        help="Number of top |weight| CpGs for panel C.",
+        help="Number of top |weight| CpGs for panel C. Default: from config.",
     ),
     skip_manifest_check: bool = typer.Option(
         False,
@@ -921,6 +951,7 @@ def main(
     """Validate ElasticNet/Pipeline clock on GSE87571 and write metrics + figures.
 
     Args:
+        config: Optional YAML config override.
         methylation: Processed GSE87571 methylation parquet (samples × cg*).
         meta: Phenotype CSV with sample IDs and chronological age.
         model: Pickled ElasticNet or Pipeline clock.
@@ -932,6 +963,17 @@ def main(
         allow_positional_align: Opt into row-order sample alignment.
         demo: Materialize fixtures and run offline-friendly evaluation.
     """
+    load_cli_config(config)
+    defaults = _clock_defaults()
+    methylation = methylation or Path(str(defaults["methylation"]))
+    meta = meta or Path(str(defaults["meta"]))
+    model = model or Path(str(defaults["model_pkl"]))
+    metrics_out = metrics_out or Path(str(defaults["metrics"]))
+    figure_stem = figure_stem or Path(str(defaults["figure_stem"]))
+    resolved_top_n = int(defaults["top_n"] if top_n is None else top_n)
+    default_metrics = Path(str(defaults["metrics"]))
+    default_figure = Path(str(defaults["figure_stem"]))
+
     if demo:
         from rogen_aging.pipeline_fixtures import write_clock_fixtures
 
@@ -940,9 +982,9 @@ def main(
         methylation = fixtures["methylation"]
         meta = fixtures["meta"]
         skip_manifest_check = True
-        if metrics_out == DEFAULT_METRICS:
+        if metrics_out == default_metrics:
             metrics_out = REPO_ROOT / "outputs" / "demo" / "clock_metrics.json"
-        if figure_stem == DEFAULT_FIGURE_STEM:
+        if figure_stem == default_figure:
             figure_stem = (
                 REPO_ROOT / "outputs" / "demo" / "figures" / "Figure_Epigenetic_Clock_Panels"
             )
@@ -956,7 +998,7 @@ def main(
         metrics_path=metrics_out,
         figure_stem=figure_stem,
         annotation_path=annotation,
-        top_n_cpgs=top_n,
+        top_n_cpgs=resolved_top_n,
         skip_manifest_check=skip_manifest_check,
         allow_positional_align=allow_positional_align,
     )

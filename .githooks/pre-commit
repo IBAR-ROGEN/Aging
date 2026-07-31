@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+# Runs the pre-commit framework. This repository sets core.hooksPath=.githooks
+# (see prepare-commit-msg), so hooks live here instead of .git/hooks.
+set -euo pipefail
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+cd "$REPO_ROOT"
+
+HOOK_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+if command -v uv >/dev/null 2>&1; then
+  exec uv run pre-commit hook-impl \
+    --config=.pre-commit-config.yaml \
+    --hook-type=pre-commit \
+    --hook-dir="$HOOK_DIR" \
+    --color=always \
+    -- "$@"
+fi
+
+if command -v pre-commit >/dev/null 2>&1; then
+  exec pre-commit hook-impl \
+    --config=.pre-commit-config.yaml \
+    --hook-type=pre-commit \
+    --hook-dir="$HOOK_DIR" \
+    --color=always \
+    -- "$@"
+fi
+
+echo "pre-commit is not installed. Run: uv sync --extra dev && ./scripts/dev/install_pre_commit_hook.sh" >&2
+exit 1

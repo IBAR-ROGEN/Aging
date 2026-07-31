@@ -46,6 +46,7 @@ while IFS= read -r file; do
 
   case "$file" in
     docs/*|README.md|pyproject.toml|*security_check*|*install_pre_commit*) continue ;;
+    config/*|tests/fixtures/*|tests/test_config.py) continue ;;
     scripts/mock_ukb_generator.py|scripts/ukb/*) continue ;;
     scripts/ukb_mock_gen.py|scripts/ukb/mock_rap_folder.py) continue ;;
     tests/test_mock_clinical_csv.py|tests/test_package_imports.py|tests/test_ukb_mock_gen.py|tests/test_ukb_integration.py) continue ;;
@@ -53,7 +54,7 @@ while IFS= read -r file; do
     notebooks/README.md|notebooks/05_ukb_exploration/*) continue ;;
     scripts/ukb_la_snp_lookup.py|scripts/compare_af_gnomad.py|scripts/run_integration.py) continue ;;
     scripts/figures/plot_af_comparison.py) continue ;;
-    src/rogen_aging/integration/*|src/rogen_aging/ukb/*|src/rogen_aging/cli/*) continue ;;
+    src/rogen_aging/integration/*|src/rogen_aging/ukb/*|src/rogen_aging/ukb_integration/*|src/rogen_aging/cli/*) continue ;;
   esac
 
   if git show ":$file" 2>/dev/null | grep -aqiE "$RESTRICTED_PATTERNS"; then

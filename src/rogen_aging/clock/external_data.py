@@ -208,7 +208,9 @@ def _parse_title_to_gsm(sample_rows: dict[str, Any]) -> dict[str, str]:
         label = f"X{m.group(2)}"
         label_to_gsm[label] = gsm
     if not label_to_gsm:
-        raise ValueError("Could not parse any X-labels from !Sample_title for supplementary matrix.")
+        raise ValueError(
+            "Could not parse any X-labels from !Sample_title for supplementary matrix."
+        )
     return label_to_gsm
 
 
@@ -246,7 +248,9 @@ def _parse_chronological_ages(sample_rows: dict[str, Any], n_samples: int) -> li
     return ages
 
 
-def _parse_series_matrix_file_full(path: Path) -> tuple[dict[str, list[str]], list[str], list[list[str]]]:
+def _parse_series_matrix_file_full(
+    path: Path,
+) -> tuple[dict[str, list[str]], list[str], list[list[str]]]:
     """Parse a GEO series matrix in one pass: metadata, then matrix block.
 
     Args:
@@ -259,7 +263,7 @@ def _parse_series_matrix_file_full(path: Path) -> tuple[dict[str, list[str]], li
     Raises:
         ValueError: If the table begin marker / header is not found.
     """
-    sample_rows: dict[str, list[str]] = {}
+    sample_rows: dict[str, Any] = {}
     header: list[str] | None = None
     body: list[list[str]] = []
     in_table = False
@@ -277,7 +281,9 @@ def _parse_series_matrix_file_full(path: Path) -> tuple[dict[str, list[str]], li
                         key = parts[0]
                         vals = [_strip_geo_field(x) for x in parts[1:]]
                         if key == "!Sample_characteristics_ch1":
-                            sample_rows.setdefault(key, []).append(vals)
+                            characteristics = sample_rows.setdefault(key, [])
+                            assert isinstance(characteristics, list)
+                            characteristics.append(vals)
                         else:
                             sample_rows[key] = vals
                 continue
@@ -307,11 +313,9 @@ def _load_supplementary_merged(
 ) -> pd.DataFrame:
     p1 = _ensure_supplementary_matrix(SUPP_MATRIX1_URL, MATRIX1_FILENAME, geo_cache_dir)
     p2 = _ensure_supplementary_matrix(SUPP_MATRIX2_URL, MATRIX2_FILENAME, geo_cache_dir)
-    read_kw: dict[str, Any] = {"sep": "\t", "compression": "gzip", "low_memory": False}
     if restrict_to_cpgs is not None:
-        head_kw = {"sep": "\t", "compression": "gzip", "nrows": 0}
-        head1 = pd.read_csv(p1, **head_kw)
-        head2 = pd.read_csv(p2, **head_kw)
+        head1 = pd.read_csv(p1, sep="\t", compression="gzip", nrows=0)
+        head2 = pd.read_csv(p2, sep="\t", compression="gzip", nrows=0)
         cpg_set = {str(x) for x in restrict_to_cpgs if str(x).startswith("cg")}
         if not cpg_set:
             raise ValueError(
@@ -322,7 +326,14 @@ def _load_supplementary_merged(
 
         def read_filtered(path: Path, use_columns: list[str]) -> pd.DataFrame:
             chunks: list[pd.DataFrame] = []
-            for chunk in pd.read_csv(path, usecols=use_columns, chunksize=50_000, **read_kw):
+            for chunk in pd.read_csv(
+                path,
+                sep="\t",
+                compression="gzip",
+                low_memory=False,
+                usecols=use_columns,
+                chunksize=50_000,
+            ):
                 sub = chunk.loc[chunk["ID_REF"].isin(cpg_set)]
                 if not sub.empty:
                     chunks.append(sub)
@@ -338,13 +349,16 @@ def _load_supplementary_merged(
                 "No matching CpG rows were found in supplementary matrices for restrict_to_cpgs."
             )
     else:
-        left = pd.read_csv(p1, **read_kw)
-        right = pd.read_csv(p2, **read_kw)
+        left = pd.read_csv(p1, sep="\t", compression="gzip", low_memory=False)
+        right = pd.read_csv(p2, sep="\t", compression="gzip", low_memory=False)
         id2 = right.drop(columns=["ID_REF"])
         merged = pd.concat([left, id2], axis=1)
     merged = merged.set_index("ID_REF")
     beta_cols = [c for c in merged.columns if _is_beta_column_name(str(c))]
-    return merged[beta_cols].apply(pd.to_numeric, errors="coerce")
+    numeric = merged[beta_cols].apply(pd.to_numeric, errors="coerce")
+    if not isinstance(numeric, pd.DataFrame):
+        raise TypeError("Expected numeric beta matrix to be a DataFrame")
+    return numeric
 
 
 def _probe_table_to_beta_wide(header: list[str], body: list[list[str]]) -> pd.DataFrame | None:
@@ -355,6 +369,8 @@ def _probe_table_to_beta_wide(header: list[str], body: list[list[str]]) -> pd.Da
     data = pd.DataFrame(body, columns=header)
     data = data.set_index("ID_REF")
     numeric = data.apply(pd.to_numeric, errors="coerce")
+    if not isinstance(numeric, pd.DataFrame):
+        return None
     return numeric
 
 
@@ -464,7 +480,9 @@ def load_gse87571(
             cpg_set = {str(x) for x in restrict_to_cpgs if str(x).startswith("cg")}
             beta_wide = beta_wide.loc[beta_wide.index.astype(str).isin(cpg_set)]
             if beta_wide.shape[0] == 0:
-                raise ValueError("restrict_to_cpgs did not match any probes in the series matrix table.")
+                raise ValueError(
+                    "restrict_to_cpgs did not match any probes in the series matrix table."
+                )
     else:
         beta_wide = _load_supplementary_merged(geo_cache_dir, restrict_to_cpgs)
 
