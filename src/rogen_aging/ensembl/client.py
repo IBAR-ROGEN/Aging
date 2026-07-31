@@ -55,7 +55,7 @@ def _parse_retry_after(header_value: str | None, fallback: float) -> float:
 
 def _backoff_seconds(attempt: int, *, base: float, cap: float) -> float:
     """Exponential backoff for attempt ``1..N`` (attempt 1 → ``base``)."""
-    return min(cap, base * (2 ** max(attempt - 1, 0)))
+    return float(min(cap, base * (2 ** max(attempt - 1, 0))))
 
 
 class EnsemblClient:
@@ -80,8 +80,7 @@ class EnsemblClient:
         backoff_cap_sec: float = DEFAULT_BACKOFF_CAP_SEC,
         session: requests.Session | None = None,
         user_agent: str = (
-            "rogen-aging-ensembl/0.1 "
-            "(ROGEN; academic research; Ensembl REST 116/GRCh38)"
+            "rogen-aging-ensembl/0.1 " "(ROGEN; academic research; Ensembl REST 116/GRCh38)"
         ),
     ) -> None:
         if release != ENSEMBL_RELEASE:

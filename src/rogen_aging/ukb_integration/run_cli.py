@@ -36,25 +36,21 @@ def integrate(
     pheno: Path = typer.Option(
         DEFAULT_PHENO,
         "--pheno",
-        path_type=Path,
         help="Mock UKB phenotype CSV (eid + v2 fields).",
     ),
     vcf: Path = typer.Option(
         DEFAULT_VCF,
         "--vcf",
-        path_type=Path,
         help="Mock LA-SNP VCF with sample IDs equal to eid.",
     ),
     output_dir: Path = typer.Option(
         DEFAULT_OUTPUT_DIR,
         "--output-dir",
-        path_type=Path,
         help="Directory for assoc_la_snp_*.csv outputs.",
     ),
     audit_log: Path = typer.Option(
         DEFAULT_AUDIT_LOG,
         "--audit-log",
-        path_type=Path,
         help="Log path for dropped records and eid schema mismatches.",
     ),
     max_drop_rate: float = typer.Option(

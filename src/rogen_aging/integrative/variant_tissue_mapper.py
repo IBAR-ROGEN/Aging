@@ -110,9 +110,9 @@ def variant_key(chrom: object, pos: object, ref: object, alt: object) -> str:
         Key of the form ``chrom:pos:REF:ALT``.
     """
     primary_alt = str(alt).split(",")[0].strip()
+    position = int(str(pos))
     return (
-        f"{normalize_chrom(chrom)}:{int(pos)}:"
-        f"{str(ref).strip().upper()}:{primary_alt.upper()}"
+        f"{normalize_chrom(chrom)}:{position}:" f"{str(ref).strip().upper()}:{primary_alt.upper()}"
     )
 
 
@@ -159,9 +159,7 @@ class VariantTissueMapper:
             raise ValueError(f"Variants frame missing required columns: {missing}")
 
         frame = variants.with_columns(
-            pl.col("chrom").cast(pl.Utf8).map_elements(
-                normalize_chrom, return_dtype=pl.Utf8
-            ),
+            pl.col("chrom").cast(pl.Utf8).map_elements(normalize_chrom, return_dtype=pl.Utf8),
             pl.col("pos").cast(pl.Int64),
             pl.col("ref").cast(pl.Utf8).str.strip_chars().str.to_uppercase(),
             pl.col("alt")
@@ -174,9 +172,7 @@ class VariantTissueMapper:
         )
         if "rsid" in frame.columns:
             frame = frame.with_columns(
-                pl.col("rsid")
-                .map_elements(normalize_rsid, return_dtype=pl.Utf8)
-                .alias("rsid")
+                pl.col("rsid").map_elements(normalize_rsid, return_dtype=pl.Utf8).alias("rsid")
             )
         frame = frame.with_columns(
             (
@@ -312,9 +308,7 @@ class VariantTissueMapper:
         for optional in ("gene_symbol", "eqtl_gene_symbol", "gtex_variant_id"):
             if optional in eqtl_frame.columns:
                 select_cols.append(optional)
-        keyed = eqtl_frame.select(select_cols).with_columns(
-            pl.col("variant_key").alias("rsid")
-        )
+        keyed = eqtl_frame.select(select_cols).with_columns(pl.col("variant_key").alias("rsid"))
         key_summary = self.summarize_eqtl_profiles(keyed).rename({"rsid": "variant_key"})
         return prepared.join(key_summary, on="variant_key", how="left")
 
@@ -340,20 +334,14 @@ class VariantTissueMapper:
         scores = self._normalize_alphagenome(alphagenome)
 
         if "variant_key" in scores.columns:
-            keep = [
-                c
-                for c in scores.columns
-                if c.startswith("alphagenome_") or c == "variant_key"
-            ]
+            keep = [c for c in scores.columns if c.startswith("alphagenome_") or c == "variant_key"]
             return prepared.join(
                 scores.select(keep).unique(subset=["variant_key"], keep="first"),
                 on="variant_key",
                 how="left",
             )
         if "rsid" not in scores.columns or "rsid" not in prepared.columns:
-            raise ValueError(
-                "AlphaGenome scores need variant_key or rsid to join onto variants"
-            )
+            raise ValueError("AlphaGenome scores need variant_key or rsid to join onto variants")
         keep = [c for c in scores.columns if c.startswith("alphagenome_") or c == "rsid"]
         return prepared.join(
             scores.select(keep).unique(subset=["rsid"], keep="first"),
@@ -436,9 +424,7 @@ class VariantTissueMapper:
             scores = self._normalize_alphagenome(alphagenome)
             if "variant_key" in scores.columns:
                 keep = [
-                    c
-                    for c in scores.columns
-                    if c.startswith("alphagenome_") or c == "variant_key"
+                    c for c in scores.columns if c.startswith("alphagenome_") or c == "variant_key"
                 ]
                 annotated = annotated.join(
                     scores.select(keep).unique(subset=["variant_key"], keep="first"),
@@ -446,9 +432,7 @@ class VariantTissueMapper:
                     how="left",
                 )
             elif "rsid" in scores.columns and "rsid" in annotated.columns:
-                keep = [
-                    c for c in scores.columns if c.startswith("alphagenome_") or c == "rsid"
-                ]
+                keep = [c for c in scores.columns if c.startswith("alphagenome_") or c == "rsid"]
                 annotated = annotated.join(
                     scores.select(keep).unique(subset=["rsid"], keep="first"),
                     on="rsid",
@@ -460,9 +444,7 @@ class VariantTissueMapper:
             "eqtl_summary": self.summarize_eqtl_profiles(eqtls),
         }
         if probe_annotation is not None:
-            result["methylation_links"] = self.map_methylation_markers(
-                annotated, probe_annotation
-            )
+            result["methylation_links"] = self.map_methylation_markers(annotated, probe_annotation)
         return result
 
     def _normalize_alphagenome(self, frame: pl.DataFrame) -> pl.DataFrame:

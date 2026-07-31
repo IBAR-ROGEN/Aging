@@ -112,7 +112,9 @@ def _pick_grch38_chromosome_mapping(mappings: list[dict[str, Any]]) -> dict[str,
     if not chromosomal_grch38:
         return None
     # Prefer shortest region name that looks like 1–22, X, Y, MT (stable sort).
-    chromosomal_grch38.sort(key=lambda x: (len(str(x.get("seq_region_name", ""))), str(x.get("seq_region_name", ""))))
+    chromosomal_grch38.sort(
+        key=lambda x: (len(str(x.get("seq_region_name", ""))), str(x.get("seq_region_name", "")))
+    )
     return chromosomal_grch38[0]
 
 
@@ -196,7 +198,6 @@ def query_ensembl_rsids_grch38(
     last_request_end: float | None = None
 
     def pace() -> None:
-        nonlocal last_request_end
         if last_request_end is None:
             return
         elapsed = time.monotonic() - last_request_end
@@ -584,7 +585,9 @@ class VcfHandleCache:
         self._open.clear()
 
 
-def fetch_variant_at_locus(vcf: cyvcf2.VCF, chromosome: str, position: int) -> cyvcf2.Variant | None:
+def fetch_variant_at_locus(
+    vcf: cyvcf2.VCF, chromosome: str, position: int
+) -> cyvcf2.Variant | None:
     """Return the variant record at ``chromosome:position`` using tabix, if present.
 
     Args:
@@ -768,13 +771,11 @@ def build_cmd(
     input_path: Path = typer.Option(
         Path("overlapping_genes_with_snps.xlsx"),
         "--input",
-        path_type=Path,
         help="Path to overlapping_genes_with_snps.xlsx",
     ),
     output: Path = typer.Option(
         DEFAULT_MANIFEST_CSV,
         "--output",
-        path_type=Path,
         help="Output CSV manifest path",
     ),
     min_interval: float = typer.Option(
@@ -819,7 +820,6 @@ def extract_cmd(
     manifest: Path = typer.Option(
         DEFAULT_MANIFEST_CSV,
         "--manifest",
-        path_type=Path,
         help="Manifest CSV from the build subcommand",
     ),
     vcf_glob: str = typer.Option(
@@ -830,7 +830,6 @@ def extract_cmd(
     output: Path = typer.Option(
         DEFAULT_1KG_FREQ_CSV,
         "--output",
-        path_type=Path,
         help="Output per-SNP allele-frequency table",
     ),
     log_level: str = typer.Option(

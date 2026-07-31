@@ -52,10 +52,12 @@ uv run python -m ipykernel install --user --name rogen-aging --display-name "Pyt
 uv run jupyter lab
 ```
 
-Install the UK Biobank pre-commit security hook (blocks accidental staging of restricted identifiers):
+Install the pre-commit framework (Black, isort, flake8, mypy, genomics schema
+check, and UK Biobank security). See [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md).
 
 ```bash
 ./scripts/dev/install_pre_commit_hook.sh
+# equivalent: uv sync --extra dev && uv run pre-commit install
 ```
 
 Continuous integration (`.github/workflows/ci.yml`) runs `uv sync --extra dev`, `ruff`, `pytest`, and the UKB compliance audit on every push or pull request to `main`. Audit rules are documented in [docs/UKBB_CI_COMPLIANCE_AUDIT.md](docs/UKBB_CI_COMPLIANCE_AUDIT.md).

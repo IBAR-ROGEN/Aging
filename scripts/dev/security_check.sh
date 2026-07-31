@@ -53,7 +53,7 @@ while IFS= read -r file; do
     notebooks/README.md|notebooks/05_ukb_exploration/*) continue ;;
     scripts/ukb_la_snp_lookup.py|scripts/compare_af_gnomad.py|scripts/run_integration.py) continue ;;
     scripts/figures/plot_af_comparison.py) continue ;;
-    src/rogen_aging/integration/*|src/rogen_aging/ukb/*|src/rogen_aging/cli/*) continue ;;
+    src/rogen_aging/integration/*|src/rogen_aging/ukb/*|src/rogen_aging/ukb_integration/*|src/rogen_aging/cli/*) continue ;;
   esac
 
   if git show ":$file" 2>/dev/null | grep -aqiE "$RESTRICTED_PATTERNS"; then
