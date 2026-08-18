@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Generate the bimodal risk heatmap (Figure 2).
 
-This script generates the heatmap described in Activity 2.1.7, showing the 
+This script generates the heatmap described in Activity 2.1.7, showing the
 protective vs. risk effects of candidate longevity genes across different conditions.
 
 Usage:

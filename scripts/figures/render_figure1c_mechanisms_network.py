@@ -242,7 +242,9 @@ def render_figure1c_mechanisms(
         alpha=0.92,
     )
     gene_colors = [g.nodes[n]["color"] for n in gene_nodes]
-    gene_sizes = [_gene_node_size(g.nodes[n]["n_snps"], snp_min=snp_min, snp_max=snp_max) for n in gene_nodes]
+    gene_sizes = [
+        _gene_node_size(g.nodes[n]["n_snps"], snp_min=snp_min, snp_max=snp_max) for n in gene_nodes
+    ]
     nx.draw_networkx_nodes(
         g,
         pos,

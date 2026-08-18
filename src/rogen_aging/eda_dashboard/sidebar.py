@@ -49,7 +49,9 @@ def render_global_sidebar(df: pd.DataFrame) -> GlobalFilters:
     st.sidebar.header("Cohort filters")
     st.sidebar.caption("Selections apply to every tab.")
 
-    col_age = resolve_column(df, ("Chronological_Age", "chronological_age", "Age", "age"), label="chronological age")
+    col_age = resolve_column(
+        df, ("Chronological_Age", "chronological_age", "Age", "age"), label="chronological age"
+    )
     col_sex = resolve_column(df, ("Sex", "sex", "SEX", "gender", "Gender"), label="sex")
     col_disease = resolve_column(
         df,

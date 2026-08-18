@@ -20,9 +20,15 @@ app = typer.Typer(
 
 @app.callback(invoke_without_command=True)
 def main(
-    model_path: Path = typer.Option(..., "--model_path", help="Path to trained model (.pkl or .joblib)."),
-    test_data: Path = typer.Option(..., "--test_data", help="Test table with chronological_age and cg* columns."),
-    output_dir: Path = typer.Option(..., "--output_dir", help="Directory for figures and metrics JSON."),
+    model_path: Path = typer.Option(
+        ..., "--model_path", help="Path to trained model (.pkl or .joblib)."
+    ),
+    test_data: Path = typer.Option(
+        ..., "--test_data", help="Test table with chronological_age and cg* columns."
+    ),
+    output_dir: Path = typer.Option(
+        ..., "--output_dir", help="Directory for figures and metrics JSON."
+    ),
 ) -> None:
     """Backward-compatible held-out validation wrapper."""
     warnings.warn(

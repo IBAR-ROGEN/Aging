@@ -13,4 +13,6 @@ if __name__ == "__main__":
         DeprecationWarning,
         stacklevel=1,
     )
-    runpy.run_path(str(Path(__file__).resolve().parent / "clock" / "validate_clock.py"), run_name="__main__")
+    runpy.run_path(
+        str(Path(__file__).resolve().parent / "clock" / "validate_clock.py"), run_name="__main__"
+    )

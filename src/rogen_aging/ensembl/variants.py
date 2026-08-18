@@ -201,8 +201,6 @@ def lookup_grch38_loci_cached(
         refresh=refresh,
     )
     return {
-        variant_id: grch38_locus_from_variation(
-            payload if isinstance(payload, dict) else None
-        )
+        variant_id: grch38_locus_from_variation(payload if isinstance(payload, dict) else None)
         for variant_id, payload in payloads.items()
     }

@@ -81,7 +81,9 @@ def load_synthetic_cohort(*, n_samples: int = 320, random_seed: int = 42) -> pd.
         p0 = (1.0 - maf) ** 2
         p1 = 2.0 * maf * (1.0 - maf)
         p2 = maf**2
-        return rng.choice(np.array([0, 1, 2], dtype=np.int8), size=size, replace=True, p=np.array([p0, p1, p2]))
+        return rng.choice(
+            np.array([0, 1, 2], dtype=np.int8), size=size, replace=True, p=np.array([p0, p1, p2])
+        )
 
     geno_5882 = sample_genotype(0.28, n)
     geno_7412 = sample_genotype(0.12, n)

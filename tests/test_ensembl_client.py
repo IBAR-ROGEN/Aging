@@ -161,7 +161,9 @@ def test_fetch_variant_cached_skips_duplicate_network(tmp_path: Any) -> None:
     client.close()
 
 
-def test_lookup_variants_cached_json_backend(tmp_path: Any, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_lookup_variants_cached_json_backend(
+    tmp_path: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
     monkeypatch.setattr("rogen_aging.ensembl.client.time.sleep", lambda _s: None)
 
     payloads = {
@@ -170,7 +172,9 @@ def test_lookup_variants_cached_json_backend(tmp_path: Any, monkeypatch: pytest.
     }
 
     class FakeClient(EnsemblClient):
-        def get_variation(self, variant_id: str, *, phenotypes: bool = False) -> dict[str, Any] | None:
+        def get_variation(
+            self, variant_id: str, *, phenotypes: bool = False
+        ) -> dict[str, Any] | None:
             return payloads[variant_id]
 
     results = lookup_variants_cached(

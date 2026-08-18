@@ -1,7 +1,7 @@
 # Contributing to rogen_aging
 
 Python ≥3.12, managed with [uv](https://docs.astral.sh/uv/). Quality gates run
-through [pre-commit](https://pre-commit.com/) (Black, isort, flake8, mypy, plus
+through [pre-commit](https://pre-commit.com/) (Ruff lint + format, mypy, plus
 a lightweight genomics schema check and the UK Biobank security scan).
 
 ## Install
@@ -19,9 +19,8 @@ This repository sets `core.hooksPath=.githooks`, so the installer enables
 
 | Hook | Purpose |
 |------|---------|
-| `black` | Format Python to the project style (`line-length = 100`) |
-| `isort` | Sort imports (Black-compatible profile) |
-| `flake8` | Lint for unused imports and common errors |
+| `ruff` | Lint Python (`E`, `F`, `I`, `UP`) and apply safe fixes |
+| `ruff-format` | Format Python to the project style (`line-length = 100`) |
 | `mypy` | Strict static typing on `src/rogen_aging/` (pandas schemas via `pandas_schemas.py`) |
 | `validate-genomics-tables` | Offline schema check of the gene–LA-SNP overlap table on `test_data/genomics_overlap_minimal.csv` |
 | `ukb-security-check` | Block staged UKB / patient-identifying content (see [UKB_PRE_COMMIT_HOOK.md](UKB_PRE_COMMIT_HOOK.md)) |
@@ -33,8 +32,14 @@ This repository sets `core.hooksPath=.githooks`, so the installer enables
 uv run pre-commit run --all-files
 
 # Run a single hook
+uv run pre-commit run ruff --all-files
+uv run pre-commit run ruff-format --all-files
 uv run pre-commit run mypy --all-files
 uv run pre-commit run validate-genomics-tables --all-files
+
+# Lint and format without pre-commit
+uv run ruff check src scripts tests
+uv run ruff format src scripts tests
 
 # Manual genomics schema check (same as the hook)
 uv run python scripts/dev/validate_genomics_tables.py \

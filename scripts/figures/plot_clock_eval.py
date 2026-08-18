@@ -112,7 +112,9 @@ def load_or_compute_eval_table(
     y = pd.to_numeric(wide["chronological_age"], errors="coerce")
     valid = y.notna()
     if not bool(valid.all()):
-        warnings.warn(f"Dropping {(~valid).sum()} rows with invalid chronological_age.", stacklevel=2)
+        warnings.warn(
+            f"Dropping {(~valid).sum()} rows with invalid chronological_age.", stacklevel=2
+        )
     wide = wide.loc[valid].copy()
     y = y.loc[valid]
 
@@ -161,7 +163,9 @@ def extract_cpg_weights(model_path: Path) -> pd.Series:
     return pd.Series(coef, index=names, name="coefficient")
 
 
-def plot_predicted_vs_chronological(ax: plt.Axes, eval_df: pd.DataFrame) -> tuple[float, float, int]:
+def plot_predicted_vs_chronological(
+    ax: plt.Axes, eval_df: pd.DataFrame
+) -> tuple[float, float, int]:
     """Scatter with identity and regression lines; return MAE, r, n.
 
     Args:
@@ -184,7 +188,14 @@ def plot_predicted_vs_chronological(ax: plt.Axes, eval_df: pd.DataFrame) -> tupl
     hi = float(max(x.max(), y.max()))
     pad = 0.05 * (hi - lo) if hi > lo else 1.0
     lim_lo, lim_hi = lo - pad, hi + pad
-    ax.plot([lim_lo, lim_hi], [lim_lo, lim_hi], linestyle="--", color="0.45", linewidth=1.2, label="y = x")
+    ax.plot(
+        [lim_lo, lim_hi],
+        [lim_lo, lim_hi],
+        linestyle="--",
+        color="0.45",
+        linewidth=1.2,
+        label="y = x",
+    )
 
     slope, intercept, _, _, _ = linregress(x, y)
     reg_x = np.array([lim_lo, lim_hi])
@@ -206,7 +217,12 @@ def plot_predicted_vs_chronological(ax: plt.Axes, eval_df: pd.DataFrame) -> tupl
         va="top",
         ha="left",
         fontsize=FONT_SIZE,
-        bbox={"boxstyle": "round,pad=0.35", "facecolor": "white", "edgecolor": "0.8", "alpha": 0.95},
+        bbox={
+            "boxstyle": "round,pad=0.35",
+            "facecolor": "white",
+            "edgecolor": "0.8",
+            "alpha": 0.95,
+        },
     )
     return mae, float(r_value), n
 

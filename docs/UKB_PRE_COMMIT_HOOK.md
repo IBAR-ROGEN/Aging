@@ -36,6 +36,7 @@ The following are excluded from content scanning:
 | Path | Reason |
 |------|--------|
 | `docs/*` | Compliance and technical documentation |
+| `.github/workflows/*` | CI workflow YAML (names UKB test files; no participant data) |
 | `README.md` (repo root) | Project documentation |
 | `notebooks/README.md` | Notebook index (may name UKB workflows and manifest columns) |
 | `*security_check*` | The security script itself |

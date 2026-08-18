@@ -183,7 +183,11 @@ def fetch_sra_summaries(
 
         # Prefer Run accession (SRR), then Experiment (SRX), then Study (SRP)
         accession = (
-            item_map.get("Run") or item_map.get("Accession") or item_map.get("Experiment") or item_map.get("Study") or uid
+            item_map.get("Run")
+            or item_map.get("Accession")
+            or item_map.get("Experiment")
+            or item_map.get("Study")
+            or uid
         )
         title = item_map.get("Title") or item_map.get("Run") or ""
         platform = item_map.get("Platform") or item_map.get("PlatformInstrument") or ""
@@ -196,19 +200,21 @@ def fetch_sra_summaries(
         number_of_samples = _number_of_samples_from_doc(doc, item_map, accession)
         link = _sra_link(accession, uid)
 
-        results.append({
-            "uid": uid,
-            "accession": accession,
-            "title": title,
-            "description": description,
-            "platform_raw": platform,
-            "platform": normalize_platform(platform),
-            "is_oxford_nanopore": is_oxford_nanopore(platform),
-            "organism": organism,
-            "study_accession": study,
-            "number_of_samples": number_of_samples,
-            "link": link,
-        })
+        results.append(
+            {
+                "uid": uid,
+                "accession": accession,
+                "title": title,
+                "description": description,
+                "platform_raw": platform,
+                "platform": normalize_platform(platform),
+                "is_oxford_nanopore": is_oxford_nanopore(platform),
+                "organism": organism,
+                "study_accession": study,
+                "number_of_samples": number_of_samples,
+                "link": link,
+            }
+        )
     return results
 
 
@@ -225,7 +231,7 @@ def build_search_query(
     or_part = " OR ".join(f'"{t}"' for t in terms)
     query = f"({or_part}) AND (sequencing OR RNA-Seq OR whole genome OR WGS OR methylation)"
     if nanopore_only:
-        query += " AND (nanopore OR \"Oxford Nanopore\")"
+        query += ' AND (nanopore OR "Oxford Nanopore")'
     return query
 
 
@@ -266,11 +272,22 @@ def main(
 
     api_key = get_ncbi_api_key()
     if not api_key:
-        print("Note: NCBI_API_KEY not set. Consider adding it to .env for higher rate limits.", file=sys.stderr)
+        print(
+            "Note: NCBI_API_KEY not set. Consider adding it to .env for higher rate limits.",
+            file=sys.stderr,
+        )
 
     fieldnames = [
-        "accession", "title", "description", "link", "number_of_samples",
-        "platform", "platform_raw", "is_oxford_nanopore", "organism", "study_accession",
+        "accession",
+        "title",
+        "description",
+        "link",
+        "number_of_samples",
+        "platform",
+        "platform_raw",
+        "is_oxford_nanopore",
+        "organism",
+        "study_accession",
     ]
     header_line = ",".join(fieldnames) + "\n"
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -315,7 +332,11 @@ def main(
         try:
             rows_all = fetch_sra_summaries(uid_list_all, api_key=api_key)
         except (requests.RequestException, ET.ParseError) as e:
-            kind = "Fetch summaries failed" if isinstance(e, requests.RequestException) else "Failed to parse SRA response"
+            kind = (
+                "Fetch summaries failed"
+                if isinstance(e, requests.RequestException)
+                else "Failed to parse SRA response"
+            )
             print(f"ERROR: {kind}: {e}", file=sys.stderr)
             raise typer.Exit(code=1) from e
 
@@ -327,7 +348,9 @@ def main(
     # Fetch summaries and write CSV for Nanopore-only (from second search, not filtered in memory)
     rows_nanopore: list[dict] = []
     if uid_list_nanopore:
-        print(f"Found {len(uid_list_nanopore)} IDs (Nanopore). Fetching summaries...", file=sys.stderr)
+        print(
+            f"Found {len(uid_list_nanopore)} IDs (Nanopore). Fetching summaries...", file=sys.stderr
+        )
         time.sleep(0.35)
         try:
             rows_nanopore = fetch_sra_summaries(uid_list_nanopore, api_key=api_key)
@@ -346,7 +369,10 @@ def main(
         w.writerows(rows_nanopore)
 
     print(f"Wrote {len(rows_all)} records to {output}", file=sys.stderr)
-    print(f"Wrote {len(rows_nanopore)} records (Nanopore search) to {nanopore_output}", file=sys.stderr)
+    print(
+        f"Wrote {len(rows_nanopore)} records (Nanopore search) to {nanopore_output}",
+        file=sys.stderr,
+    )
 
 
 if __name__ == "__main__":

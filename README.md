@@ -52,7 +52,7 @@ uv run python -m ipykernel install --user --name rogen-aging --display-name "Pyt
 uv run jupyter lab
 ```
 
-Install the pre-commit framework (Black, isort, flake8, mypy, genomics schema
+Install the pre-commit framework (Ruff, mypy, genomics schema
 check, and UK Biobank security). See [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md).
 
 ```bash

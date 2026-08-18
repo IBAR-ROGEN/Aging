@@ -295,9 +295,7 @@ def render_longevity_network_diagram(out_path: Path, *, dpi: int = 200) -> Path:
         color="#475569",
         va="center",
     )
-    ax.add_patch(
-        plt.Rectangle((0.12, legend_y - 0.08), 0.14, 0.16, color="#3b82f6", zorder=5)
-    )
+    ax.add_patch(plt.Rectangle((0.12, legend_y - 0.08), 0.14, 0.16, color="#3b82f6", zorder=5))
     ax.text(
         2.15,
         legend_y,
@@ -306,9 +304,7 @@ def render_longevity_network_diagram(out_path: Path, *, dpi: int = 200) -> Path:
         color="#475569",
         va="center",
     )
-    ax.add_patch(
-        plt.Rectangle((1.92, legend_y - 0.08), 0.14, 0.16, color="#f59e0b", zorder=5)
-    )
+    ax.add_patch(plt.Rectangle((1.92, legend_y - 0.08), 0.14, 0.16, color="#f59e0b", zorder=5))
     ax.text(
         3.45,
         legend_y,
@@ -317,9 +313,7 @@ def render_longevity_network_diagram(out_path: Path, *, dpi: int = 200) -> Path:
         color="#475569",
         va="center",
     )
-    ax.add_patch(
-        plt.Rectangle((3.22, legend_y - 0.08), 0.14, 0.16, color="#10b981", zorder=5)
-    )
+    ax.add_patch(plt.Rectangle((3.22, legend_y - 0.08), 0.14, 0.16, color="#10b981", zorder=5))
     ax.text(
         5.05,
         legend_y,
@@ -328,9 +322,7 @@ def render_longevity_network_diagram(out_path: Path, *, dpi: int = 200) -> Path:
         color="#475569",
         va="center",
     )
-    ax.add_patch(
-        plt.Rectangle((4.82, legend_y - 0.08), 0.14, 0.16, color="#a855f7", zorder=5)
-    )
+    ax.add_patch(plt.Rectangle((4.82, legend_y - 0.08), 0.14, 0.16, color="#a855f7", zorder=5))
     ax.text(
         6.55,
         legend_y,

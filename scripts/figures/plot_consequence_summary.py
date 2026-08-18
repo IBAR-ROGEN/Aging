@@ -47,12 +47,10 @@ CLASS_EDGE_COLORS = {
 SECTION_HEADER_COLOR = "#e8e8e8"
 COLUMN_HEADER_COLOR = "#f0f0f0"
 TABLE_CAPTION = (
-    "Predicted functional consequences for longevity-associated variants "
-    "across 41 genes (GRCh38)."
+    "Predicted functional consequences for longevity-associated variants across 41 genes (GRCh38)."
 )
 STACKED_BAR_CAPTION = (
-    "Variant counts by functional consequence, split by protein-altering "
-    "vs non-coding classes."
+    "Variant counts by functional consequence, split by protein-altering vs non-coding classes."
 )
 
 FONT_SIZES = {
@@ -284,11 +282,7 @@ def _plot_class_donut(ax: plt.Axes, df: pd.DataFrame) -> None:
 
 
 def _plot_consequence_bars(ax: plt.Axes, df: pd.DataFrame) -> None:
-    counts = (
-        df.groupby(["consequence", "class"], observed=True)
-        .size()
-        .reset_index(name="count")
-    )
+    counts = df.groupby(["consequence", "class"], observed=True).size().reset_index(name="count")
     consequences = [c for c in CONSEQUENCE_ORDER if c in set(counts["consequence"])]
     extra = sorted(set(counts["consequence"]) - set(consequences))
     consequences.extend(extra)
@@ -513,9 +507,7 @@ def export_table_excel(df: pd.DataFrame, output_stem: Path) -> None:
     ):
         line_count = _row_line_count(cells)
         ws.row_dimensions[row_idx].height = (
-            EXCEL_ROW_HEIGHT
-            if line_count == 1
-            else EXCEL_ROW_HEIGHT_MULTILINE * line_count
+            EXCEL_ROW_HEIGHT if line_count == 1 else EXCEL_ROW_HEIGHT_MULTILINE * line_count
         )
 
         for col_idx, value in enumerate(cells, start=1):
@@ -656,11 +648,7 @@ def _consequence_order(counts: pd.DataFrame) -> list[str]:
 def plot_stacked_bar(df: pd.DataFrame, output_stem: Path) -> None:
     _apply_rcparams()
 
-    counts = (
-        df.groupby(["consequence", "class"], observed=True)
-        .size()
-        .reset_index(name="count")
-    )
+    counts = df.groupby(["consequence", "class"], observed=True).size().reset_index(name="count")
     consequences = _consequence_order(counts)
     x = np.arange(len(consequences))
     bar_width = 0.72
@@ -695,7 +683,12 @@ def plot_stacked_bar(df: pd.DataFrame, output_stem: Path) -> None:
     )
 
     ax.set_xticks(x)
-    ax.set_xticklabels([_consequence_label(c) for c in consequences], rotation=45, ha="right", fontsize=FONT_SIZES["tick"])
+    ax.set_xticklabels(
+        [_consequence_label(c) for c in consequences],
+        rotation=45,
+        ha="right",
+        fontsize=FONT_SIZES["tick"],
+    )
     ax.set_ylabel("Variant count", fontsize=FONT_SIZES["axis_label"])
     ax.tick_params(axis="y", labelsize=FONT_SIZES["tick"])
     ax.spines["top"].set_visible(False)

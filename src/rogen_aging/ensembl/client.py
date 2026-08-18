@@ -80,7 +80,7 @@ class EnsemblClient:
         backoff_cap_sec: float = DEFAULT_BACKOFF_CAP_SEC,
         session: requests.Session | None = None,
         user_agent: str = (
-            "rogen-aging-ensembl/0.1 " "(ROGEN; academic research; Ensembl REST 116/GRCh38)"
+            "rogen-aging-ensembl/0.1 (ROGEN; academic research; Ensembl REST 116/GRCh38)"
         ),
     ) -> None:
         if release != ENSEMBL_RELEASE:

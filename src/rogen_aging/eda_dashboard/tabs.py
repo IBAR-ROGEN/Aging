@@ -140,7 +140,9 @@ currently filtered cohort.
             line=dict(color="#DC2626", width=3),
         )
     )
-    scatter.update_layout(legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1))
+    scatter.update_layout(
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+    )
     st.plotly_chart(scatter, use_container_width=True)
 
 
@@ -204,8 +206,14 @@ as dosage; a **Kruskal–Wallis** test provides a non-parametric omnibus p-value
     with c1:
         snp = st.selectbox("SNP / variant column", options=snp_cols, index=0)
     with c2:
-        default_trait = "HDL_Cholesterol" if "HDL_Cholesterol" in trait_candidates else trait_candidates[0]
-        trait = st.selectbox("Clinical / molecular trait", options=trait_candidates, index=trait_candidates.index(default_trait))
+        default_trait = (
+            "HDL_Cholesterol" if "HDL_Cholesterol" in trait_candidates else trait_candidates[0]
+        )
+        trait = st.selectbox(
+            "Clinical / molecular trait",
+            options=trait_candidates,
+            index=trait_candidates.index(default_trait),
+        )
 
     plot_df = df[[snp, trait]].copy()
     plot_df = plot_df.rename(columns={snp: "_geno", trait: "_trait"})
@@ -214,13 +222,19 @@ as dosage; a **Kruskal–Wallis** test provides a non-parametric omnibus p-value
     plot_df["Genotype"] = _genotype_labels(plot_df["_geno"])
     plot_df = plot_df[plot_df["Genotype"] != "Missing"].reset_index(drop=True)
 
-    groups = [g["_trait"].to_numpy(dtype=np.float64) for _, g in plot_df.groupby("Genotype", sort=True) if len(g) >= 2]
+    groups = [
+        g["_trait"].to_numpy(dtype=np.float64)
+        for _, g in plot_df.groupby("Genotype", sort=True)
+        if len(g) >= 2
+    ]
     p_text: str
     if len(groups) < 2:
         p_text = "Not enough genotype groups with ≥2 samples for Kruskal–Wallis."
     else:
         h_stat, p_kw = kruskal(*groups)
-        p_text = f"Kruskal–Wallis H = {h_stat:.3f}, p = {p_kw:.3g} (omnibus across genotype groups)."
+        p_text = (
+            f"Kruskal–Wallis H = {h_stat:.3f}, p = {p_kw:.3g} (omnibus across genotype groups)."
+        )
 
     box = px.box(
         plot_df,

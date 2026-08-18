@@ -99,9 +99,7 @@ def variant_key(chrom: object, pos: object, ref: object, alt: object) -> str:
     """
     primary_alt = str(alt).split(",")[0].strip()
     position = int(str(pos))
-    return (
-        f"{normalize_chrom(chrom)}:{position}:" f"{str(ref).strip().upper()}:{primary_alt.upper()}"
-    )
+    return f"{normalize_chrom(chrom)}:{position}:{str(ref).strip().upper()}:{primary_alt.upper()}"
 
 
 class VariantTissueMapper:
@@ -229,7 +227,9 @@ class VariantTissueMapper:
         gene_col = (
             "eqtl_gene_symbol"
             if "eqtl_gene_symbol" in filtered.columns
-            else "gene_symbol" if "gene_symbol" in filtered.columns else None
+            else "gene_symbol"
+            if "gene_symbol" in filtered.columns
+            else None
         )
 
         ranked = filtered.sort(["rsid", "p_value"], nulls_last=True)

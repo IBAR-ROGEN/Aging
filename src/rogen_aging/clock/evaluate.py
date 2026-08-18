@@ -170,7 +170,9 @@ def build_feature_matrix(
         for idx, name in enumerate(expected):
             train_fill = (
                 float(train_stats[idx])
-                if train_stats is not None and idx < len(train_stats) and np.isfinite(train_stats[idx])
+                if train_stats is not None
+                and idx < len(train_stats)
+                and np.isfinite(train_stats[idx])
                 else None
             )
             if name in df.columns:

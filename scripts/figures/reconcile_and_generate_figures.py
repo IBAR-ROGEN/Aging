@@ -242,8 +242,7 @@ def load_supp_table(path: Path) -> pd.DataFrame:
     missing = required - set(df.columns)
     if missing:
         raise ValueError(
-            f"Supplementary Table 3 missing columns {sorted(missing)}; "
-            f"found {list(df.columns)}"
+            f"Supplementary Table 3 missing columns {sorted(missing)}; found {list(df.columns)}"
         )
 
     out = df.copy()

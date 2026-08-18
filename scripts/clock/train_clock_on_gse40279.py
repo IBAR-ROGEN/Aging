@@ -16,9 +16,13 @@ app = typer.Typer(add_completion=False, no_args_is_help=True)
 
 @app.callback(invoke_without_command=True)
 def main(
-    input_data: Path = typer.Option(..., "--input_data", help="Parquet or CSV with cg* + chronological_age."),
+    input_data: Path = typer.Option(
+        ..., "--input_data", help="Parquet or CSV with cg* + chronological_age."
+    ),
     output_model: Path = typer.Option(..., "--output_model", help="Path for trained model (.pkl)."),
-    output_metrics: Path = typer.Option(..., "--output_metrics", help="Training metrics JSON path."),
+    output_metrics: Path = typer.Option(
+        ..., "--output_metrics", help="Training metrics JSON path."
+    ),
     test_size: float = typer.Option(0.2, "--test_size"),
     random_state: int = typer.Option(42, "--random_state"),
 ) -> None:

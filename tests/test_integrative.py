@@ -161,9 +161,7 @@ def test_map_variants_to_tissues_full(
     result = mapper.map_variants_to_tissues(
         annotated_variants,
         eqtl_table,
-        alphagenome=pl.DataFrame(
-            {"rsid": ["rs1"], "alphagenome_diff": [0.2]}
-        ),
+        alphagenome=pl.DataFrame({"rsid": ["rs1"], "alphagenome_diff": [0.2]}),
         probe_annotation=probe_annotation,
     )
     assert set(result) >= {"annotated", "eqtl_summary", "methylation_links"}
@@ -231,9 +229,7 @@ def test_integrate_sample_profiles_requires_composite_risk() -> None:
     with pytest.raises(ValueError, match="composite_risk"):
         integrator.integrate_sample_profiles(
             pl.DataFrame({"rsid": ["rs1"]}),
-            pl.DataFrame(
-                {"sample_id": ["S1"], "rsid": ["rs1"], "alt_dosage": [1]}
-            ),
+            pl.DataFrame({"sample_id": ["S1"], "rsid": ["rs1"], "alt_dosage": [1]}),
         )
 
 
@@ -252,9 +248,7 @@ def test_run_integrative_pipeline(
     result = run_integrative_pipeline(
         annotated_variants,
         eqtl_table,
-        alphagenome=pl.DataFrame(
-            {"rsid": ["rs1", "rs2"], "perc_change": [40.0, -10.0]}
-        ),
+        alphagenome=pl.DataFrame({"rsid": ["rs1", "rs2"], "perc_change": [40.0, -10.0]}),
         probe_annotation=probe_annotation,
         sample_phenotypes=samples,
     )
@@ -303,9 +297,7 @@ def test_summarize_eqtls_missing_cols_raises() -> None:
 
 def test_join_alphagenome_requires_join_key() -> None:
     mapper = VariantTissueMapper()
-    variants = pl.DataFrame(
-        {"chrom": ["1"], "pos": [1], "ref": ["A"], "alt": ["G"]}
-    )
+    variants = pl.DataFrame({"chrom": ["1"], "pos": [1], "ref": ["A"], "alt": ["G"]})
     scores = pl.DataFrame({"alphagenome_diff": [0.1]})
     with pytest.raises(ValueError, match="variant_key or rsid"):
         mapper.join_alphagenome_scores(variants, scores)

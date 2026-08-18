@@ -142,7 +142,9 @@ def ensure_diff_columns(df: pd.DataFrame, threshold: float) -> pd.DataFrame:
 
     if "abs_diff" not in out.columns:
         out["abs_diff"] = np.nan
-    out.loc[paired, "abs_diff"] = (out.loc[paired, "AF_1kg"] - out.loc[paired, "AF_gnomad_nfe"]).abs()
+    out.loc[paired, "abs_diff"] = (
+        out.loc[paired, "AF_1kg"] - out.loc[paired, "AF_gnomad_nfe"]
+    ).abs()
 
     if "large_diff" not in out.columns:
         out["large_diff"] = False
@@ -261,7 +263,13 @@ def plot_ranked_panel(ax: plt.Axes, paired: pd.DataFrame, top_n: int, threshold:
     ax.set_yticklabels(top["rsID"].astype(str), fontsize=FONT_SIZE - 1)
     ax.set_xlabel("|ΔAF| (1000 Genomes − gnomAD v4 NFE)")
     ax.set_title("Largest allele-frequency discrepancies")
-    ax.axvline(threshold, color="#666666", linestyle="--", linewidth=1.0, label=f"Threshold ({threshold:g})")
+    ax.axvline(
+        threshold,
+        color="#666666",
+        linestyle="--",
+        linewidth=1.0,
+        label=f"Threshold ({threshold:g})",
+    )
     ax.legend(loc="lower right", frameon=False, fontsize=FONT_SIZE - 2)
     ax.margins(x=0.08)
 

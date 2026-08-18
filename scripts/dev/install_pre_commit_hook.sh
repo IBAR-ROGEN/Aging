@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Install the repository pre-commit framework (Black, isort, flake8, mypy,
+# Install the repository pre-commit framework (Ruff, mypy,
 # genomics schema check, UK Biobank security scan).
 # Run from the repository root.
 #

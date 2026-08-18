@@ -86,8 +86,7 @@ def resolve_default_eqtls() -> Path:
     if DEFAULT_JULY_XLSX.is_file():
         return DEFAULT_JULY_XLSX
     raise FileNotFoundError(
-        "Production eQTL table missing. Expected "
-        f"{DEFAULT_EQTLS_PARQUET} or {DEFAULT_EQTLS_CSV}."
+        f"Production eQTL table missing. Expected {DEFAULT_EQTLS_PARQUET} or {DEFAULT_EQTLS_CSV}."
     )
 
 

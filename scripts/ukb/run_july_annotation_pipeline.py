@@ -1401,8 +1401,7 @@ def main(
         # Production always lands in outputs/ (never outputs/demo/).
         if "outputs/demo" in str(output).replace("\\", "/"):
             raise ValueError(
-                f"Production output must not use outputs/demo/: {output}. "
-                f"Expected {default_output}"
+                f"Production output must not use outputs/demo/: {output}. Expected {default_output}"
             )
         if output == default_output.parent / "demo" / default_output.name:
             output = default_output

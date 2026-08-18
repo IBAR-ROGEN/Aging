@@ -33,9 +33,7 @@ DEFAULT_PATHWAY_GENES: dict[str, tuple[str, ...]] = {
         "CETP",
         "APOC1",
     ),
-    "Mitochondrial Integrity": (
-        "NDUFS1",
-    ),
+    "Mitochondrial Integrity": ("NDUFS1",),
     "Immune Regulation": (
         "HLA-DQB1",
         "NLRC5",

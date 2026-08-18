@@ -22,6 +22,7 @@ app = typer.Typer(
     add_completion=False, no_args_is_help=True, help="Train or evaluate an epigenetic clock."
 )
 
+
 @app.command("train")
 def train_cmd(
     input_data: Path = typer.Option(
@@ -165,6 +166,7 @@ def validate_matrix_cmd(
 def main() -> None:
     """Console entry for ``rogen-clock``."""
     app()
+
 
 if __name__ == "__main__":
     main()

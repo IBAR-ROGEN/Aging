@@ -60,7 +60,11 @@ def _load_horvath_coefficients(path: str | Path | None = None) -> tuple[float, d
         df.columns[0],
     )
     coef_col = next(
-        (c for c in df.columns if "coefficient" in c.lower() or "coef" in c.lower() or "weight" in c.lower()),
+        (
+            c
+            for c in df.columns
+            if "coefficient" in c.lower() or "coef" in c.lower() or "weight" in c.lower()
+        ),
         df.columns[1],
     )
 

@@ -95,7 +95,9 @@ define a global analytic subset; every visualization below respects those filter
         if st.session_state[_USE_SYNTHETIC]
         else f"Loaded **`{cohort_path.name}`** ({len(df):,} rows)."
     )
-    if st.session_state[_USE_SYNTHETIC] and st.sidebar.button("Switch back to Parquet (if available)"):
+    if st.session_state[_USE_SYNTHETIC] and st.sidebar.button(
+        "Switch back to Parquet (if available)"
+    ):
         st.session_state[_USE_SYNTHETIC] = False
         st.rerun()
 

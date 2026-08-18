@@ -19,7 +19,7 @@ def find_graphviz() -> str | None:
     dot_path = shutil.which("dot")
     if dot_path:
         return dot_path
-    
+
     # Common installation paths
     common_paths = [
         "/usr/local/bin/dot",
@@ -28,17 +28,17 @@ def find_graphviz() -> str | None:
         "/opt/local/bin/dot",  # MacPorts
         "/Applications/Graphviz.app/Contents/MacOS/dot",
     ]
-    
+
     for path in common_paths:
         if os.path.exists(path) and os.access(path, os.X_OK):
             return path
-    
+
     return None
 
 
 def create_agent_system_schema(output_path: str | None = None) -> None:
     """Create Figure 4: Agent System Schema architecture diagram.
-    
+
     Args:
         output_path: Path to save the diagram. If None, saves to ``figures/`` directory.
     """
@@ -56,7 +56,7 @@ def create_agent_system_schema(output_path: str | None = None) -> None:
         for bin_dir in common_bin_dirs:
             if os.path.exists(bin_dir) and bin_dir not in current_path:
                 os.environ["PATH"] = f"{bin_dir}:{current_path}"
-        
+
         # Check again
         dot_path = find_graphviz()
         if not dot_path:
@@ -64,9 +64,11 @@ def create_agent_system_schema(output_path: str | None = None) -> None:
             print("To use Graphviz (better quality), install with: brew install graphviz")
             # Use matplotlib fallback
             from pathlib import Path
+
             fallback_script = Path(__file__).parent / "generate_agent_system_schema_fallback.py"
             if fallback_script.exists():
                 import importlib.util
+
                 spec = importlib.util.spec_from_file_location("fallback_module", fallback_script)
                 fallback_module = importlib.util.module_from_spec(spec)
                 spec.loader.exec_module(fallback_module)
@@ -78,7 +80,7 @@ def create_agent_system_schema(output_path: str | None = None) -> None:
                     "Please install Graphviz: brew install graphviz\n"
                     "Or download from: https://graphviz.org/download/"
                 )
-    
+
     if output_path is None:
         output_dir = Path(__file__).parent.parent.parent / "figures"
         output_dir.mkdir(exist_ok=True)
@@ -86,63 +88,74 @@ def create_agent_system_schema(output_path: str | None = None) -> None:
     else:
         output_path = Path(output_path)
         output_path.parent.mkdir(parents=True, exist_ok=True)
-    
+
     # Convert to absolute path
     output_path_abs = output_path.resolve()
     output_dir_abs = output_path_abs.parent
     output_filename = output_path_abs.stem  # filename without extension
-    
+
     # Change to output directory so diagrams saves there
     original_cwd = os.getcwd()
     try:
         os.chdir(str(output_dir_abs))
-        
+
         # Set graph attributes for a professional look
-        graph_attr = {
-            "fontsize": "20",
-            "bgcolor": "white",
-            "pad": "0.5"
-        }
-        
+        graph_attr = {"fontsize": "20", "bgcolor": "white", "pad": "0.5"}
+
         with Diagram(
             "Fig 4: LongevityForest Multi-Agent Architecture",
             filename=output_filename,
             show=False,
             direction="LR",
-            graph_attr=graph_attr
+            graph_attr=graph_attr,
         ):
             # 1. The User
             user = User("Researcher")
 
             # 2. The Development Environment
             # We use a generic node for Cursor IDE (VSCode fork)
-            ide = Node("Cursor IDE\n(User Interface)", **{"fillcolor": "#007ACC", "style": "rounded,filled"})
+            ide = Node(
+                "Cursor IDE\n(User Interface)",
+                **{"fillcolor": "#007ACC", "style": "rounded,filled"},
+            )
 
             # 3. The Bridge
             # We use a generic node to represent the Model Context Protocol
-            mcp = Node("Model Context\nProtocol (MCP)", **{"fillcolor": "#4ECDC4", "style": "rounded,filled"})
+            mcp = Node(
+                "Model Context\nProtocol (MCP)",
+                **{"fillcolor": "#4ECDC4", "style": "rounded,filled"},
+            )
 
             # 4. The Agent Cluster
             with Cluster("LongevityForest Agent Swarm"):
                 # We use distinct nodes to represent the type of data/work
-                biomart = Node("BioMART Agent\n(Annotations)", **{"fillcolor": "#FFE66D", "style": "rounded,filled"})
-                alpha = Node("AlphaFold Agent\n(Structure)", **{"fillcolor": "#95E1D3", "style": "rounded,filled"})
-                string = Node("STRING Agent\n(Interactions)", **{"fillcolor": "#FF6B6B", "style": "rounded,filled"})
-                
+                biomart = Node(
+                    "BioMART Agent\n(Annotations)",
+                    **{"fillcolor": "#FFE66D", "style": "rounded,filled"},
+                )
+                alpha = Node(
+                    "AlphaFold Agent\n(Structure)",
+                    **{"fillcolor": "#95E1D3", "style": "rounded,filled"},
+                )
+                string = Node(
+                    "STRING Agent\n(Interactions)",
+                    **{"fillcolor": "#FF6B6B", "style": "rounded,filled"},
+                )
+
                 agents = [biomart, alpha, string]
 
             # 5. Define the Connections
             # The '<< >>' operator creates a bi-directional edge
             user >> Edge(label="Input", color="black") >> ide
             ide << Edge(label="JSON-RPC", style="bold", color="darkblue") >> mcp
-            
+
             # Connect MCP to all agents
             for agent in agents:
                 mcp << Edge(color="darkgreen") >> agent
-            
+
     finally:
         os.chdir(original_cwd)
-    
+
     print(f"Agent System Schema diagram saved to: {output_path_abs}")
 
 
