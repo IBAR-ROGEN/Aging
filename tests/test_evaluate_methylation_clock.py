@@ -1,13 +1,10 @@
-"""Unit tests for ``evaluate_methylation_clock`` (GSE87571 ElasticNet validation)."""
+"""Unit tests for GSE87571 ElasticNet clock validation."""
 
 from __future__ import annotations
 
-import importlib.util
 import json
 import pickle
-import sys
 from pathlib import Path
-from types import ModuleType
 from typing import Any
 
 import numpy as np
@@ -16,26 +13,7 @@ import pytest
 from sklearn.linear_model import ElasticNet, ElasticNetCV
 from sklearn.pipeline import Pipeline
 
-_REPO_ROOT = Path(__file__).resolve().parent.parent
-_SCRIPT = _REPO_ROOT / "scripts" / "clock" / "evaluate_methylation_clock.py"
-
-
-def _load_script() -> ModuleType:
-    """Import the repo-root CLI module (not on the default ``pythonpath``)."""
-    name = "evaluate_methylation_clock"
-    if name in sys.modules:
-        return sys.modules[name]
-    spec = importlib.util.spec_from_file_location(name, _SCRIPT)
-    if spec is None or spec.loader is None:
-        raise ImportError(f"Cannot load {_SCRIPT}")
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[name] = module
-    spec.loader.exec_module(module)
-    return module
-
-
-emc = _load_script()
-
+from rogen_aging.clock import gse87571 as emc
 
 CPG_A = "cg00000001"
 CPG_B = "cg00000002"
@@ -161,7 +139,9 @@ def test_verify_input_manifest_absent_manifest(tmp_path: Path) -> None:
 
 def test_verify_input_manifest_no_required_rows(tmp_path: Path) -> None:
     manifest = tmp_path / "INPUT_MANIFEST.md"
-    manifest.write_text("# empty\n\n| Path | Role | Required |\n|------|------|----------|\n", encoding="utf-8")
+    manifest.write_text(
+        "# empty\n\n| Path | Role | Required |\n|------|------|----------|\n", encoding="utf-8"
+    )
     with pytest.raises(ValueError, match="No required input paths"):
         emc.verify_input_manifest(manifest, repo_root=tmp_path)
 
@@ -313,9 +293,7 @@ def test_label_cpg() -> None:
 def test_load_probe_gene_map_from_csv(tmp_path: Path) -> None:
     annot = tmp_path / "annot.csv"
     annot.write_text(
-        "IlmnID,UCSC_RefGene_Name\n"
-        f"{CPG_A},GENEA;GENEB\n"
-        f"{CPG_B},\n",
+        "IlmnID,UCSC_RefGene_Name\n" f"{CPG_A},GENEA;GENEB\n" f"{CPG_B},\n",
         encoding="utf-8",
     )
     mapping = emc.load_probe_gene_map(annot)
@@ -377,9 +355,7 @@ def test_load_validation_cohort_positional_fallback(
         emc.load_validation_cohort(meth_path, meta_path)
 
     with pytest.warns(UserWarning, match="aligning by row order"):
-        wide = emc.load_validation_cohort(
-            meth_path, meta_path, allow_positional_align=True
-        )
+        wide = emc.load_validation_cohort(meth_path, meta_path, allow_positional_align=True)
     assert len(wide) == n
     np.testing.assert_allclose(wide["chronological_age"].to_numpy(), [20.0, 40.0, 55.0, 70.0])
 

@@ -2,8 +2,8 @@
 
 ## Activity A.2.1.8.1 — July prioritized-variant functional annotation
 
-Required inputs for [`scripts/ukb/run_july_annotation_pipeline.py`](scripts/ukb/run_july_annotation_pipeline.py)
-(production run: 47 prioritized GRCh38 variants → Supplementary Table 1).
+Required inputs for [`rogen-july-annotate`](src/rogen_aging/annotation/july.py)
+(`uv run rogen-july-annotate`; production run: 47 prioritized GRCh38 variants → Supplementary Table 1).
 
 | Path | Role | Required |
 |------|------|----------|
@@ -27,7 +27,7 @@ Required inputs for [`scripts/ukb/run_july_annotation_pipeline.py`](scripts/ukb/
 
 ## Methylation Clock Validation
 
-Required inputs for [`scripts/clock/evaluate_methylation_clock.py`](scripts/clock/evaluate_methylation_clock.py)
+Required inputs for [`rogen-clock evaluate-gse87571`](src/rogen_aging/clock/gse87571.py)
 (activity 2.1.10.1: GSE40279-trained ElasticNet clock, GSE87571 external validation).
 
 | Path | Role | Required |
@@ -51,7 +51,7 @@ Required inputs for [`scripts/clock/evaluate_methylation_clock.py`](scripts/cloc
 - If that pickle is missing, the evaluator accepts
   `models/methylation_clock_v1.joblib` (Pipeline) and/or can materialize the
   pickle via `uv run python scripts/dev/write_pipeline_fixtures.py` or
-  `uv run python scripts/clock/evaluate_methylation_clock.py --demo`.
+  `uv run rogen-clock evaluate-gse87571 --demo`.
 - Optional annotation falls back to Horvath S3 (`test_data/gb-2013-14-10-r115-S3.csv`) when absent.
 
 ---

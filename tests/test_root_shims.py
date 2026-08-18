@@ -38,7 +38,6 @@ def test_canonical_figure_scripts_are_implementations() -> None:
         "scripts/figures/plot_af_comparison.py",
         "scripts/figures/plot_clock_validation.py",
         "scripts/figures/plot_consequence_summary.py",
-        "scripts/clock/evaluate_methylation_clock.py",
     ):
         path = _REPO_ROOT / relative
         text = path.read_text(encoding="utf-8")

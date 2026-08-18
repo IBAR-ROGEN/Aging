@@ -1,6 +1,7 @@
 # July prioritized-variant annotation pipeline
 
-**Script:** `scripts/ukb/run_july_annotation_pipeline.py` (deprecated shim: `run_july_annotation_pipeline.py`)  
+**CLI:** `uv run rogen-july-annotate` (`rogen_aging.annotation.july`)  
+**Thin wrapper:** `scripts/ukb/run_july_annotation_pipeline.py` (deprecated shim: `run_july_annotation_pipeline.py`)  
 **Related:** [LA_SNP_VEP_ANNOTATION.md](LA_SNP_VEP_ANNOTATION.md) · [LA_SNP_GTEX_ANNOTATION.md](LA_SNP_GTEX_ANNOTATION.md) · [GENOMICS_ANALYSIS.md](GENOMICS_ANALYSIS.md)
 
 ## Overview
@@ -45,16 +46,16 @@ Required paths are also listed in [`INPUT_MANIFEST.md`](../INPUT_MANIFEST.md).
 ```bash
 uv sync
 # Production (all 47 variants → outputs/Supplementary_Table_1_Annotated_Variants.xlsx)
-uv run python scripts/ukb/run_july_annotation_pipeline.py
+uv run rogen-july-annotate
 
 # Warm-cache / offline mode (no live API on cache miss)
-uv run python scripts/ukb/run_july_annotation_pipeline.py --cache-only
+uv run rogen-july-annotate --cache-only
 
 # Offline demo fixtures only (writes under outputs/demo/)
-uv run python scripts/ukb/run_july_annotation_pipeline.py --demo
+uv run rogen-july-annotate --demo
 
 # Custom paths
-uv run python scripts/ukb/run_july_annotation_pipeline.py \
+uv run rogen-july-annotate \
   --variants data/processed/variants_47_input.csv \
   --alphagenome data/scores/alphagenome_raw.parquet \
   --alphamissense data/scores/alphamissense_raw.parquet \

@@ -9,6 +9,7 @@ from pathlib import Path
 import typer
 
 from rogen_aging.clock.evaluate import evaluate_clock
+from rogen_aging.clock.gse87571 import main as evaluate_gse87571_main
 from rogen_aging.clock.train import train_clock
 from rogen_aging.clock.validate_matrix import (
     MissingValuePolicy,
@@ -21,6 +22,7 @@ from rogen_aging.config.cli import config_option, load_cli_config
 app = typer.Typer(
     add_completion=False, no_args_is_help=True, help="Train or evaluate an epigenetic clock."
 )
+
 
 @app.command("train")
 def train_cmd(
@@ -162,9 +164,13 @@ def validate_matrix_cmd(
         raise typer.Exit(code=1)
 
 
+app.command("evaluate-gse87571")(evaluate_gse87571_main)
+
+
 def main() -> None:
     """Console entry for ``rogen-clock``."""
     app()
+
 
 if __name__ == "__main__":
     main()

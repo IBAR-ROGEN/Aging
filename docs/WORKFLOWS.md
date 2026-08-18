@@ -50,10 +50,10 @@ Legacy script paths under `scripts/*.py` and at the repo root remain as **deprec
 ### Epigenetic clock (Activity 2.1.10.1)
 
 - **Package:** `src/rogen_aging/clock/` (`data.py`, `model.py`, `train.py`, `evaluate.py`, `external_data.py`)
-- **Canonical CLI:** `uv run rogen-clock train|evaluate` or `scripts/clock/run_clock.py`
+- **Canonical CLI:** `uv run rogen-clock train|evaluate|evaluate-gse87571` or `scripts/clock/run_clock.py`
 - **GSE87571 external cohort:** `uv run python -m rogen_aging.clock.external_data --output data/gse87571.parquet`
 - **External-validation figure:** `uv run python scripts/figures/plot_clock_eval.py` → [CLOCK_EVAL_FIGURES.md](CLOCK_EVAL_FIGURES.md)
-- **Final metrics + three-panel figure:** `uv run python scripts/clock/evaluate_methylation_clock.py` → [METHYLATION_CLOCK_VALIDATION.md](METHYLATION_CLOCK_VALIDATION.md) · [INPUT_MANIFEST.md](../INPUT_MANIFEST.md)
+- **Final metrics + three-panel figure:** `uv run rogen-clock evaluate-gse87571` → [METHYLATION_CLOCK_VALIDATION.md](METHYLATION_CLOCK_VALIDATION.md) · [INPUT_MANIFEST.md](../INPUT_MANIFEST.md)
 - **Romanian mock demo** (separate StandardScaler path): `scripts/clock/train_romanian_epigenetic_clock.py`
 - **Docs:** [CLOCK_LIBRARY.md](CLOCK_LIBRARY.md), [GSE40279_CLOCK_TRAINING.md](GSE40279_CLOCK_TRAINING.md), [CLOCK_EVAL_FIGURES.md](CLOCK_EVAL_FIGURES.md), [METHYLATION_CLOCK_VALIDATION.md](METHYLATION_CLOCK_VALIDATION.md), [ROMANIAN_EPIGENETIC_CLOCK.md](ROMANIAN_EPIGENETIC_CLOCK.md), [ACTIVITIES.md](ACTIVITIES.md#21101--methylation-aging-clock)
 
@@ -125,8 +125,8 @@ Combined GTEx v8 eQTL + Ensembl VEP + AlphaGenome/AlphaMissense Excel export
 for the prioritized variant CSV. Output → `outputs/Supplementary_Table_1_Annotated_Variants.xlsx`.
 
 ```bash
-uv run python scripts/ukb/run_july_annotation_pipeline.py
-uv run python scripts/ukb/run_july_annotation_pipeline.py --cache-only
+uv run rogen-july-annotate
+uv run rogen-july-annotate --cache-only
 ```
 
 See [JULY_ANNOTATION_PIPELINE.md](JULY_ANNOTATION_PIPELINE.md).

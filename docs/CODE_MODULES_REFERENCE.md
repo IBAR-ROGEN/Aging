@@ -8,7 +8,8 @@ This document summarizes installable modules and CLI entry points. Per-file inve
 
 | Module | Responsibility |
 |--------|----------------|
-| `clock/` | `train_clock`, `evaluate_clock`, `load_wide_table`, `external_data.load_gse87571` (Activity **2.1.10.1**) — [CLOCK_LIBRARY.md](CLOCK_LIBRARY.md) |
+| `clock/` | `train_clock`, `evaluate_clock`, `gse87571` publication eval, `load_wide_table`, `external_data.load_gse87571` (Activity **2.1.10.1**) — [CLOCK_LIBRARY.md](CLOCK_LIBRARY.md) |
+| `annotation/` | July GTEx v8 + VEP + AlphaGenome/AlphaMissense workbook — [JULY_ANNOTATION_PIPELINE.md](JULY_ANNOTATION_PIPELINE.md) |
 | `ukb/manifest.py` | Ensembl manifest build + 1KG VCF extract |
 | `ukb/gnomad.py` | 1KG vs gnomAD v4 NFE comparison |
 | `ukb/mock_clinical.py` | Synthetic clinical CSV generator |
@@ -25,7 +26,8 @@ This document summarizes installable modules and CLI entry points. Per-file inve
 
 | Command | Module |
 |---------|--------|
-| `rogen-clock` | `rogen_aging.cli.clock` |
+| `rogen-clock` | `rogen_aging.cli.clock` (`train`, `evaluate`, `validate-matrix`, `evaluate-gse87571`) |
+| `rogen-july-annotate` | `rogen_aging.cli.july_annotate` → `annotation.july` |
 | `rogen-ukb-manifest` | `rogen_aging.cli.ukb_manifest` → `ukb.manifest` |
 | `rogen-compare-af-gnomad` | `rogen_aging.cli.compare_af_gnomad` → `ukb.gnomad` (`compare` + `summarize` subcommands) |
 | `rogen-ukb-mock-clinical` | `rogen_aging.cli.ukb_mock_clinical` |
@@ -33,7 +35,7 @@ This document summarizes installable modules and CLI entry points. Per-file inve
 | `rogen-ukb-integrate` | `rogen_aging.cli.ukb_integrate` → `ukb_integration.run_cli` |
 | `rogen-vcf-synthetic` | `rogen_aging.cli.vcf_synthetic` |
 
-**Canonical clock CLI:** `uv run rogen-clock train|evaluate` or `scripts/clock/run_clock.py`.  
+**Canonical clock CLI:** `uv run rogen-clock train|evaluate|evaluate-gse87571` or `scripts/clock/run_clock.py`.  
 `scripts/clock/validate_clock.py` and `scripts/clock/train_clock_on_gse40279.py` are deprecated Typer wrappers.
 
 ## Scripts by folder
@@ -44,8 +46,8 @@ See [ACTIVITIES.md](ACTIVITIES.md) for the full tree. Highlights:
 - **`scripts/figures/`** — matplotlib/networkx renders + `plot_clock_eval.py` ([FIGURES.md](FIGURES.md)); flat `scripts/generate_*.py` shims forward here
 - **`scripts/alphagenome/`** — AlphaGenome batch + analysis (tables → `analysis/alphagenome/`, plots → `figures/alphagenome/`)
 - **`analysis/validate_genomics_tables/`**, **`analysis/overlap_enrichment/`**, **`analysis/variant_functional_annotation/`** — GRCh38 genomics validation ([GENOMICS_ANALYSIS.md](GENOMICS_ANALYSIS.md); index: [analysis/genomics/README.md](../analysis/genomics/README.md))
-- **`scripts/ukb/run_july_annotation_pipeline.py`** — July batch GTEx v8 + VEP + AlphaGenome/AlphaMissense Excel export ([JULY_ANNOTATION_PIPELINE.md](JULY_ANNOTATION_PIPELINE.md))
-- **`scripts/clock/evaluate_methylation_clock.py`** — GSE87571 external validation of a bare ElasticNet clock; writes `outputs/clock_metrics.json` + three-panel figure ([METHYLATION_CLOCK_VALIDATION.md](METHYLATION_CLOCK_VALIDATION.md), [INPUT_MANIFEST.md](../INPUT_MANIFEST.md))
+- **`rogen-july-annotate`** (`src/rogen_aging/annotation/july.py`) — July batch GTEx v8 + VEP + AlphaGenome/AlphaMissense Excel export ([JULY_ANNOTATION_PIPELINE.md](JULY_ANNOTATION_PIPELINE.md)); thin wrapper: `scripts/ukb/run_july_annotation_pipeline.py`
+- **`rogen-clock evaluate-gse87571`** (`src/rogen_aging/clock/gse87571.py`) — GSE87571 external validation of a bare ElasticNet clock; writes `outputs/clock_metrics.json` + three-panel figure ([METHYLATION_CLOCK_VALIDATION.md](METHYLATION_CLOCK_VALIDATION.md), [INPUT_MANIFEST.md](../INPUT_MANIFEST.md)); thin wrapper: `scripts/clock/evaluate_methylation_clock.py`
 - **`scripts/integrative/`** — variant×tissue map, phenotype risk, end-to-end pipeline ([INTEGRATIVE_PIPELINE.md](INTEGRATIVE_PIPELINE.md))
 - **`scripts/dev/`** — `security_check.sh`, CI audit, ONT pipeline validation, R bootstrap, `find_r.sh`
 

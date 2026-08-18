@@ -33,7 +33,8 @@ rogen_aging/
 
 | Path | Purpose |
 |------|---------|
-| `clock/` | Epigenetic clock train/eval/data ([CLOCK_LIBRARY.md](CLOCK_LIBRARY.md)) |
+| `clock/` | Epigenetic clock train/eval/data ([CLOCK_LIBRARY.md](CLOCK_LIBRARY.md)); GSE87571 publication eval in `gse87571.py` |
+| `annotation/` | July GTEx + VEP + Alpha score workbook ([JULY_ANNOTATION_PIPELINE.md](JULY_ANNOTATION_PIPELINE.md)) |
 | `ukb/` | LA-SNP manifest, gnomAD compare, mock clinical CSV ([LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md](LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md)) |
 | `vcf/` | Synthetic VCF utilities ([SYNTHETIC_ROMANIAN_VCF_GENERATOR.md](SYNTHETIC_ROMANIAN_VCF_GENERATOR.md)) |
 | `ukb_integration/` | Synthetic UKB join + associations ([UKB_INTEGRATION_PIPELINE.md](UKB_INTEGRATION_PIPELINE.md)); `integration/` is a deprecated alias |
@@ -48,8 +49,8 @@ Grouped by workflow. Flat `scripts/*.py` paths are **deprecation shims** that fo
 
 | Folder | Contents |
 |--------|----------|
-| `clock/` | `run_clock.py`, `evaluate_methylation_clock.py`, Romanian demo, deprecated train/validate shims |
-| `ukb/` | `la_snp_lookup.py`, `compare_af_gnomad.py`, `mock_clinical_csv.py`, `mock_rap_folder.py`, `run_integration.py`, `run_july_annotation_pipeline.py`, `annotate_la_snps_vep.py` |
+| `clock/` | `run_clock.py` (thin `rogen-clock` wrapper), `evaluate_methylation_clock.py` (thin `evaluate-gse87571` wrapper), Romanian demo, deprecated train/validate shims |
+| `ukb/` | `la_snp_lookup.py`, `compare_af_gnomad.py`, `mock_clinical_csv.py`, `mock_rap_folder.py`, `run_integration.py`, `run_july_annotation_pipeline.py` (thin `rogen-july-annotate` wrapper), `annotate_la_snps_vep.py` |
 | `vcf/` | `generate_synthetic_romanian_vcf.py` |
 | `figures/` | `plot_*`, `render_*`, `generate_*`, `reconcile_and_generate_figures.py` |
 | `alphagenome/` | Sequence comparer + analysis + visualize |
@@ -119,7 +120,7 @@ Run with `uv run pytest` after `uv sync --extra dev`. Imports use `rogen_aging.*
 | LA-SNP manifest / AF CSVs | `analysis/` | `analysis/ukb_snp_manifest_v0.1.csv` |
 | VEP annotation + cache | `analysis/` | `analysis/vep_annotation/`, `analysis/vep_cache/` |
 | GTEx eQTL annotation + cache | `analysis/` | `analysis/gtex_annotation/`, `analysis/gtex_cache/` |
-| July batch annotation | `scripts/ukb/` + `data/` / `outputs/` | `scripts/ukb/run_july_annotation_pipeline.py` → [JULY_ANNOTATION_PIPELINE.md](JULY_ANNOTATION_PIPELINE.md) |
+| July batch annotation | `rogen-july-annotate` | `scripts/ukb/run_july_annotation_pipeline.py` → [JULY_ANNOTATION_PIPELINE.md](JULY_ANNOTATION_PIPELINE.md) |
 | Integrative multi-omics | `analysis/integrative/` | `scripts/integrative/run_pipeline.py` → [INTEGRATIVE_PIPELINE.md](INTEGRATIVE_PIPELINE.md) |
 | Clock model + metrics | `analysis/` | `analysis/gse40279_elasticnet_clock.pkl` |
 

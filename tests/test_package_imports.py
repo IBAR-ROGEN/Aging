@@ -12,6 +12,7 @@ def test_import_package() -> None:
 
 
 def test_import_submodules() -> None:
+    import rogen_aging.annotation  # noqa: PLC0415
     import rogen_aging.clock  # noqa: PLC0415
     import rogen_aging.config  # noqa: PLC0415
     import rogen_aging.ensembl  # noqa: PLC0415
@@ -22,6 +23,7 @@ def test_import_submodules() -> None:
     import rogen_aging.ukb_integration  # noqa: PLC0415
     import rogen_aging.vcf  # noqa: PLC0415
 
+    assert "verify_july_input_manifest" in rogen_aging.annotation.__all__
     assert "train_clock" in rogen_aging.clock.__all__
     assert "validate_methylation_matrix" in rogen_aging.clock.__all__
     assert "load_config" in rogen_aging.config.__all__

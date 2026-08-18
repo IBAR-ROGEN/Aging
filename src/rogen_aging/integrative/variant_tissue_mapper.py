@@ -2,7 +2,7 @@
 
 Consolidates join and summarisation logic previously scattered across standalone
 GTEx / VEP annotation scripts (``scripts/ukb/annotate_la_snps_gtex.py``,
-``run_july_annotation_pipeline.py``) into a reusable, API-free mapper.
+``run_july_annotation_pipeline.py`` / ``rogen_aging.annotation.july``) into a reusable, API-free mapper.
 """
 
 from __future__ import annotations

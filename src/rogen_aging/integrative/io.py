@@ -64,7 +64,7 @@ def resolve_default_variants() -> Path:
     raise FileNotFoundError(
         "July production annotation missing. Expected "
         f"{DEFAULT_VARIANTS_PARQUET} or {DEFAULT_JULY_XLSX}. "
-        "Run: uv run python scripts/ukb/run_july_annotation_pipeline.py"
+        "Run: uv run rogen-july-annotate"
     )
 
 
@@ -107,8 +107,7 @@ def ensure_july_parquet_cache(*, force: bool = False) -> tuple[Path, Path]:
         return DEFAULT_VARIANTS_PARQUET, DEFAULT_EQTLS_PARQUET
     if not DEFAULT_JULY_XLSX.is_file():
         raise FileNotFoundError(
-            f"July workbook not found: {DEFAULT_JULY_XLSX}. "
-            "Run: uv run python scripts/ukb/run_july_annotation_pipeline.py"
+            f"July workbook not found: {DEFAULT_JULY_XLSX}. " "Run: uv run rogen-july-annotate"
         )
     import pandas as pd
 

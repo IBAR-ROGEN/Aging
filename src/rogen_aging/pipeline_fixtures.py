@@ -345,7 +345,7 @@ def _seed_gtex_cache(
                 continue
             eqtls_by_rsid.setdefault(rsid, []).append(row)
 
-    # Tissue list must match scripts/ukb/run_july_annotation_pipeline.TARGET_TISSUES
+    # Tissue list must match rogen_aging.annotation.july.TARGET_TISSUES
     # for aggregate cache key compatibility — import lazily to avoid cycles.
     target_tissues = (
         "Brain_Amygdala",

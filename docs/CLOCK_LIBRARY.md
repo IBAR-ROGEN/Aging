@@ -64,7 +64,7 @@ See **[CLOCK_EVAL_FIGURES.md](CLOCK_EVAL_FIGURES.md)** for configuration constan
 For final validation metrics (MAE, median AE, Pearson *r*, age-stratified MAE) and a three-panel publication figure written under `outputs/`:
 
 ```bash
-uv run python scripts/clock/evaluate_methylation_clock.py
+uv run rogen-clock evaluate-gse87571
 # → outputs/clock_metrics.json
 # → outputs/figures/Figure_Epigenetic_Clock_Panels.png/.pdf
 ```

@@ -14,7 +14,8 @@ Installable code lives under `src/rogen_aging/`. Console entry points are regist
 
 | Package | Role |
 |---------|------|
-| `rogen_aging.clock` | ElasticNet DNAm-age clocks (train, evaluate, external cohort loaders) |
+| `rogen_aging.clock` | ElasticNet DNAm-age clocks (train, evaluate, GSE87571 publication eval, external cohort loaders) |
+| `rogen_aging.annotation` | July prioritized-variant annotation (GTEx v8, Ensembl VEP, Alpha scores) |
 | `rogen_aging.ukb` | LA-SNP manifests, 1KG / gnomAD allele-frequency comparison, synthetic UKB-RAP fixtures |
 | `rogen_aging.ukb_integration` | Synthetic phenotype–genotype joins and LA-SNP association summaries |
 | `rogen_aging.integrative` | Offline variant×tissue×phenotype joins and composite risk scoring |
@@ -82,7 +83,7 @@ uv run rogen-clock evaluate \
   --output_dir figures/validation_gse87571
 
 # Publication metrics + three-panel figure (see INPUT_MANIFEST.md)
-uv run python scripts/clock/evaluate_methylation_clock.py
+uv run rogen-clock evaluate-gse87571
 ```
 
 See [docs/METHYLATION_CLOCK_VALIDATION.md](docs/METHYLATION_CLOCK_VALIDATION.md) and [INPUT_MANIFEST.md](INPUT_MANIFEST.md).
@@ -91,7 +92,7 @@ See [docs/METHYLATION_CLOCK_VALIDATION.md](docs/METHYLATION_CLOCK_VALIDATION.md)
 
 ```bash
 # GTEx v8 + Ensembl VEP + AlphaGenome / AlphaMissense → supplementary workbook
-uv run python scripts/ukb/run_july_annotation_pipeline.py
+uv run rogen-july-annotate
 # → outputs/Supplementary_Table_1_Annotated_Variants.xlsx
 
 # Offline variant × tissue × phenotype composite risk
@@ -164,7 +165,7 @@ Default risk-channel weights are VEP 0.25, AlphaGenome 0.25, AlphaMissense 0.25,
 
 | Stage | Entry point | Primary outputs |
 |-------|-------------|-----------------|
-| Functional annotation | `scripts/ukb/run_july_annotation_pipeline.py` | `outputs/Supplementary_Table_1_Annotated_Variants.xlsx` (+ optional parquet siblings) |
+| Functional annotation | `rogen-july-annotate` | `outputs/Supplementary_Table_1_Annotated_Variants.xlsx` (+ optional parquet siblings) |
 | Tissue map & composite risk | `scripts/integrative/run_pipeline.py` | `analysis/integrative/results/*.parquet` |
 
 ---

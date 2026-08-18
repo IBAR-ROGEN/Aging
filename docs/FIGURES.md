@@ -85,7 +85,7 @@ Full configuration and input options: [CLOCK_EVAL_FIGURES.md](CLOCK_EVAL_FIGURES
 Three-panel final validation figure (scatter + residuals + top CpG weights) with metrics JSON:
 
 ```bash
-uv run python scripts/clock/evaluate_methylation_clock.py
+uv run rogen-clock evaluate-gse87571
 # → outputs/clock_metrics.json
 # → outputs/figures/Figure_Epigenetic_Clock_Panels.png/.pdf/.svg
 ```

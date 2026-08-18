@@ -3,7 +3,7 @@
 
 Example:
     uv run python scripts/dev/write_pipeline_fixtures.py
-    uv run python scripts/ukb/run_july_annotation_pipeline.py --demo
+    uv run rogen-july-annotate --demo
 """
 
 from __future__ import annotations
