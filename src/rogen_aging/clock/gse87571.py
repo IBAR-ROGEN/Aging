@@ -19,7 +19,6 @@ See Also:
 from __future__ import annotations
 
 import json
-import pickle
 import re
 import warnings
 from pathlib import Path
@@ -39,7 +38,11 @@ from scipy.stats import pearsonr  # noqa: E402
 from sklearn.linear_model import ElasticNet, ElasticNetCV  # noqa: E402
 from sklearn.metrics import mean_absolute_error, median_absolute_error  # noqa: E402
 
-from rogen_aging.clock.evaluate import build_feature_matrix  # noqa: E402
+from rogen_aging.clock.evaluate import (  # noqa: E402
+    build_feature_matrix,
+    cg_feature_columns,
+    load_model,
+)
 from rogen_aging.config import cfg_path, find_repo_root, get_config, load_cli_config  # noqa: E402
 from rogen_aging.config.cli import config_option  # noqa: E402
 
@@ -200,22 +203,15 @@ def load_elasticnet_clock(model_path: Path) -> ElasticNet | Any:
         TypeError: If the object is neither ElasticNet nor a Pipeline ending
             in ElasticNet / ElasticNetCV.
     """
-    if not model_path.is_file():
+    try:
+        model = load_model(model_path)
+    except FileNotFoundError as exc:
         raise FileNotFoundError(
             f"Trained ElasticNet model not found: {model_path}. "
             "Expected a pickled sklearn.linear_model.ElasticNet or Pipeline "
             "at models/ro_clock_elasticnet_gse40279.pkl. "
             "Halting — will not train or substitute another estimator."
-        )
-
-    suffix = model_path.suffix.lower()
-    if suffix == ".joblib":
-        import joblib
-
-        model = joblib.load(model_path)
-    else:
-        with model_path.open("rb") as handle:
-            model = pickle.load(handle)
+        ) from exc
 
     if type(model) is ElasticNet:
         return model
@@ -239,15 +235,8 @@ def load_elasticnet_clock(model_path: Path) -> ElasticNet | Any:
 
 
 def _cg_columns(df: pd.DataFrame) -> list[str]:
-    """Return Illumina-style CpG column names from a wide table.
-
-    Args:
-        df: Sample-by-feature table whose CpG columns start with ``cg``.
-
-    Returns:
-        Column names that begin with the ``cg`` probe-ID prefix.
-    """
-    return [c for c in df.columns if str(c).startswith("cg")]
+    """Return Illumina-style CpG column names from a wide table."""
+    return cg_feature_columns(df)
 
 
 def _pick_id_column(df: pd.DataFrame, candidates: tuple[str, ...]) -> str | None:

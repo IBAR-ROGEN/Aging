@@ -25,9 +25,11 @@ def test_import_submodules() -> None:
 
     assert "verify_july_input_manifest" in rogen_aging.annotation.__all__
     assert "train_clock" in rogen_aging.clock.__all__
+    assert "load_model" in rogen_aging.clock.__all__
     assert "validate_methylation_matrix" in rogen_aging.clock.__all__
     assert "load_config" in rogen_aging.config.__all__
     assert "EnsemblClient" in rogen_aging.ensembl.__all__
+    assert "fetch_vep_id_cached" in rogen_aging.ensembl.__all__
     assert "lookup_variants_cached" in rogen_aging.ensembl.__all__
     assert "generate_ukb_rap_mock" in rogen_aging.ukb.__all__
     assert "run_integrative_pipeline" in rogen_aging.integrative.__all__

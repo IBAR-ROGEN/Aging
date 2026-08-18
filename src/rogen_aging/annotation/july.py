@@ -38,6 +38,7 @@ from tqdm import tqdm
 
 from rogen_aging.config import cfg_path, find_repo_root, get_config, target_tissues
 from rogen_aging.config.cli import config_option, load_cli_config
+from rogen_aging.ensembl import EnsemblClient, fetch_vep_id_cached, fetch_vep_region_cached
 
 ScoreKind = Literal["alphagenome", "alphamissense"]
 JsonDict = dict[str, Any]
@@ -750,87 +751,60 @@ def extract_vep_fields(payload: list[JsonDict] | None) -> JsonDict:
 
 
 def fetch_vep_for_variant(
-    session: requests.Session,
+    client: EnsemblClient,
     row: JsonDict,
     cache_dir: Path,
     local_vep: dict[str, list[JsonDict]],
-    last_request_end: float | None,
     cache_only: bool,
-) -> tuple[JsonDict, float | None]:
+) -> JsonDict:
     """Query Ensembl VEP by rsID, falling back to region/allele when needed.
 
     Lookup order: local JSONL → VEP-by-id → VEP-by-region. Region fallback is
     required when an rsID is missing or Ensembl returns 404 for the id endpoint.
 
     Args:
-        session: HTTP session.
+        client: Shared Ensembl REST client (pacing and retries).
         row: Variant dict including chrom/pos/ref/alt/rsid/variant_key.
         cache_dir: API response cache directory.
         local_vep: Optional pre-loaded local VEP payloads.
-        last_request_end: Monotonic timestamp of the previous live request.
         cache_only: Disable live Ensembl calls on cache miss.
 
     Returns:
-        Tuple of ``(flat_vep_fields, last_request_end)``.
+        Flattened VEP fields for the variant.
     """
     rsid = normalize_rsid(row.get("rsid"))
     chrom = normalize_chrom(row["chrom"])
-    pos = int(row["pos"])
+    pos = int(str(row["pos"]))
     alt = str(row["alt"])
     vkey = str(row["variant_key"])
+    extra = {"hgvs": 1, "canonical": 1}
 
     for key in filter(None, [rsid, vkey, row.get("rsid")]):
         if key in local_vep:
-            return extract_vep_fields(local_vep[key]), last_request_end
+            return extract_vep_fields(local_vep[key])
 
     payload: list[JsonDict] | None = None
     if rsid:
-        url = (
-            f"{ENSEMBL_REST}/vep/human/id/{quote(rsid, safe='')}"
-            f"?content-type=application/json&hgvs=1&canonical=1"
-        )
-        cache_file = cache_path(cache_dir, "vep_id", rsid.lower())
-        raw, last_request_end, _ = fetch_json_with_retry(
-            session,
-            url,
-            params=None,
-            cache_file=cache_file,
-            min_interval_sec=VEP_DELAY_SEC,
-            max_retries=MAX_RETRIES,
-            last_request_end=last_request_end,
+        payload = fetch_vep_id_cached(
+            client,
+            rsid,
+            cache_path(cache_dir, "vep_id", rsid.lower()),
+            extra_params=extra,
             cache_only=cache_only,
-            allow_404=True,
         )
-        if isinstance(raw, list):
-            payload = raw
-        elif isinstance(raw, dict):
-            payload = [raw]
 
     if payload is None:
         # Region endpoint encodes ALT in the path: chrom:pos-pos/ALT
         region = f"{chrom}:{pos}-{pos}/{quote(alt, safe='')}"
-        url = (
-            f"{ENSEMBL_REST}/vep/human/region/{region}"
-            f"?content-type=application/json&hgvs=1&canonical=1"
-        )
-        cache_file = cache_path(cache_dir, "vep_region", f"{chrom}_{pos}_{alt}")
-        raw, last_request_end, _ = fetch_json_with_retry(
-            session,
-            url,
-            params=None,
-            cache_file=cache_file,
-            min_interval_sec=VEP_DELAY_SEC,
-            max_retries=MAX_RETRIES,
-            last_request_end=last_request_end,
+        payload = fetch_vep_region_cached(
+            client,
+            region,
+            cache_path(cache_dir, "vep_region", f"{chrom}_{pos}_{alt}"),
+            extra_params=extra,
             cache_only=cache_only,
-            allow_404=True,
         )
-        if isinstance(raw, list):
-            payload = raw
-        elif isinstance(raw, dict):
-            payload = [raw]
 
-    return extract_vep_fields(payload), last_request_end
+    return extract_vep_fields(payload)
 
 
 def parse_gtex_variant(record: JsonDict) -> JsonDict:
@@ -1033,6 +1007,16 @@ def annotate_variants(
             ),
         }
     )
+    ensembl = EnsemblClient(
+        base_url=ENSEMBL_REST,
+        min_interval_sec=VEP_DELAY_SEC,
+        timeout_sec=REQUEST_TIMEOUT_SEC,
+        max_retries=MAX_RETRIES,
+        user_agent=(
+            "rogen-aging-july-annotation/1.0 "
+            "(ROGEN; academic research; GTEx Portal + Ensembl REST)"
+        ),
+    )
 
     vep_rows: list[JsonDict] = []
     eqtl_rows: list[JsonDict] = []
@@ -1044,9 +1028,7 @@ def annotate_variants(
             rsid = row.get("rsid")
             logger.debug("Annotating {}", rsid or row["variant_key"])
 
-            vep_fields, last_request_end = fetch_vep_for_variant(
-                session, row, cache_dir, local_vep, last_request_end, cache_only
-            )
+            vep_fields = fetch_vep_for_variant(ensembl, row, cache_dir, local_vep, cache_only)
             vep_rows.append({"variant_key": row["variant_key"], **vep_fields})
 
             gtex_variant, last_request_end = resolve_gtex_variant(
@@ -1109,6 +1091,7 @@ def annotate_variants(
             )
     finally:
         session.close()
+        ensembl.close()
 
     vep_df = pl.DataFrame(vep_rows) if vep_rows else pl.DataFrame({"variant_key": []})
     eqtl_df = (

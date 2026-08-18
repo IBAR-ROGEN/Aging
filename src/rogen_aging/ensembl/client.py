@@ -312,6 +312,34 @@ class EnsemblClient:
             )
         return payload
 
+    def get_vep_region(
+        self,
+        region: str,
+        *,
+        extra_params: dict[str, Any] | None = None,
+    ) -> list[dict[str, Any]] | None:
+        """Run VEP for a genomic region / allele string.
+
+        Endpoint: ``GET /vep/{species}/region/{region}``.
+        ``region`` is typically ``{chrom}:{start}-{end}/{alt}`` with the alt
+        already URL-quoted when it contains reserved characters.
+        """
+        params: dict[str, Any] = {"content-type": "application/json"}
+        if extra_params:
+            params.update(extra_params)
+        path = f"vep/{quote(self.species, safe='')}/region/{region}"
+        payload = self.get_json(path, params=params, allow_404=True)
+        if payload is None:
+            return None
+        if isinstance(payload, dict):
+            return [payload]
+        if not isinstance(payload, list):
+            raise EnsemblApiError(
+                f"Unexpected VEP region payload type for {region!r}: {type(payload).__name__}",
+                url=path,
+            )
+        return payload
+
     def info_data(self) -> dict[str, Any]:
         """Return ``/info/data`` (release numbers served by this REST host)."""
         payload = self.get_json("info/data", params={"content-type": "application/json"})

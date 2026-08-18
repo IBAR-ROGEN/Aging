@@ -23,6 +23,7 @@ from rogen_aging.ensembl.variants import (
     lookup_grch38_loci_cached,
     lookup_variants_cached,
 )
+from rogen_aging.ensembl.vep import fetch_vep_id_cached, fetch_vep_region_cached
 
 __all__ = [
     "DEFAULT_BASE_URL",
@@ -34,6 +35,8 @@ __all__ = [
     "SqliteCache",
     "cache_key_for",
     "fetch_variant_cached",
+    "fetch_vep_id_cached",
+    "fetch_vep_region_cached",
     "grch38_locus_from_variation",
     "lookup_grch38_loci_cached",
     "lookup_variants_cached",

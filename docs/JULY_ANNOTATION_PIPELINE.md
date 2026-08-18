@@ -1,6 +1,7 @@
 # July prioritized-variant annotation pipeline
 
 **CLI:** `uv run rogen-july-annotate` (`rogen_aging.annotation.july`)  
+**Ensembl VEP:** `rogen_aging.ensembl.EnsemblClient` (id + region lookups; GTEx still uses the Portal API)  
 **Thin wrapper:** `scripts/ukb/run_july_annotation_pipeline.py` (deprecated shim: `run_july_annotation_pipeline.py`)  
 **Related:** [LA_SNP_VEP_ANNOTATION.md](LA_SNP_VEP_ANNOTATION.md) · [LA_SNP_GTEX_ANNOTATION.md](LA_SNP_GTEX_ANNOTATION.md) · [GENOMICS_ANALYSIS.md](GENOMICS_ANALYSIS.md)
 

@@ -3,6 +3,7 @@
 **Project:** IBAR-ROGEN Aging  
 **Activity:** 2.1.7.1 (manuscript supplementary table)  
 **Script:** `scripts/ukb/annotate_la_snps_vep.py` (deprecated shim: `annotate_la_snps_vep.py` at repo root)  
+**HTTP:** `rogen_aging.ensembl.EnsemblClient` (`GET /vep/{species}/id/{rsid}`)  
 **Related:** [ALPHAGENOME_ANALYSIS_EXPLANATION.md](ALPHAGENOME_ANALYSIS_EXPLANATION.md), [LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md](LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md)
 
 ## Overview

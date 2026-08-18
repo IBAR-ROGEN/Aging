@@ -161,7 +161,9 @@ def test_fetch_variant_cached_skips_duplicate_network(tmp_path: Any) -> None:
     client.close()
 
 
-def test_lookup_variants_cached_json_backend(tmp_path: Any, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_lookup_variants_cached_json_backend(
+    tmp_path: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
     monkeypatch.setattr("rogen_aging.ensembl.client.time.sleep", lambda _s: None)
 
     payloads = {
@@ -170,7 +172,9 @@ def test_lookup_variants_cached_json_backend(tmp_path: Any, monkeypatch: pytest.
     }
 
     class FakeClient(EnsemblClient):
-        def get_variation(self, variant_id: str, *, phenotypes: bool = False) -> dict[str, Any] | None:
+        def get_variation(
+            self, variant_id: str, *, phenotypes: bool = False
+        ) -> dict[str, Any] | None:
             return payloads[variant_id]
 
     results = lookup_variants_cached(
@@ -218,3 +222,46 @@ def test_grch38_locus_from_variation() -> None:
     }
     assert grch38_locus_from_variation(payload) == ("19", 44908684)
     assert grch38_locus_from_variation(None) is None
+
+
+def test_get_vep_id_and_region(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("rogen_aging.ensembl.client.time.sleep", lambda _s: None)
+    session = MagicMock()
+    session.headers = {}
+    session.request.side_effect = [
+        MagicMock(
+            status_code=200,
+            headers={},
+            ok=True,
+            content=b'[{"id":"rs1"}]',
+            json=MagicMock(return_value=[{"id": "rs1"}]),
+        ),
+        MagicMock(
+            status_code=200,
+            headers={},
+            ok=True,
+            content=b'[{"id":"region1"}]',
+            json=MagicMock(return_value={"id": "region1"}),
+        ),
+    ]
+    client = EnsemblClient(session=session, min_interval_sec=0.0)
+    assert client.get_vep_id("rs1") == [{"id": "rs1"}]
+    assert client.get_vep_region("19:1-1/A") == [{"id": "region1"}]
+    paths = [call.args[1] for call in session.request.call_args_list]
+    assert "vep/human/id/rs1" in paths[0]
+    assert "vep/human/region/19:1-1/A" in paths[1]
+    client.close()
+
+
+def test_fetch_vep_id_cached_skips_network_on_hit(tmp_path: Any) -> None:
+    from rogen_aging.ensembl.vep import fetch_vep_id_cached
+
+    cache_file = tmp_path / "vep_id_rs1.json"
+    cache_file.write_text('[{"id": "rs1"}]', encoding="utf-8")
+    session = MagicMock()
+    session.headers = {}
+    client = EnsemblClient(session=session, min_interval_sec=0.0)
+    payload = fetch_vep_id_cached(client, "rs1", cache_file)
+    assert payload == [{"id": "rs1"}]
+    assert session.request.call_count == 0
+    client.close()
