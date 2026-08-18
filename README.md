@@ -60,7 +60,7 @@ check, and UK Biobank security). See [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md
 # equivalent: uv sync --extra dev && uv run pre-commit install
 ```
 
-Continuous integration (`.github/workflows/ci.yml`) runs `uv sync --extra dev`, `ruff`, `pytest`, and the UKB compliance audit on every push or pull request to `main`. Audit rules are documented in [docs/UKBB_CI_COMPLIANCE_AUDIT.md](docs/UKBB_CI_COMPLIANCE_AUDIT.md).
+Continuous integration (`.github/workflows/ci.yml`) runs `uv sync --extra dev`, `ruff`, `mypy` (`src/rogen_aging`), `pytest`, and the UKB compliance audit on every push or pull request to `main`. Audit rules are documented in [docs/UKBB_CI_COMPLIANCE_AUDIT.md](docs/UKBB_CI_COMPLIANCE_AUDIT.md).
 
 ---
 
