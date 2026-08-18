@@ -78,13 +78,15 @@ Run with `uv run pytest` after `uv sync --extra dev`. Imports use `rogen_aging.*
 | File | Role |
 |------|------|
 | `test_clock_regression.py` | Refactored clock vs legacy ElasticNet metrics on `test_data/mock_clock_wide.csv` |
+| `test_validate_methylation_matrix.py` | Methylation-matrix preflight (`validate_methylation_matrix`) |
+| `test_config.py` | OmegaConf default / production / CLI `--config` merge |
 | `test_package_imports.py` | Smoke imports for installable subpackages |
 | `test_ukb_integration.py` / `test_ukb_mock_gen.py` | Synthetic UKB join and mock RAP layout |
 | `test_synthetic_vcf.py` / `test_mock_clinical_csv.py` | VCF generator and mock clinical CSV |
 | `test_af_comparison_summary.py` | gnomAD comparison summarizer |
 | `test_integrative.py` | Variant×tissue×phenotype integrative pipeline |
 
-**CI:** `.github/workflows/ci.yml` runs `uv sync --extra dev`, `uv run ruff check src scripts tests`, `uv run pytest -q`, then `./scripts/dev/ukbb_ci_compliance_audit.sh` on every push/PR to `main`. Lockfile: `uv.lock` is committed for reproducible installs.
+**CI:** `.github/workflows/ci.yml` runs `uv sync --extra dev`, `uv run ruff check src scripts tests`, `uv run mypy src/rogen_aging`, the pytest matrix under `tests/` (including config and methylation-matrix preflight), then `./scripts/dev/ukbb_ci_compliance_audit.sh` on every push/PR to `main`. Lockfile: `uv.lock` is committed for reproducible installs.
 
 ## `docs/`
 

@@ -70,7 +70,7 @@ jobs:
             models/ro_clock_elasticnet_gse40279.pkl
 
   lint:
-    name: Ruff lint
+    name: Ruff and mypy
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -98,6 +98,9 @@ jobs:
       - name: Ruff lint
         run: uv run ruff check src scripts tests
 
+      - name: Mypy (strict, src/rogen_aging)
+        run: uv run mypy src/rogen_aging
+
   test:
     name: pytest (${{ matrix.suite }})
     needs: generate-fixtures
@@ -120,11 +123,13 @@ jobs:
             paths: >-
               tests/test_clock_regression.py
               tests/test_evaluate_methylation_clock.py
+              tests/test_validate_methylation_matrix.py
           - suite: core
             paths: >-
               tests/test_package_imports.py
               tests/test_root_shims.py
               tests/test_ensembl_client.py
+              tests/test_config.py
               tests/test_af_comparison_summary.py
               tests/test_overlap_enrichment.py
     steps:
