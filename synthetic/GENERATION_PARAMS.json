@@ -1,0 +1,142 @@
+{
+  "disclaimer": "synthetic data, not a performance estimate",
+  "seed": 20260830,
+  "n_samples": 200,
+  "age_min": 20.0,
+  "age_max": 90.0,
+  "age_distribution": "uniform on [age_min, age_max)",
+  "coefficient_file": "models/ro_clock_elasticnet_gse40279.pkl",
+  "n_clock_cpgs": 12,
+  "cpg_ids": [
+    "cg_test_0000",
+    "cg_test_0001",
+    "cg_test_0002",
+    "cg_test_0003",
+    "cg_test_0004",
+    "cg_test_0005",
+    "cg_test_0006",
+    "cg_test_0007",
+    "cg_test_0008",
+    "cg_test_0009",
+    "cg_test_0010",
+    "cg_test_0011"
+  ],
+  "coefficients": {
+    "cg_test_0000": 9.597864225974284,
+    "cg_test_0001": 14.447090036591188,
+    "cg_test_0002": 8.726209511469468,
+    "cg_test_0003": -0.0,
+    "cg_test_0004": -0.0,
+    "cg_test_0005": -0.0,
+    "cg_test_0006": -0.0,
+    "cg_test_0007": 0.0,
+    "cg_test_0008": -0.0,
+    "cg_test_0009": -0.0,
+    "cg_test_0010": 0.0,
+    "cg_test_0011": -0.0
+  },
+  "intercept": 39.459051130750154,
+  "imputer_training_means": {
+    "cg_test_0000": 0.4817695600559784,
+    "cg_test_0001": 0.5462486496288892,
+    "cg_test_0002": 0.4863005157949657,
+    "cg_test_0003": 0.5032781891469347,
+    "cg_test_0004": 0.5121847801441513,
+    "cg_test_0005": 0.5760356302393757,
+    "cg_test_0006": 0.49691028291935446,
+    "cg_test_0007": 0.5036229643564807,
+    "cg_test_0008": 0.4877164226780946,
+    "cg_test_0009": 0.48205655358138944,
+    "cg_test_0010": 0.46888162643032016,
+    "cg_test_0011": 0.47724110779629925
+  },
+  "beta_generation": {
+    "method": "unstructured_normal_around_training_means then rank-1 adjustment along the coefficient vector so the linear clock matches age plus fixed Gaussian residual, then clip to (0.02, 0.98)",
+    "matrix_layout": "samples as rows; one column per CpG in the clock coefficient set",
+    "age_residual_sd_years": 8.0,
+    "beta_baseline_sd": 0.12,
+    "clip_lo": 0.02,
+    "clip_hi": 0.98,
+    "tuned_to_improve_fit": false
+  },
+  "failure_modes": {
+    "drop_cpg_fraction": 0.05,
+    "nan_value_fraction": 0.02,
+    "n_samples_absent_from_metadata": 20,
+    "combined": {
+      "dropped_cpgs": [
+        "cg_test_0000"
+      ],
+      "n_nan_cells": 44,
+      "orphan_sample_ids": [
+        "SYN0180",
+        "SYN0181",
+        "SYN0182",
+        "SYN0183",
+        "SYN0184",
+        "SYN0185",
+        "SYN0186",
+        "SYN0187",
+        "SYN0188",
+        "SYN0189",
+        "SYN0190",
+        "SYN0191",
+        "SYN0192",
+        "SYN0193",
+        "SYN0194",
+        "SYN0195",
+        "SYN0196",
+        "SYN0197",
+        "SYN0198",
+        "SYN0199"
+      ]
+    },
+    "isolated": {
+      "(a) drop 5% of clock CpGs entirely": {
+        "dropped_cpgs": [
+          "cg_test_0004"
+        ],
+        "n_nan_cells": 0,
+        "orphan_sample_ids": []
+      },
+      "(b) set 2% of values to NaN": {
+        "dropped_cpgs": [],
+        "n_nan_cells": 48,
+        "orphan_sample_ids": []
+      },
+      "(c) 20 sample IDs absent from metadata": {
+        "dropped_cpgs": [],
+        "n_nan_cells": 0,
+        "orphan_sample_ids": [
+          "SYN0180",
+          "SYN0181",
+          "SYN0182",
+          "SYN0183",
+          "SYN0184",
+          "SYN0185",
+          "SYN0186",
+          "SYN0187",
+          "SYN0188",
+          "SYN0189",
+          "SYN0190",
+          "SYN0191",
+          "SYN0192",
+          "SYN0193",
+          "SYN0194",
+          "SYN0195",
+          "SYN0196",
+          "SYN0197",
+          "SYN0198",
+          "SYN0199"
+        ]
+      }
+    }
+  },
+  "outputs": {
+    "beta_matrix": "synthetic/SYNTHETIC \u2014 beta_matrix.parquet",
+    "metadata": "synthetic/SYNTHETIC \u2014 metadata.csv",
+    "metrics": "synthetic/SYNTHETIC \u2014 clock_metrics.json",
+    "figure_stem": "synthetic/SYNTHETIC \u2014 Figure_Epigenetic_Clock_Panels",
+    "report": "synthetic/SYNTHETIC_RUN_REPORT.md"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "n_samples": 180,
+  "mae": 9.603133475770075,
+  "median_absolute_error": 8.700377036999637,
+  "pearson_r": 0.9065560071256443,
+  "pearson_p": 1.3787610270644284e-68,
+  "mae_by_age_stratum": {
+    "<30": 19.685846322929567,
+    "30-60": 7.029209521167596,
+    ">60": 9.276350768859977
+  },
+  "n_by_age_stratum": {
+    "<30": 24,
+    "30-60": 85,
+    ">60": 71
+  },
+  "n_features_used": 12,
+  "n_imputed_missing_cpgs": 1,
+  "model_path": "/Users/mityatoren/code/rogen_aging/models/ro_clock_elasticnet_gse40279.pkl",
+  "methylation_path": "/Users/mityatoren/code/rogen_aging/synthetic/SYNTHETIC \u2014 beta_matrix.parquet",
+  "meta_path": "/Users/mityatoren/code/rogen_aging/synthetic/SYNTHETIC \u2014 metadata.csv",
+  "disclaimer": "synthetic data, not a performance estimate"
+}
