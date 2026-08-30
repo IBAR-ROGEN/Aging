@@ -16,6 +16,14 @@
   },
   "n_features_used": 12,
   "n_imputed_missing_cpgs": 1,
+  "n_clock_cpgs": 12,
+  "n_present": 11,
+  "n_missing_imputed": 1,
+  "missing_cpg_ids": [
+    "cg_test_0000"
+  ],
+  "n_nan_cells_in_present_cpgs": 41,
+  "fraction_of_model_weight_imputed": 0.292875294028429,
   "model_path": "/Users/mityatoren/code/rogen_aging/models/ro_clock_elasticnet_gse40279.pkl",
   "methylation_path": "/Users/mityatoren/code/rogen_aging/synthetic/SYNTHETIC \u2014 beta_matrix.parquet",
   "meta_path": "/Users/mityatoren/code/rogen_aging/synthetic/SYNTHETIC \u2014 metadata.csv",
