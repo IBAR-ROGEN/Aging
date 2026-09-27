@@ -21,7 +21,9 @@ YELLOW='\033[1;33m'
 NC='\033[0m'
 
 RESTRICTED_EXTENSIONS='\.(vcf|vcf\.gz|vcf\.bgz|bed|bed\.gz)$'
-RESTRICTED_PATTERNS='patient_id|UKB_'
+# Token start, not a substring. test_ukb_integration.py must not match UKB_.
+# UKB_Expected_Chunk and patient_id still match on BSD and GNU grep.
+RESTRICTED_PATTERNS='(^|[^[:alnum:]_])(patient_id|UKB_)'
 
 violations=0
 staged_files=$(git diff --cached --name-only 2>/dev/null || true)

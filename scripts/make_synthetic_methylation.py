@@ -3,7 +3,7 @@
 
 Synthetic-only: does not download GEO, call GEOparse/GEOquery, or fetch a series
 matrix. CpG identifiers are read from the harness clock artifact
-(``models/ro_clock_elasticnet_gse40279.pkl`` or the joblib fallback), never from
+(``models/fixtures/fixture_clock_cg_test.pkl`` or the joblib fallback), never from
 a published coefficient table.
 
 Example:
@@ -33,7 +33,7 @@ from rogen_aging.config import find_repo_root
 
 REPO_ROOT = find_repo_root()
 HARNESS_PATH = REPO_ROOT / "scripts" / "clock" / "evaluate_methylation_clock.py"
-MODEL_PKL = REPO_ROOT / "models" / "ro_clock_elasticnet_gse40279.pkl"
+MODEL_PKL = REPO_ROOT / "models" / "fixtures" / "fixture_clock_cg_test.pkl"
 MODEL_JOBLIB = REPO_ROOT / "models" / "methylation_clock_v1.joblib"
 SYNTHETIC_DIR = REPO_ROOT / "synthetic"
 FILE_PREFIX = "SYNTHETIC — "

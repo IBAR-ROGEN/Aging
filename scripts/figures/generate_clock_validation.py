@@ -2,7 +2,8 @@
 """Generate the methylation clock validation plot (Figure 3).
 
 This script generates the scatter plot for Activity 2.1.10, showing the
-relationship between chronological age and DNAm predicted age with MAE ~ 2.1 years.
+relationship between chronological age and DNAm predicted age.
+SIMULATED TARGET, not a model result (MAE ~ 2.1 years).
 
 Usage:
     python scripts/generate_clock_validation.py

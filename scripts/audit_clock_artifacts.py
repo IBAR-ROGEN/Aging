@@ -408,6 +408,11 @@ def _recorded_feature_count(payload: dict[str, Any]) -> int | None:
         value = payload.get(key)
         if isinstance(value, int):
             return value
+    probe_counts = payload.get("probe_counts")
+    if isinstance(probe_counts, dict):
+        trained = probe_counts.get("trained")
+        if isinstance(trained, int):
+            return trained
     return None
 
 

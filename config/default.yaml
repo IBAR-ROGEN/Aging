@@ -7,7 +7,7 @@ repo:
 
 paths:
   models:
-    clock_elasticnet: models/ro_clock_elasticnet_gse40279.pkl
+    clock_elasticnet: models/gse40279_hannum450k_elasticnet.joblib
     clock_joblib_fallback: models/methylation_clock_v1.joblib
   methylation:
     gse87571_processed: data/methylation/GSE87571_processed.parquet

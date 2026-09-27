@@ -41,6 +41,7 @@ from rogen_aging.clock.evaluate import (  # noqa: E402
     alignment_fields,
     build_feature_matrix,
     print_alignment_summary,
+    refuse_fixture_model,
 )
 from rogen_aging.config import cfg_path, find_repo_root, get_config, load_cli_config  # noqa: E402
 from rogen_aging.config.cli import config_option  # noqa: E402
@@ -798,6 +799,7 @@ def run_validation(
     *,
     skip_manifest_check: bool = False,
     allow_positional_align: bool = False,
+    demo: bool = False,
 ) -> dict[str, Any]:
     """Run end-to-end GSE87571 validation: predict, score, plot, and persist.
 
@@ -832,6 +834,7 @@ def run_validation(
         allow_positional_align=allow_positional_align,
     )
     model = load_elasticnet_clock(model_path)
+    refuse_fixture_model(model, demo=demo)
 
     y = pd.to_numeric(wide["chronological_age"], errors="coerce")
     valid = y.notna()
@@ -1008,6 +1011,7 @@ def main(
         top_n_cpgs=resolved_top_n,
         skip_manifest_check=skip_manifest_check,
         allow_positional_align=allow_positional_align,
+        demo=demo,
     )
 
 

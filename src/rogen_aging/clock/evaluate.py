@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import pickle
+import re
 import warnings
 from pathlib import Path
 from typing import Any, cast
@@ -18,6 +19,26 @@ from sklearn.base import BaseEstimator
 from sklearn.metrics import mean_absolute_error
 
 from rogen_aging.clock.data import load_wide_table
+
+FIXTURE_FEATURE_RE = re.compile(r"^cg_test_\d+$")
+
+
+def model_is_cg_test_fixture(model: Any) -> bool:
+    """True when every recorded feature name is a ``cg_test_*`` demo probe."""
+    names = _extract_feature_names_in(model)
+    if not names:
+        return False
+    return all(FIXTURE_FEATURE_RE.fullmatch(name) is not None for name in names)
+
+
+def refuse_fixture_model(model: Any, *, demo: bool) -> None:
+    """Stop evaluation of the demo clock unless ``demo`` was requested."""
+    if demo or not model_is_cg_test_fixture(model):
+        return
+    raise ValueError(
+        "Refusing to evaluate: every feature name matches ^cg_test_\\d+$. "
+        "This model is a fixture, not a GSE40279 clock. Pass --demo to evaluate it."
+    )
 
 
 def load_model(model_path: Path) -> Any:
@@ -411,10 +432,71 @@ def plot_mae_by_decade(decade_df: pd.DataFrame, out_path: Path) -> None:
     plt.close(fig)
 
 
+def plot_predicted_vs_chronological(
+    age: np.ndarray,
+    predicted: np.ndarray,
+    out_path: Path,
+) -> None:
+    """Scatter predicted age against chronological age.
+
+    Both axes share the same limits. The identity line and the ordinary
+    least-squares fit are drawn with different styles.
+
+    Args:
+        age: Chronological ages (years).
+        predicted: Predicted ages (years).
+        out_path: Destination PNG path.
+    """
+    age = np.asarray(age, dtype=float)
+    predicted = np.asarray(predicted, dtype=float)
+    low = float(min(np.min(age), np.min(predicted)))
+    high = float(max(np.max(age), np.max(predicted)))
+    span = high - low
+    pad = 0.02 * span if span > 0 else 1.0
+    low -= pad
+    high += pad
+    slope, intercept = np.polyfit(age, predicted, 1)
+    grid = np.array([low, high], dtype=float)
+    fig, ax = plt.subplots(figsize=(7.0, 7.0))
+    ax.scatter(
+        age,
+        predicted,
+        alpha=0.75,
+        edgecolors="black",
+        linewidths=0.25,
+        s=36,
+        label="samples",
+        zorder=2,
+    )
+    ax.plot(grid, grid, color="black", linestyle="--", linewidth=1.2, label="y = x", zorder=3)
+    ax.plot(
+        grid,
+        slope * grid + intercept,
+        color="#C44E52",
+        linestyle="-",
+        linewidth=1.6,
+        label="linear fit",
+        zorder=4,
+    )
+    ax.set_xlim(low, high)
+    ax.set_ylim(low, high)
+    ax.set_aspect("equal", adjustable="box")
+    ax.set_xlabel("Chronological age (years)")
+    ax.set_ylabel("Predicted age (years)")
+    ax.set_title("Predicted vs chronological age")
+    ax.grid(True, linestyle=":", linewidth=0.6, alpha=0.75)
+    ax.legend(loc="best", frameon=True)
+    fig.tight_layout()
+    fig.savefig(out_path, dpi=160)
+    plt.close(fig)
+
+
 def evaluate_clock(
     model_path: Path,
     test_data: Path,
     output_dir: Path,
+    *,
+    demo: bool = False,
 ) -> dict[str, Any]:
     """Run held-out evaluation; write figures and ``validation_metrics.json``.
 
@@ -422,6 +504,7 @@ def evaluate_clock(
         model_path: Path to a saved clock (``.joblib`` / pickle).
         test_data: Path to a wide test table with ages and ``cg*`` columns.
         output_dir: Directory for metrics JSON and residual/MAE figures.
+        demo: When false, a model whose features are all ``cg_test_*`` is refused.
 
     Returns:
         Metrics dictionary including overall MAE, Pearson r, decade MAE, and
@@ -435,6 +518,7 @@ def evaluate_clock(
     output_dir.mkdir(parents=True, exist_ok=True)
 
     model = load_model(model_path)
+    refuse_fixture_model(model, demo=demo)
     df = load_wide_table(test_data)
 
     y = pd.to_numeric(df["chronological_age"], errors="coerce")
@@ -452,6 +536,7 @@ def evaluate_clock(
     y_pred = np.asarray(estimator.predict(x), dtype=float)
 
     mae_overall = float(mean_absolute_error(y.to_numpy(), y_pred))
+    median_ae = float(np.median(np.abs(y.to_numpy(dtype=float) - y_pred)))
     r_value, r_p = pearsonr(y.to_numpy(dtype=float), y_pred.astype(float))
 
     residual = y_pred - y.to_numpy(dtype=float)
@@ -472,6 +557,7 @@ def evaluate_clock(
     report = alignment_fields(alignment)
     metrics: dict[str, Any] = {
         "mae_overall": mae_overall,
+        "median_ae": median_ae,
         "pearson_r": float(r_value),
         "pearson_p": float(r_p),
         "n_samples": int(len(y)),
@@ -485,6 +571,11 @@ def evaluate_clock(
 
     plot_residuals(y.to_numpy(dtype=float), residual, output_dir / "Fig_Clock_Residuals.png")
     plot_mae_by_decade(decade_table, output_dir / "Fig_Clock_MAE_by_decade.png")
+    plot_predicted_vs_chronological(
+        y.to_numpy(dtype=float),
+        y_pred,
+        output_dir / "Fig_Clock_Predicted_vs_Chronological.png",
+    )
     print_alignment_summary(report)
 
     return {**metrics, "metrics_path": str(metrics_path)}

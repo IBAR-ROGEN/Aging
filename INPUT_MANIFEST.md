@@ -32,9 +32,13 @@ Required inputs for [`scripts/clock/evaluate_methylation_clock.py`](scripts/cloc
 
 | Path | Role | Required |
 |------|------|----------|
+| `data/methylation/GSE40279_processed.parquet` | GSE40279 wide betas (`sample_id`, `chronological_age`, `cg*` float32) from `rogen-clock prepare-gse40279` | yes |
 | `data/methylation/GSE87571_processed.parquet` | Independent validation beta matrix (`sample_id` + `cg*` columns) | yes |
 | `data/methylation/GSE87571_meta.csv` | Phenotype metadata (`sample_id` + `chronological_age`) | yes |
-| `models/ro_clock_elasticnet_gse40279.pkl` | Fitted ElasticNet **or** Pipeline ending in ElasticNet/ElasticNetCV | yes |
+| `models/gse40279_hannum450k_elasticnet.joblib` | GSE40279 ElasticNetCV pipeline (`rogen-clock train`) | yes |
+| `models/gse40279_hannum450k_elasticnet.provenance.json` | Training provenance (checksum, probe counts, CV hyperparameters, git commit) | yes |
+| `models/gse40279_hannum450k_elasticnet_cpgs.csv` | Non-zero CpGs and weights | yes |
+| `models/fixtures/fixture_clock_cg_test.pkl` | Demo clock (`cg_test_*` only). Not a GSE40279 result | no |
 | `data/methylation/HM450_probe_annotation.csv` | Probe → nearest gene (`IlmnID`, `UCSC_RefGene_Name`) for panel C labels | no |
 
 ## Outputs (written by the evaluation script)
@@ -47,12 +51,12 @@ Required inputs for [`scripts/clock/evaluate_methylation_clock.py`](scripts/cloc
 
 ## Notes
 
-- Preferred model path is `models/ro_clock_elasticnet_gse40279.pkl`.
-- That filename is not provenance. `uv run python scripts/audit_clock_artifacts.py` writes [`docs/CLOCK_ARTIFACT_AUDIT.md`](docs/CLOCK_ARTIFACT_AUDIT.md). In the current checkout the named pickle is a fixture (`cg_test_*` probes).
-- If that pickle is missing, the evaluator accepts
-  `models/methylation_clock_v1.joblib` (Pipeline) and/or can materialize the
-  pickle via `uv run python scripts/dev/write_pipeline_fixtures.py` or
-  `uv run python scripts/clock/evaluate_methylation_clock.py --demo`.
+- The trained clock path is `models/gse40279_hannum450k_elasticnet.joblib`.
+- `models/fixtures/fixture_clock_cg_test.pkl` is the old demo clock (`cg_test_*`). `rogen-clock evaluate` refuses it unless `--demo` is passed.
+- `uv run python scripts/audit_clock_artifacts.py` writes [`docs/CLOCK_ARTIFACT_AUDIT.md`](docs/CLOCK_ARTIFACT_AUDIT.md). Read that report for which serializations are fixtures. Do not copy metrics out of it by hand.
+- `uv run python scripts/dev/write_pipeline_fixtures.py` or
+  `uv run python scripts/clock/evaluate_methylation_clock.py --demo`
+  materializes the demo fixture only.
 - Optional annotation falls back to Horvath S3 (`test_data/gb-2013-14-10-r115-S3.csv`) when absent.
 
 ---
