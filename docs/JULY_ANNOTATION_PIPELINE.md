@@ -19,6 +19,8 @@ manuscript supplementary tables. The pipeline:
 API responses are cached under `data/cache/july_annotation/`. Progress uses
 `tqdm`; structured logs use `loguru`.
 
+STALE: `outputs/Supplementary_Table_1_Annotated_Variants.xlsx` and the parquet siblings `Supplementary_Table_1_Combined_Master.parquet` and `Supplementary_Table_1_GTEx_eQTL_Summary.parquet` were built from `data/processed/variants_47_input.csv`. They were not rebuilt from `data/processed/variants_47_input_v2.csv` because this pipeline joins AlphaGenome scores. The v2 alt differs for rs28366003, rs1800774, rs41383, rs9916344, rs7207422, rs1801318, rs1981429, rs139170, rs155979, rs524533, and rs882696.
+
 ## Inputs
 
 | Path | Role | Required columns |

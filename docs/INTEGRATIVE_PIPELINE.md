@@ -34,6 +34,8 @@ AlphaGenome 0.25, AlphaMissense 0.25, GTEx 0.15, epigenetic 0.10
 | Probe annotation (optional) | `IlmnID`, `UCSC_RefGene_Name` | Semicolon-separated gene lists exploded on join |
 | Sample genotypes (optional) | `sample_id`, `rsid`, `alt_dosage` | Extra phenotype columns are carried through aggregation |
 
+STALE: the production July workbook and parquet siblings still use alleles from `data/processed/variants_47_input.csv`. They were not rebuilt after `variants_47_input_v2.csv` because the July stage joins AlphaGenome. Affected rsids: rs28366003, rs1800774, rs41383, rs9916344, rs7207422, rs1801318, rs1981429, rs139170, rs155979, rs524533, and rs882696.
+
 Typical upstream sources: July annotation workbook
 (`outputs/Supplementary_Table_1_Annotated_Variants.xlsx`) or parquet siblings
 `Supplementary_Table_1_Combined_Master.parquet` /
