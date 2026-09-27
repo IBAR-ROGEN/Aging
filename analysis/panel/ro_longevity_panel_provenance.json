@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-09-27T11:44:36Z",
+  "generated_at_utc": "2026-09-27T13:05:30Z",
   "disclaimer": "Cohort sizes and odds ratios are illustrative. ROGEN sample size and design are not fixed. Frequencies are from public reference populations, not from Romanian data.",
   "input_variants": {
     "path": "data/processed/variants_47_input.csv",
@@ -25,8 +25,8 @@
     "query_date_utc": null,
     "allele_counts": {
       "source": "cache fields ac_nfe and an_nfe for the cached gnomAD variant_id",
-      "entries_with_counts": 47,
-      "fetched_this_run": 11,
+      "entries_with_counts": 38,
+      "fetched_this_run": 0,
       "af_gnomad_nfe_modified": false
     }
   },
@@ -36,13 +36,38 @@
     "test": "two-sided Fisher exact, or Pearson chi-square when every expected count is >= 5",
     "multiple_testing": "Benjamini-Hochberg",
     "fdr": 0.05,
-    "n_tests": 45,
-    "n_chi_square": 44,
-    "n_fisher": 1,
+    "n_tests": 38,
+    "n_chi_square": 35,
+    "n_fisher": 3,
     "descriptive_column": "tsi_nfe_maf_abs_diff_gt_0_05_descriptive is the absolute MAF gap > 0.05. It is not a test.",
     "tsi_allele_number": "sum of Ensembl allele_count for 1000GENOMES:phase_3:TSI when returned",
     "tsi_allele_number_assumption": "2 x 107 (1000 Genomes phase 3 TSI sample size) when Ensembl does not return TSI allele counts",
     "assumption_used_for": []
+  },
+  "unresolved_alleles_excluded_from_nfe_test": {
+    "file": "data/processed/manual_resolution_alleles.csv",
+    "rsids": [
+      "rs139170",
+      "rs1800774",
+      "rs1801318",
+      "rs1981429",
+      "rs41383",
+      "rs524533",
+      "rs7207422",
+      "rs882696",
+      "rs9916344"
+    ],
+    "notes": {
+      "rs139170": "panel alt absent from gnomAD v4",
+      "rs1800774": "panel alt absent from gnomAD v4",
+      "rs1801318": "alt allele mismatch between panel and gnomAD cache",
+      "rs1981429": "panel alt absent from gnomAD v4",
+      "rs41383": "panel alt absent from gnomAD v4",
+      "rs524533": "panel alt absent from gnomAD v4",
+      "rs7207422": "panel alt absent from gnomAD v4",
+      "rs882696": "panel alt absent from gnomAD v4",
+      "rs9916344": "alt allele mismatch between panel and gnomAD cache"
+    }
   },
   "ensembl": {
     "release": 116,

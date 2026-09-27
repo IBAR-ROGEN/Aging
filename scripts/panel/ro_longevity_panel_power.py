@@ -80,6 +80,7 @@ DEFAULT_VARIANTS = REPO_ROOT / "data" / "processed" / "variants_47_input.csv"
 DEFAULT_GENE_LIST = REPO_ROOT / "manuscript" / "tables" / "41_gene_candidate_list.csv"
 DEFAULT_GNOMAD_CACHE = REPO_ROOT / "data" / "geo" / "gnomad_r4_nfe_cache.json"
 DEFAULT_ENSEMBL_CACHE = REPO_ROOT / "data" / "geo" / "ensembl_r116_variation_cache"
+DEFAULT_MANUAL_RESOLUTION = REPO_ROOT / "data" / "processed" / "manual_resolution_alleles.csv"
 DEFAULT_OUT_DIR = REPO_ROOT / "analysis" / "panel"
 
 VARIANT_COLUMNS = ("chrom", "pos", "ref", "alt", "rsid", "gene_symbol")
@@ -99,14 +100,51 @@ def cache_variant_id_alt(variant_id: str) -> str:
     return parts[-1]
 
 
+def _repo_relative(path: Path) -> str:
+    """Path relative to the repo when it lives inside it."""
+    resolved = path.resolve()
+    root = REPO_ROOT.resolve()
+    try:
+        return resolved.relative_to(root).as_posix()
+    except ValueError:
+        return str(path)
+
+
+def load_manual_resolution_notes(path: Path) -> dict[str, str]:
+    """rsID to the note already recorded for alleles held out of the test."""
+    if not path.is_file():
+        return {}
+    frame = pl.read_csv(path, schema_overrides={"rsid": pl.Utf8, "note": pl.Utf8})
+    notes: dict[str, str] = {}
+    for row in frame.iter_rows(named=True):
+        rsid = normalize_rsid(str(row["rsid"]))
+        note = str(row.get("note") or "").strip()
+        if not rsid or not note:
+            continue
+        current = notes.get(rsid)
+        if current is None:
+            notes[rsid] = note
+        elif note not in current.split("; "):
+            notes[rsid] = _join_notes([current, note])
+    return notes
+
+
 def require_cache_alt_matches_panel(
     variants: pl.DataFrame,
     cache: dict[str, dict[str, Any]],
+    *,
+    excluded: set[str] | None = None,
 ) -> None:
-    """Stop when a cached gnomAD variant ID alt is not the panel alt."""
+    """Stop when a cached gnomAD variant ID alt is not the panel alt.
+
+    ``excluded`` rsIDs are held out of the NFE comparison and are not checked.
+    """
+    skipped = excluded or set()
     mismatches: list[str] = []
     for row in variants.iter_rows(named=True):
         rsid = normalize_rsid(str(row["rsid"]))
+        if rsid in skipped:
+            continue
         entry = cache.get(rsid)
         if not isinstance(entry, dict):
             continue
@@ -354,6 +392,8 @@ def ensure_nfe_allele_counts(
     variants: pl.DataFrame,
     cache_path: Path,
     cache: dict[str, dict[str, Any]],
+    *,
+    excluded: set[str] | None = None,
 ) -> dict[str, Any]:
     """Store NFE AC/AN on cache entries that lack them. Do not change ``af_gnomad_nfe``."""
     snapshot = {
@@ -361,8 +401,11 @@ def ensure_nfe_allele_counts(
     }
     missing: list[tuple[str, str]] = []
     dropped_mismatch = False
+    skipped = excluded or set()
     for row in variants.iter_rows(named=True):
         rsid = normalize_rsid(str(row["rsid"]))
+        if rsid in skipped:
+            continue
         entry = cache.get(rsid)
         if not isinstance(entry, dict):
             continue
@@ -438,7 +481,8 @@ def ensure_nfe_allele_counts(
     with_counts = sum(
         1
         for row in variants.iter_rows(named=True)
-        if nfe_counts_from_cache(cache.get(normalize_rsid(str(row["rsid"]))))[0] is not None
+        if normalize_rsid(str(row["rsid"])) not in skipped
+        and nfe_counts_from_cache(cache.get(normalize_rsid(str(row["rsid"]))))[0] is not None
     )
     return {
         "source": "cache fields ac_nfe and an_nfe for the cached gnomAD variant_id",
@@ -742,6 +786,8 @@ def build_panel_rows(
     classes: pl.DataFrame,
     gnomad_cache: dict[str, dict[str, Any]],
     ensembl_payloads: dict[str, Any | None],
+    *,
+    held_out_notes: dict[str, str] | None = None,
 ) -> list[dict[str, Any]]:
     """One row per prioritized variant. Missing frequencies stay empty."""
     class_by_gene = {
@@ -753,10 +799,13 @@ def build_panel_rows(
         rsid = normalize_rsid(str(variant["rsid"]))
         ref = str(variant["ref"])
         alt = str(variant["alt"])
+        held_note = None if held_out_notes is None else held_out_notes.get(rsid)
         notes: list[str] = []
-        cached = gnomad_cache.get(rsid)
+        cached = None if held_note is not None else gnomad_cache.get(rsid)
         af_nfe: float | None = None
-        if cached is None:
+        if held_note is not None:
+            af_nfe = None
+        elif cached is None:
             notes.append(
                 "gnomAD v4 NFE cache has no entry; frequency left empty and gnomAD was not re-queried"
             )
@@ -820,7 +869,10 @@ def build_panel_rows(
 
         tsi_gap: float | None = None
         tsi_flag: bool | None = None
-        if maf_sub["TSI"] is None or maf_nfe is None:
+        if held_note is not None:
+            af_nfe = None
+            maf_nfe = None
+        elif maf_sub["TSI"] is None or maf_nfe is None:
             notes.append(
                 "Descriptive TSI versus NFE MAF gap left empty because one frequency is missing. "
                 "This gap is not a test."
@@ -830,15 +882,19 @@ def build_panel_rows(
             tsi_flag = abs(tsi_gap) > TSI_NFE_MAF_GAP
 
         af_tsi = af_alt["TSI"]
-        tsi_ac, tsi_an, tsi_an_source = tsi_alt_allele_counts(populations, ref, alt)
-        nfe_ac, nfe_an = nfe_counts_from_cache(cached if isinstance(cached, dict) else None)
-        p_value, count_test = allele_count_test(tsi_ac, tsi_an, nfe_ac, nfe_an)
+        if held_note is not None:
+            p_value, count_test = None, None
+            tsi_an_source = "held_out"
+        else:
+            tsi_ac, tsi_an, tsi_an_source = tsi_alt_allele_counts(populations, ref, alt)
+            nfe_ac, nfe_an = nfe_counts_from_cache(cached if isinstance(cached, dict) else None)
+            p_value, count_test = allele_count_test(tsi_ac, tsi_an, nfe_ac, nfe_an)
         if tsi_an_source == "assumed_2x_sample_size":
             notes.append(
                 "TSI allele number was not returned by Ensembl; "
                 f"used 2 x {TSI_PHASE3_N_SAMPLES} (1000 Genomes phase 3 TSI sample size)"
             )
-        if p_value is None:
+        if held_note is None and p_value is None:
             if nfe_ac is None or nfe_an is None:
                 notes.append(
                     "TSI versus NFE allele-count test left empty; "
@@ -859,8 +915,14 @@ def build_panel_rows(
             )
 
         rare_flag: bool | None = None if maf_nfe is None else maf_nfe < RARE_MAF
-        reference_power = allelic_power(maf_nfe, RANK_ODDS_RATIO, RANK_N_CASES, ALPHA_BONFERRONI)
-        if maf_nfe is None:
+        reference_power = (
+            None
+            if held_note is not None
+            else allelic_power(maf_nfe, RANK_ODDS_RATIO, RANK_N_CASES, ALPHA_BONFERRONI)
+        )
+        if held_note is not None:
+            notes = [held_note]
+        elif maf_nfe is None:
             notes.append(
                 "illustrative power left empty because gnomAD v4 NFE MAF is missing; "
                 "control frequency was not imputed"
@@ -1073,11 +1135,11 @@ def release_check_argv(table: Path, report: Path) -> list[str]:
         "run",
         "rogen-release-check",
         "--table",
-        str(table),
+        _repo_relative(table),
         "--table-kind",
         RELEASE_CHECK_KIND,
         "--report",
-        str(report),
+        _repo_relative(report),
     ]
 
 
@@ -1086,9 +1148,9 @@ def run_release_check(path: Path, report: Path) -> dict[str, Any]:
     argv = release_check_argv(path, report)
     if shutil.which("uv") is None:
         return {
-            "path": str(path),
+            "path": _repo_relative(path),
             "kind": RELEASE_CHECK_KIND,
-            "report": str(report),
+            "report": _repo_relative(report),
             "argv": argv,
             "returncode": None,
             "stdout": "",
@@ -1110,9 +1172,9 @@ def run_release_check(path: Path, report: Path) -> dict[str, Any]:
     ):
         status = "command_not_found"
     return {
-        "path": str(path),
+        "path": _repo_relative(path),
         "kind": RELEASE_CHECK_KIND,
-        "report": str(report),
+        "report": _repo_relative(report),
         "argv": argv,
         "returncode": completed.returncode,
         "stdout": completed.stdout,
@@ -1136,15 +1198,16 @@ def write_provenance(
     variants_path: Path,
     gene_list_path: Path,
     release_checks: list[dict[str, Any]],
+    held_out_notes: dict[str, str],
 ) -> None:
     """Record data sources, cache use, and the release-check result."""
     payload = {
         "generated_at_utc": started_at,
         "disclaimer": DISCLAIMER,
-        "input_variants": {"path": str(variants_path), "n_rows": EXPECTED_VARIANT_ROWS},
+        "input_variants": {"path": _repo_relative(variants_path), "n_rows": EXPECTED_VARIANT_ROWS},
         "longevitymap_annotation": {
             "database": "LongevityMap",
-            "table": str(gene_list_path),
+            "table": _repo_relative(gene_list_path),
             "join": "gene_symbol to Gene_Symbol",
             "queried_live": False,
             "role": "gene-level class annotation only",
@@ -1154,7 +1217,7 @@ def write_provenance(
             "dataset": GNOMAD_DATASET,
             "population": GNOMAD_POPULATION,
             "api": GNOMAD_API_URL,
-            "cache_path": str(gnomad_cache),
+            "cache_path": _repo_relative(gnomad_cache),
             "cache_hits": gnomad_counts["cache_hits"],
             "new_queries": gnomad_counts["new_queries"],
             "absent_from_cache": gnomad_counts["absent_from_cache"],
@@ -1163,6 +1226,11 @@ def write_provenance(
             "allele_counts": nfe_allele_counts,
         },
         "tsi_vs_nfe": tsi_vs_nfe,
+        "unresolved_alleles_excluded_from_nfe_test": {
+            "file": _repo_relative(DEFAULT_MANUAL_RESOLUTION),
+            "rsids": sorted(held_out_notes),
+            "notes": {rsid: held_out_notes[rsid] for rsid in sorted(held_out_notes)},
+        },
         "ensembl": {
             "release": ensembl_release,
             "assembly": ENSEMBL_ASSEMBLY,
@@ -1170,7 +1238,7 @@ def write_provenance(
             "info_data": "GET /info/data",
             "endpoint": "GET /variation/human/{id}?pops=1",
             "populations": [f"1000GENOMES:phase_3:{code}" for code in EUR_SUBPOPS],
-            "cache_path": str(ensembl_cache),
+            "cache_path": _repo_relative(ensembl_cache),
             "cache_hits": ensembl_counts["cache_hits"],
             "new_queries": ensembl_counts["new_queries"],
             "request_failures": ensembl_counts["request_failures"],
@@ -1231,13 +1299,23 @@ def main(
     variant_frame = load_variants(variants)
     classes = load_longevitymap_classes(gene_list)
     gnomad_cache_map, gnomad_counts = fetch_nfe_frequencies(variant_frame, gnomad_cache)
-    require_cache_alt_matches_panel(variant_frame, gnomad_cache_map)
-    nfe_allele_counts = ensure_nfe_allele_counts(variant_frame, gnomad_cache, gnomad_cache_map)
+    held_out_notes = load_manual_resolution_notes(DEFAULT_MANUAL_RESOLUTION)
+    held_out = set(held_out_notes)
+    require_cache_alt_matches_panel(variant_frame, gnomad_cache_map, excluded=held_out)
+    nfe_allele_counts = ensure_nfe_allele_counts(
+        variant_frame, gnomad_cache, gnomad_cache_map, excluded=held_out
+    )
     rsids = [normalize_rsid(str(rsid)) for rsid in variant_frame["rsid"].to_list()]
     ensembl_payloads, ensembl_counts, ensembl_release, ensembl_host = fetch_ensembl_variations(
         rsids, ensembl_cache
     )
-    rows = build_panel_rows(variant_frame, classes, gnomad_cache_map, ensembl_payloads)
+    rows = build_panel_rows(
+        variant_frame,
+        classes,
+        gnomad_cache_map,
+        ensembl_payloads,
+        held_out_notes=held_out_notes,
+    )
     tsi_vs_nfe = apply_tsi_nfe_fdr(rows)
     rows = assign_testability_rank(rows)
     panel = panel_frame(rows)
@@ -1269,6 +1347,7 @@ def main(
         variants_path=variants,
         gene_list_path=gene_list,
         release_checks=release_checks,
+        held_out_notes=held_out_notes,
     )
     typer.echo(f"Wrote {panel_path}")
     typer.echo(f"Wrote {grid_path}")

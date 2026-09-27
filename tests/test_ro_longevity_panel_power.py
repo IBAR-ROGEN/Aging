@@ -90,6 +90,21 @@ def test_cache_alt_match_does_not_stop() -> None:
     panel.require_cache_alt_matches_panel(variants, cache)
 
 
+def test_excluded_cache_alt_mismatch_does_not_stop() -> None:
+    variants = pl.DataFrame(
+        {
+            "chrom": ["17"],
+            "pos": [6494893],
+            "ref": ["C"],
+            "alt": ["A"],
+            "rsid": ["rs9916344"],
+            "gene_symbol": ["GENE"],
+        }
+    )
+    cache = {"rs9916344": {"variant_id": "17-6494893-C-T"}}
+    panel.require_cache_alt_matches_panel(variants, cache, excluded={"rs9916344"})
+
+
 def test_maf_is_the_smaller_allele_frequency() -> None:
     assert panel.maf_from_af(0.2) == pytest.approx(0.2)
     assert panel.maf_from_af(0.8) == pytest.approx(0.2)
