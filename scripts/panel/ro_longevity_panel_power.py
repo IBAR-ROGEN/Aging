@@ -28,7 +28,7 @@ import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
 import polars as pl  # noqa: E402
 import typer  # noqa: E402
-from scipy.stats import norm  # noqa: E402
+from scipy.stats import chi2_contingency, fisher_exact, norm  # noqa: E402
 
 from rogen_aging.config import find_repo_root, get_config  # noqa: E402
 from rogen_aging.ensembl.cache import cache_key_for, open_cache  # noqa: E402
@@ -42,10 +42,12 @@ from rogen_aging.ukb.gnomad import (  # noqa: E402
     GNOMAD_API_URL,
     GNOMAD_DATASET,
     GNOMAD_POPULATION,
+    GnomadClient,
     LookupPlan,
     load_cache,
     normalize_chromosome_label,
     normalize_rsid,
+    save_cache,
     to_gnomad_variant_id,
 )
 
@@ -60,6 +62,13 @@ RANK_N_CASES = 1000
 RANK_ODDS_RATIO = 1.5
 TSI_NFE_MAF_GAP = 0.05
 RARE_MAF = 0.01
+# 1000 Genomes phase 3 TSI panel size (individuals). Used only when Ensembl
+# does not return allele counts for that population.
+TSI_PHASE3_N_SAMPLES = 107
+FDR_THRESHOLD = 0.05
+CHI_SQUARE_MIN_EXPECTED = 5.0
+NFE_COUNT_AF_TOLERANCE = 1e-4
+PANEL_DIFFERENCE = "differs between public reference panels (1000G TSI vs gnomAD NFE)"
 
 DISCLAIMER = (
     "Cohort sizes and odds ratios are illustrative. ROGEN sample size "
@@ -196,6 +205,312 @@ def alt_allele_frequency(
     return None, (
         f"1000 Genomes phase 3 {subpopulation} alleles do not match ref/alt; frequency left empty"
     )
+
+
+def _as_count(value: Any) -> int | None:
+    """Return ``value`` as a non-negative integer count, or None."""
+    if isinstance(value, bool) or value is None:
+        return None
+    if isinstance(value, int):
+        return value if value >= 0 else None
+    if isinstance(value, float) and math.isfinite(value) and value.is_integer() and value >= 0:
+        return int(value)
+    return None
+
+
+def tsi_alt_allele_counts(
+    populations: list[dict[str, Any]] | None,
+    ref: str,
+    alt: str,
+) -> tuple[int | None, int | None, str]:
+    """Alt-allele count and allele number for 1000 Genomes phase 3 TSI.
+
+    The allele number is the sum of Ensembl ``allele_count`` values for TSI
+    when every listed TSI allele has a count. Otherwise the allele number is
+    ``2 * TSI_PHASE3_N_SAMPLES`` and the source is ``assumed_2x_sample_size``.
+    """
+    if not populations:
+        return None, None, "missing"
+    alt_u = alt.strip().upper()
+    ref_u = ref.strip().upper()
+    listed: list[tuple[str, int | None, float | None]] = []
+    for row in populations:
+        if not isinstance(row, dict):
+            continue
+        if _population_code(str(row.get("population", ""))) != "TSI":
+            continue
+        allele = row.get("allele")
+        if allele is None:
+            continue
+        frequency = row.get("frequency")
+        freq = float(frequency) if isinstance(frequency, (int, float)) else None
+        listed.append((str(allele).strip().upper(), _as_count(row.get("allele_count")), freq))
+    if not listed:
+        return None, None, "missing"
+    counts = [count for _allele, count, _freq in listed]
+    if all(count is not None for count in counts):
+        allele_number = sum(count for count in counts if count is not None)
+        for allele, count, _freq in listed:
+            if allele == alt_u and count is not None:
+                return count, allele_number, "ensembl_allele_count"
+        for allele, count, _freq in listed:
+            if allele == ref_u and count is not None and allele_number >= count:
+                return allele_number - count, allele_number, "ensembl_allele_count"
+        return None, allele_number, "ensembl_allele_count"
+    allele_number = 2 * TSI_PHASE3_N_SAMPLES
+    for allele, _count, frequency in listed:
+        if allele == alt_u and frequency is not None:
+            return round(frequency * allele_number), allele_number, "assumed_2x_sample_size"
+    for allele, _count, frequency in listed:
+        if allele == ref_u and frequency is not None:
+            return round((1.0 - frequency) * allele_number), allele_number, "assumed_2x_sample_size"
+    return None, allele_number, "assumed_2x_sample_size"
+
+
+def nfe_counts_from_cache(entry: dict[str, Any] | None) -> tuple[int | None, int | None]:
+    """Read gnomAD NFE alt-allele count and allele number stored on a cache entry."""
+    if not isinstance(entry, dict):
+        return None, None
+    allele_count = _as_count(entry.get("ac_nfe"))
+    allele_number = _as_count(entry.get("an_nfe"))
+    if (
+        allele_count is None
+        or allele_number is None
+        or allele_number <= 0
+        or allele_count > allele_number
+    ):
+        return None, None
+    stored_af = entry.get("af_gnomad_nfe")
+    if (
+        isinstance(stored_af, (int, float))
+        and abs((allele_count / allele_number) - float(stored_af)) > NFE_COUNT_AF_TOLERANCE
+    ):
+        return None, None
+    return allele_count, allele_number
+
+
+def nfe_ac_an_from_variant(variant: dict[str, Any] | None) -> tuple[int | None, int | None]:
+    """NFE alt-allele count and allele number from a gnomAD variant payload."""
+    if not isinstance(variant, dict):
+        return None, None
+    for source in ("joint", "exome", "genome"):
+        block = variant.get(source)
+        if not isinstance(block, dict):
+            continue
+        populations = block.get("populations")
+        if not isinstance(populations, list):
+            continue
+        for population in populations:
+            if not isinstance(population, dict) or population.get("id") != GNOMAD_POPULATION:
+                continue
+            allele_count = _as_count(population.get("ac"))
+            allele_number = _as_count(population.get("an"))
+            if (
+                allele_count is None
+                or allele_number is None
+                or allele_number <= 0
+                or allele_count > allele_number
+            ):
+                continue
+            return allele_count, allele_number
+    return None, None
+
+
+def ensure_nfe_allele_counts(
+    variants: pl.DataFrame,
+    cache_path: Path,
+    cache: dict[str, dict[str, Any]],
+) -> dict[str, Any]:
+    """Store NFE AC/AN on cache entries that lack them. Do not change ``af_gnomad_nfe``."""
+    snapshot = {
+        rsid: entry.get("af_gnomad_nfe") for rsid, entry in cache.items() if isinstance(entry, dict)
+    }
+    missing: list[tuple[str, str]] = []
+    dropped_mismatch = False
+    for row in variants.iter_rows(named=True):
+        rsid = normalize_rsid(str(row["rsid"]))
+        entry = cache.get(rsid)
+        if not isinstance(entry, dict):
+            continue
+        raw_count = _as_count(entry.get("ac_nfe"))
+        raw_number = _as_count(entry.get("an_nfe"))
+        stored_af = entry.get("af_gnomad_nfe")
+        if (
+            raw_count is not None
+            and raw_number not in {None, 0}
+            and isinstance(stored_af, (int, float))
+            and abs((raw_count / raw_number) - float(stored_af)) > NFE_COUNT_AF_TOLERANCE
+        ):
+            entry.pop("ac_nfe", None)
+            entry.pop("an_nfe", None)
+            entry.pop("ac_nfe_variant_id", None)
+            entry["ac_nfe_matches_af"] = False
+            dropped_mismatch = True
+        if nfe_counts_from_cache(entry)[0] is not None:
+            continue
+        if entry.get("ac_nfe_matches_af") is False:
+            continue
+        variant_id = to_gnomad_variant_id(
+            str(row["chrom"]),
+            int(row["pos"]),
+            str(row["ref"]),
+            str(row["alt"]),
+        )
+        missing.append((rsid, variant_id))
+    fetched = 0
+    if missing:
+        cfg = get_config()
+        client = GnomadClient(
+            timeout_sec=float(cfg.ukb.gnomad.timeout_sec),
+            min_interval_sec=float(cfg.ukb.gnomad.min_interval_sec),
+            max_retries=int(cfg.ukb.gnomad.max_retries),
+        )
+        by_id: dict[str, dict[str, Any] | None] = {}
+        try:
+            batch_size = int(cfg.ukb.gnomad.batch_size)
+            variant_ids = [variant_id for _rsid, variant_id in missing]
+            for start in range(0, len(variant_ids), batch_size):
+                batch = variant_ids[start : start + batch_size]
+                by_id.update(client.fetch_variants_by_id(batch))
+        finally:
+            client.close()
+        for rsid, variant_id in missing:
+            entry = cache[rsid]
+            allele_count, allele_number = nfe_ac_an_from_variant(by_id.get(variant_id))
+            stored_af = entry.get("af_gnomad_nfe")
+            matches = (
+                allele_count is not None
+                and allele_number not in {None, 0}
+                and isinstance(stored_af, (int, float))
+                and abs((allele_count / allele_number) - float(stored_af)) <= NFE_COUNT_AF_TOLERANCE
+            )
+            if not matches:
+                entry["ac_nfe_matches_af"] = False
+                continue
+            entry["ac_nfe"] = allele_count
+            entry["an_nfe"] = allele_number
+            entry["ac_nfe_variant_id"] = variant_id
+            entry["ac_nfe_matches_af"] = True
+            fetched += 1
+    if missing or dropped_mismatch:
+        for rsid, allele_frequency in snapshot.items():
+            if cache[rsid].get("af_gnomad_nfe") != allele_frequency:
+                _stop("STOP: gnomAD cache allele frequency changed while storing allele counts.")
+        save_cache(cache_path, cache)
+    with_counts = sum(
+        1
+        for row in variants.iter_rows(named=True)
+        if nfe_counts_from_cache(cache.get(normalize_rsid(str(row["rsid"]))))[0] is not None
+    )
+    return {
+        "source": "cache fields ac_nfe and an_nfe for the panel alt",
+        "entries_with_counts": with_counts,
+        "fetched_this_run": fetched,
+        "af_gnomad_nfe_modified": False,
+    }
+
+
+def _expected_cell_counts(table: list[list[int]]) -> list[float]:
+    row_totals = [sum(row) for row in table]
+    col_totals = [table[0][index] + table[1][index] for index in range(2)]
+    total = sum(row_totals)
+    if total <= 0:
+        return []
+    return [row_totals[row] * col_totals[col] / total for row in range(2) for col in range(2)]
+
+
+def allele_count_test(
+    tsi_alt: int | None,
+    tsi_total: int | None,
+    nfe_alt: int | None,
+    nfe_total: int | None,
+) -> tuple[float | None, str | None]:
+    """Two-sided test of alt-allele counts. Chi-square when every expected count is >= 5."""
+    if None in {tsi_alt, tsi_total, nfe_alt, nfe_total}:
+        return None, None
+    assert tsi_alt is not None and tsi_total is not None
+    assert nfe_alt is not None and nfe_total is not None
+    if min(tsi_total, nfe_total) <= 0:
+        return None, None
+    if not (0 <= tsi_alt <= tsi_total and 0 <= nfe_alt <= nfe_total):
+        return None, None
+    table = [
+        [tsi_alt, tsi_total - tsi_alt],
+        [nfe_alt, nfe_total - nfe_alt],
+    ]
+    expected = _expected_cell_counts(table)
+    if expected and all(value >= CHI_SQUARE_MIN_EXPECTED for value in expected):
+        _statistic, p_value, _dof, _expected = chi2_contingency(table, correction=False)
+        return float(p_value), "chi_square"
+    _odds, p_value = fisher_exact(table, alternative="two-sided")
+    return float(p_value), "fisher"
+
+
+def benjamini_hochberg(p_values: list[float | None]) -> list[float | None]:
+    """Benjamini-Hochberg q-values. Missing p-values stay missing and are not in ``m``."""
+    indexed = [(index, p_value) for index, p_value in enumerate(p_values) if p_value is not None]
+    q_values: list[float | None] = [None] * len(p_values)
+    m_tests = len(indexed)
+    if m_tests == 0:
+        return q_values
+    ordered = sorted(indexed, key=lambda item: (item[1], item[0]))
+    running = 1.0
+    adjusted: list[float] = [1.0] * m_tests
+    for rank in range(m_tests, 0, -1):
+        _index, p_value = ordered[rank - 1]
+        raw = p_value * m_tests / rank
+        running = min(running, raw)
+        adjusted[rank - 1] = min(running, 1.0)
+    for (index, _p_value), q_value in zip(ordered, adjusted, strict=True):
+        q_values[index] = q_value
+    return q_values
+
+
+def apply_tsi_nfe_fdr(rows: list[dict[str, Any]]) -> dict[str, Any]:
+    """Fill q-values across the panel and flag q < 0.05. Does not change frequencies."""
+    q_values = benjamini_hochberg([row.get("p_tsi_vs_nfe") for row in rows])
+    n_chi_square = 0
+    n_fisher = 0
+    assumed: list[str] = []
+    for row, q_value in zip(rows, q_values, strict=True):
+        row["q_tsi_vs_nfe"] = q_value
+        if q_value is None:
+            row["tsi_differs_fdr05"] = None
+        else:
+            differs = q_value < FDR_THRESHOLD
+            row["tsi_differs_fdr05"] = differs
+            if differs:
+                phrase = f"Alternate-allele frequency {PANEL_DIFFERENCE}"
+                row["notes"] = _join_notes([str(row.get("notes") or ""), phrase])
+        method = row.pop("_count_test", None)
+        if method == "chi_square":
+            n_chi_square += 1
+        elif method == "fisher":
+            n_fisher += 1
+        if row.pop("_tsi_an_source", None) == "assumed_2x_sample_size":
+            assumed.append(str(row["rsid"]))
+    return {
+        "comparison": "same-allele alternate allele frequency",
+        "wording": PANEL_DIFFERENCE,
+        "test": ("two-sided Fisher exact, or Pearson chi-square when every expected count is >= 5"),
+        "multiple_testing": "Benjamini-Hochberg",
+        "fdr": FDR_THRESHOLD,
+        "n_tests": sum(row.get("p_tsi_vs_nfe") is not None for row in rows),
+        "n_chi_square": n_chi_square,
+        "n_fisher": n_fisher,
+        "descriptive_column": (
+            "tsi_nfe_maf_abs_diff_gt_0_05_descriptive is the absolute MAF gap > 0.05. "
+            "It is not a test."
+        ),
+        "tsi_allele_number": (
+            "sum of Ensembl allele_count for 1000GENOMES:phase_3:TSI when returned"
+        ),
+        "tsi_allele_number_assumption": (
+            f"2 x {TSI_PHASE3_N_SAMPLES} (1000 Genomes phase 3 TSI sample size) "
+            "when Ensembl does not return TSI allele counts"
+        ),
+        "assumption_used_for": assumed,
+    }
 
 
 def load_variants(path: Path) -> pl.DataFrame:
@@ -469,11 +784,27 @@ def build_panel_rows(
         tsi_flag: bool | None = None
         if maf_sub["TSI"] is None or maf_nfe is None:
             notes.append(
-                "TSI versus NFE MAF comparison left empty because one frequency is missing"
+                "Descriptive TSI versus NFE MAF gap left empty because one frequency is missing. "
+                "This gap is not a test."
             )
         else:
             tsi_gap = maf_sub["TSI"] - maf_nfe
             tsi_flag = abs(tsi_gap) > TSI_NFE_MAF_GAP
+
+        af_tsi = af_alt["TSI"]
+        tsi_ac, tsi_an, tsi_an_source = tsi_alt_allele_counts(populations, ref, alt)
+        nfe_ac, nfe_an = nfe_counts_from_cache(cached if isinstance(cached, dict) else None)
+        p_value, count_test = allele_count_test(tsi_ac, tsi_an, nfe_ac, nfe_an)
+        if tsi_an_source == "assumed_2x_sample_size":
+            notes.append(
+                "TSI allele number was not returned by Ensembl; "
+                f"used 2 x {TSI_PHASE3_N_SAMPLES} (1000 Genomes phase 3 TSI sample size)"
+            )
+        if p_value is None:
+            notes.append(
+                "TSI versus NFE allele-count test left empty; "
+                "counts were not filled from another source"
+            )
 
         gene = str(variant["gene_symbol"])
         longevity_class = class_by_gene.get(gene.upper())
@@ -519,9 +850,17 @@ def build_panel_rows(
                 "eur_subpop_maf_max": maf_max,
                 "eur_subpop_maf_range": maf_range,
                 "tsi_minus_nfe_maf": tsi_gap,
-                "tsi_nfe_maf_abs_diff_gt_0_05": tsi_flag,
+                "tsi_nfe_maf_abs_diff_gt_0_05_descriptive": tsi_flag,
+                "af_tsi": af_tsi,
+                "af_nfe": af_nfe,
+                "af_diff": None if af_tsi is None or af_nfe is None else af_tsi - af_nfe,
+                "p_tsi_vs_nfe": p_value,
+                "q_tsi_vs_nfe": None,
+                "tsi_differs_fdr05": None,
                 "power_n1000_or1_5_alpha_bonferroni": reference_power,
                 "notes": _join_notes(notes),
+                "_count_test": count_test,
+                "_tsi_an_source": tsi_an_source,
             }
         )
     return rows
@@ -611,7 +950,13 @@ def panel_frame(rows: list[dict[str, Any]]) -> pl.DataFrame:
         "eur_subpop_maf_max",
         "eur_subpop_maf_range",
         "tsi_minus_nfe_maf",
-        "tsi_nfe_maf_abs_diff_gt_0_05",
+        "tsi_nfe_maf_abs_diff_gt_0_05_descriptive",
+        "af_tsi",
+        "af_nfe",
+        "af_diff",
+        "p_tsi_vs_nfe",
+        "q_tsi_vs_nfe",
+        "tsi_differs_fdr05",
         "power_n1000_or1_5_alpha_bonferroni",
         "notes",
     ]
@@ -740,6 +1085,8 @@ def write_provenance(
     ensembl_counts: dict[str, int],
     ensembl_release: int,
     ensembl_host: str,
+    tsi_vs_nfe: dict[str, Any],
+    nfe_allele_counts: dict[str, Any],
     gnomad_cache: Path,
     ensembl_cache: Path,
     variants_path: Path,
@@ -769,7 +1116,9 @@ def write_provenance(
             "absent_from_cache": gnomad_counts["absent_from_cache"],
             "requery": False,
             "query_date_utc": None,
+            "allele_counts": nfe_allele_counts,
         },
+        "tsi_vs_nfe": tsi_vs_nfe,
         "ensembl": {
             "release": ensembl_release,
             "assembly": ENSEMBL_ASSEMBLY,
@@ -838,13 +1187,14 @@ def main(
     variant_frame = load_variants(variants)
     classes = load_longevitymap_classes(gene_list)
     gnomad_cache_map, gnomad_counts = fetch_nfe_frequencies(variant_frame, gnomad_cache)
+    nfe_allele_counts = ensure_nfe_allele_counts(variant_frame, gnomad_cache, gnomad_cache_map)
     rsids = [normalize_rsid(str(rsid)) for rsid in variant_frame["rsid"].to_list()]
     ensembl_payloads, ensembl_counts, ensembl_release, ensembl_host = fetch_ensembl_variations(
         rsids, ensembl_cache
     )
-    rows = assign_testability_rank(
-        build_panel_rows(variant_frame, classes, gnomad_cache_map, ensembl_payloads)
-    )
+    rows = build_panel_rows(variant_frame, classes, gnomad_cache_map, ensembl_payloads)
+    tsi_vs_nfe = apply_tsi_nfe_fdr(rows)
+    rows = assign_testability_rank(rows)
     panel = panel_frame(rows)
     grid = build_power_grid(rows)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -867,6 +1217,8 @@ def main(
         ensembl_counts=ensembl_counts,
         ensembl_release=ensembl_release,
         ensembl_host=ensembl_host,
+        tsi_vs_nfe=tsi_vs_nfe,
+        nfe_allele_counts=nfe_allele_counts,
         gnomad_cache=gnomad_cache,
         ensembl_cache=ensembl_cache,
         variants_path=variants,

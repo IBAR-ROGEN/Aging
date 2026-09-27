@@ -1,13 +1,13 @@
 {
-  "generated_at_utc": "2026-09-27T08:42:43Z",
+  "generated_at_utc": "2026-09-27T09:21:56Z",
   "disclaimer": "Cohort sizes and odds ratios are illustrative. ROGEN sample size and design are not fixed. Frequencies are from public reference populations, not from Romanian data.",
   "input_variants": {
-    "path": "/Users/mityatoren/code/rogen_aging/data/processed/variants_47_input.csv",
+    "path": "data/processed/variants_47_input.csv",
     "n_rows": 47
   },
   "longevitymap_annotation": {
     "database": "LongevityMap",
-    "table": "/Users/mityatoren/code/rogen_aging/manuscript/tables/41_gene_candidate_list.csv",
+    "table": "manuscript/tables/41_gene_candidate_list.csv",
     "join": "gene_symbol to Gene_Symbol",
     "queried_live": false,
     "role": "gene-level class annotation only"
@@ -17,12 +17,32 @@
     "dataset": "gnomad_r4",
     "population": "nfe",
     "api": "https://gnomad.broadinstitute.org/api",
-    "cache_path": "/Users/mityatoren/code/rogen_aging/data/geo/gnomad_r4_nfe_cache.json",
+    "cache_path": "data/geo/gnomad_r4_nfe_cache.json",
     "cache_hits": 47,
     "new_queries": 0,
     "absent_from_cache": 0,
     "requery": false,
-    "query_date_utc": null
+    "query_date_utc": null,
+    "allele_counts": {
+      "source": "cache fields ac_nfe and an_nfe for the panel alt",
+      "entries_with_counts": 36,
+      "fetched_this_run": 0,
+      "af_gnomad_nfe_modified": false
+    }
+  },
+  "tsi_vs_nfe": {
+    "comparison": "same-allele alternate allele frequency",
+    "wording": "differs between public reference panels (1000G TSI vs gnomAD NFE)",
+    "test": "two-sided Fisher exact, or Pearson chi-square when every expected count is >= 5",
+    "multiple_testing": "Benjamini-Hochberg",
+    "fdr": 0.05,
+    "n_tests": 36,
+    "n_chi_square": 35,
+    "n_fisher": 1,
+    "descriptive_column": "tsi_nfe_maf_abs_diff_gt_0_05_descriptive is the absolute MAF gap > 0.05. It is not a test.",
+    "tsi_allele_number": "sum of Ensembl allele_count for 1000GENOMES:phase_3:TSI when returned",
+    "tsi_allele_number_assumption": "2 x 107 (1000 Genomes phase 3 TSI sample size) when Ensembl does not return TSI allele counts",
+    "assumption_used_for": []
   },
   "ensembl": {
     "release": 116,
@@ -37,11 +57,11 @@
       "1000GENOMES:phase_3:GBR",
       "1000GENOMES:phase_3:FIN"
     ],
-    "cache_path": "/Users/mityatoren/code/rogen_aging/data/geo/ensembl_r116_variation_cache",
-    "cache_hits": 0,
-    "new_queries": 47,
+    "cache_path": "data/geo/ensembl_r116_variation_cache",
+    "cache_hits": 47,
+    "new_queries": 0,
     "request_failures": 0,
-    "query_date_utc": "2026-09-27T08:42:43Z"
+    "query_date_utc": null
   },
   "frequency_policy": "gnomAD v4 NFE and each 1000 Genomes phase 3 EUR subpopulation are stored separately. They are not averaged, and none is labeled as a Romanian frequency.",
   "power": {
@@ -69,42 +89,42 @@
   },
   "release_check": [
     {
-      "path": "/Users/mityatoren/code/rogen_aging/analysis/panel/ro_longevity_panel.csv",
+      "path": "analysis/panel/ro_longevity_panel.csv",
       "kind": "summary",
-      "report": "/Users/mityatoren/code/rogen_aging/analysis/panel/release_checks/ro_longevity_panel.json",
+      "report": "analysis/panel/release_checks/ro_longevity_panel.json",
       "argv": [
         "uv",
         "run",
         "rogen-release-check",
         "--table",
-        "/Users/mityatoren/code/rogen_aging/analysis/panel/ro_longevity_panel.csv",
+        "analysis/panel/ro_longevity_panel.csv",
         "--table-kind",
         "summary",
         "--report",
-        "/Users/mityatoren/code/rogen_aging/analysis/panel/release_checks/ro_longevity_panel.json"
+        "analysis/panel/release_checks/ro_longevity_panel.json"
       ],
       "returncode": 0,
-      "stdout": "PASS individual_level: no individual-level column and no RO- pseudonym; --n-samples was not supplied\nPASS direct_identifiers: no date-of-birth, full-date, postcode, or name column\nPASS allele_count_cells: not applied: table kind is summary\nPASS strata_cells: not applied: table kind is summary\nWrote release report: /Users/mityatoren/code/rogen_aging/analysis/panel/release_checks/ro_longevity_panel.json\n",
+      "stdout": "PASS individual_level: no individual-level column and no RO- pseudonym; --n-samples was not supplied\nPASS direct_identifiers: no date-of-birth, full-date, postcode, or name column\nPASS allele_count_cells: not applied: table kind is summary\nPASS strata_cells: not applied: table kind is summary\nWrote release report: analysis/panel/release_checks/ro_longevity_panel.json\n",
       "stderr": "",
       "status": "passed"
     },
     {
-      "path": "/Users/mityatoren/code/rogen_aging/analysis/panel/ro_longevity_power_grid.csv",
+      "path": "analysis/panel/ro_longevity_power_grid.csv",
       "kind": "summary",
-      "report": "/Users/mityatoren/code/rogen_aging/analysis/panel/release_checks/ro_longevity_power_grid.json",
+      "report": "analysis/panel/release_checks/ro_longevity_power_grid.json",
       "argv": [
         "uv",
         "run",
         "rogen-release-check",
         "--table",
-        "/Users/mityatoren/code/rogen_aging/analysis/panel/ro_longevity_power_grid.csv",
+        "analysis/panel/ro_longevity_power_grid.csv",
         "--table-kind",
         "summary",
         "--report",
-        "/Users/mityatoren/code/rogen_aging/analysis/panel/release_checks/ro_longevity_power_grid.json"
+        "analysis/panel/release_checks/ro_longevity_power_grid.json"
       ],
       "returncode": 0,
-      "stdout": "PASS individual_level: no individual-level column and no RO- pseudonym; --n-samples was not supplied\nPASS direct_identifiers: no date-of-birth, full-date, postcode, or name column\nPASS allele_count_cells: not applied: table kind is summary\nPASS strata_cells: not applied: table kind is summary\nWrote release report: /Users/mityatoren/code/rogen_aging/analysis/panel/release_checks/ro_longevity_power_grid.json\n",
+      "stdout": "PASS individual_level: no individual-level column and no RO- pseudonym; --n-samples was not supplied\nPASS direct_identifiers: no date-of-birth, full-date, postcode, or name column\nPASS allele_count_cells: not applied: table kind is summary\nPASS strata_cells: not applied: table kind is summary\nWrote release report: analysis/panel/release_checks/ro_longevity_power_grid.json\n",
       "stderr": "",
       "status": "passed"
     }

@@ -28,7 +28,11 @@ For each variant the table also records:
 
 - whether NFE MAF is below 0.01
 - the minimum, maximum, and range of MAF across the EUR subpopulations that have a frequency (the range is empty when fewer than two subpopulations are present)
-- whether TSI MAF and NFE MAF differ by more than 0.05
+- `tsi_nfe_maf_abs_diff_gt_0_05_descriptive`: whether TSI MAF and NFE MAF differ by more than 0.05. This column is not a test.
+
+The alternate allele, not the minor allele, is what is compared between 1000 Genomes phase 3 TSI and gnomAD v4 NFE. Each variant is a 2×2 table of alt-allele counts versus the other alleles. The test is two-sided Fisher exact, or Pearson chi-square when every expected count is at least 5. Benjamini-Hochberg q-values are computed across those tests. `tsi_differs_fdr05` is true when q < 0.05. A true flag means the alternate-allele frequency differs between public reference panels (1000G TSI vs gnomAD NFE). It is not a Romanian frequency and it is not a Southeast European frequency.
+
+TSI allele number is the sum of Ensembl `allele_count` for `1000GENOMES:phase_3:TSI` when those counts are returned. If they are not, the allele number is 2 × 107 (the phase 3 TSI sample size), and that assumption is written in the provenance JSON. gnomAD NFE allele count and allele number are the cache fields `ac_nfe` and `an_nfe` for the panel alt. `af_gnomad_nfe` is not replaced. Columns `af_tsi`, `af_nfe`, and `af_diff` are that same alt-allele pair and their difference.
 
 ## Power
 
