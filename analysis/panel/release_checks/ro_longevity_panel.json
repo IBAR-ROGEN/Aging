@@ -1,5 +1,5 @@
 {
-  "table": "/Users/mityatoren/code/rogen_aging/analysis/panel/ro_longevity_panel.csv",
+  "table": "analysis/panel/ro_longevity_panel.csv",
   "table_kind": "summary",
   "min_cell_count": 5,
   "n_samples": null,
