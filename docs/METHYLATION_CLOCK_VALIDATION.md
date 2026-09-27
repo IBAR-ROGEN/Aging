@@ -92,9 +92,11 @@ uv run python scripts/audit_clock_artifacts.py
 
 ## ONT and bisulfite on HG002 chr20
 
-Method defined; run pending (toolchain not installed as of 2026-09-27).
+Method defined. The ONT run itself is still pending. Nothing has been downloaded. Do not use `gm24385_mod_2021.09/extra_analysis/all.bam`.
 
-`scripts/clock/ont_clock_site_coverage.py` is the comparison. Nothing has been downloaded. Do not use `gm24385_mod_2021.09/extra_analysis/all.bam`.
+The CLI tools are installed in the micromamba environment `rogen-tools`, not on the default `PATH` ([TOOLCHAIN_SEPT2026.md](TOOLCHAIN_SEPT2026.md)): samtools 1.24, bcftools 1.24, minimap2 2.31-r1302, modkit 0.6.4, tabix and bgzip from htslib 1.24. `pysam` and `pod5` are not installed.
+
+`scripts/clock/ont_clock_site_coverage.py` is the comparison.
 
 Confirmed input URLs, copied from that script:
 

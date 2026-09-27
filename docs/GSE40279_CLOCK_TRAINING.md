@@ -36,7 +36,7 @@ From that file: `n_train_samples` 524, `n_test_samples` 132, `n_cpgs_features` 8
 
 Hold-out metrics in `holdout_metrics_from_train_clock` of `models/gse40279_hannum450k_elasticnet.provenance.json` (the same three values are in `outputs/gse40279_hannum450k_train_metrics.json`): `test_mae` 3.5248637199401855, `test_rmse` 4.727581024169922, `test_pearson_r` 0.9566776752471924.
 
-GSE87571 evaluation of this joblib: not yet run. `outputs/clock_metrics.json` is an older file whose `model_path` is `models/ro_clock_elasticnet_gse40279.pkl`, not the Hannum joblib.
+GSE87571 evaluation of this joblib has run (commit `56740c1`). From `outputs/validation_metrics.json`: `n_samples` 729, `mae_overall` 3.760192551894116, `median_ae` 3.2548561096191406, `pearson_r` 0.9867447913584797. Those figures are external to the GSE40279 train/test split. `outputs/clock_metrics.json` is not in the tree; the July fixture copy is `outputs/archive/fixture_2026-07/clock_metrics.json` and is not this result.
 
 ## Expected input format
 
