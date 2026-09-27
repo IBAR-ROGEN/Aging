@@ -1,15 +1,1 @@
 rsid,chrom,pos,ref,panel_alt,gnomad_cache_variant_id,alt_allele,af_ceu,af_tsi,af_nfe_gnomad_genomes,af_nfe_gnomad_exomes,gnomad_v4_queried_variant_id,gnomad_v4_exists,gnomad_v4_nfe_ac,gnomad_v4_nfe_an,gnomad_v4_nfe_af,note,grch38_ref_base,ensembl_alts,panel_alt_in_gnomad,panel_alt_equals_reverse_complement_of_listed_allele
-rs9916344,17,6494893,C,A,17-6494893-C-T,A,,,,,17-6494893-C-A,false,,,,alt allele mismatch between panel and gnomAD cache,,,,
-rs9916344,17,6494893,C,A,17-6494893-C-T,G,,,,,17-6494893-C-A,false,,,,alt allele mismatch between panel and gnomAD cache,,,,
-rs9916344,17,6494893,C,A,17-6494893-C-T,T,0.52020202020202,0.644859813084112,0.5093,,17-6494893-C-A,false,,,,alt allele mismatch between panel and gnomAD cache,,,,
-rs1801318,2,206141952,T,A,2-206141952-T-C,A,,,,,2-206141952-T-A,false,,,,alt allele mismatch between panel and gnomAD cache,,,,
-rs1801318,2,206141952,T,A,2-206141952-T-C,C,0.282828282828283,0.401869158878505,0.3115,0.3088,2-206141952-T-A,false,,,,alt allele mismatch between panel and gnomAD cache,,,,
-rs1800774,16,56981633,C,A,16-56981633-C-T,A,,,,,16-56981633-C-A,false,,,,panel alt absent from gnomAD v4,C,A|G|T,false,true
-rs41383,16,57077090,T,A,16-57077090-T-C,A,,,,,16-57077090-T-A,false,,,,panel alt absent from gnomAD v4,T,A|C,false,true
-rs7207422,17,33127370,A,C,17-33127370-A-G,C,,,,,17-33127370-A-C,false,,,,panel alt absent from gnomAD v4,A,C|G,false,true
-rs1981429,20,45347053,G,C,20-45347053-G-T,C,,,,,20-45347053-G-C,false,,,,panel alt absent from gnomAD v4,G,C|T,false,true
-rs139170,22,44203572,C,G,22-44203572-C-T,G,,,,,22-44203572-C-G,false,,,,panel alt absent from gnomAD v4,C,G|T,false,true
-rs524533,6,44272822,C,A,6-44272822-C-T,A,,,,,6-44272822-C-A,false,,,,panel alt absent from gnomAD v4,C,A|G|T,false,true
-rs882696,8,15545789,T,A,8-15545789-T-C,A,,,,,8-15545789-T-A,false,,,,panel alt absent from gnomAD v4,T,A|C|G,false,true
-rs28366003,16,56608579,A,C,16-56608579-A-C,C,,,,,16-56608579-A-C,true,11,1151536,9.552458629170082e-06,panel alt present in gnomAD but absent or near-absent in NFE; frequency inconsistent with 1000G,A,C|G,true,true
-rs155979,5,96434194,G,A,5-96434194-G-A,A,,,,,5-96434194-G-A,true,0,68044,0,panel alt present in gnomAD but absent or near-absent in NFE; frequency inconsistent with 1000G,G,A|C|T,true,true

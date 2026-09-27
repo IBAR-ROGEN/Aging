@@ -8,7 +8,7 @@ Cohort sizes and odds ratios are illustrative. ROGEN sample size and design are 
 
 | File | Role |
 |------|------|
-| `data/processed/variants_47_input.csv` | The 47 prioritized variants (`chrom`, `pos`, `ref`, `alt`, `rsid`, `gene_symbol`). The script stops if this file is missing or does not have 47 data rows. It does not rebuild the list. |
+| `data/processed/variants_47_input_v2.csv` | The 47 prioritized variants used by the panel (`chrom`, `pos`, `ref`, `alt`, `rsid`, `gene_symbol`, plus `alt_source`, `alt_evidence`, and `alt_status`). Eleven alts replace the original panel alt. `rs5882` is `alt_status=unresolved` and keeps its original alt. The original file `data/processed/variants_47_input.csv` is unchanged. The script stops if the v2 file is missing or does not have 47 data rows. |
 | `manuscript/tables/41_gene_candidate_list.csv` | Gene-level `Longevity_Class` (Pro-Longevity, Anti-Longevity, Context-Dependent). Joined on `gene_symbol` for annotation only. |
 
 `Longevity_Class` in that table is the LongevityMap class used in the manuscript. This script does not query LongevityMap.

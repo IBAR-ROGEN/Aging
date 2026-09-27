@@ -75,6 +75,7 @@ data/processed/*
 !data/processed/manual_resolution_alleles.csv
 !data/processed/manual_resolution_worksheet.csv
 !data/processed/allele_evidence_47.csv
+!data/processed/variants_47_input_v2.csv
 results/*
 !results/.gitkeep
 outputs/*
@@ -120,6 +121,7 @@ docs/_build/
 !data/processed/manual_resolution_alleles.csv
 !data/processed/manual_resolution_worksheet.csv
 !data/processed/allele_evidence_47.csv
+!data/processed/variants_47_input_v2.csv
 !data/network/*.csv
 !manuscript/tables/*.csv
 *.tsv

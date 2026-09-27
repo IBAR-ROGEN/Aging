@@ -17,7 +17,7 @@ paths:
     geo_cache: data/geo
     romanian_mock_dir: data/mock_romanian_cohort
   july:
-    variants: data/processed/variants_47_input.csv
+    variants: data/processed/variants_47_input_v2.csv
     fixture_variants: data/processed/prioritized_variants.csv
     alphagenome: data/scores/alphagenome_raw.parquet
     alphamissense: data/scores/alphamissense_raw.parquet

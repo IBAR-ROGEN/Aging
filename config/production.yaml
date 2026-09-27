@@ -8,7 +8,7 @@ july:
 
 paths:
   july:
-    variants: data/processed/variants_47_input.csv
+    variants: data/processed/variants_47_input_v2.csv
     output_xlsx: outputs/Supplementary_Table_1_Annotated_Variants.xlsx
   integrative:
     output_dir: analysis/integrative/results

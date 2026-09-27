@@ -7,7 +7,8 @@ Required inputs for [`scripts/ukb/run_july_annotation_pipeline.py`](scripts/ukb/
 
 | Path | Role | Required |
 |------|------|----------|
-| `data/processed/variants_47_input.csv` | 47 prioritized variants (`chrom`, `pos`, `ref`, `alt`, `rsid`, `gene_symbol`) | yes |
+| `data/processed/variants_47_input.csv` | Original 47-variant allele assignments. Kept for provenance. Not the panel input. | yes |
+| `data/processed/variants_47_input_v2.csv` | Panel and `paths.july.variants` input. Eleven corrected alts; `rs5882` remains unresolved. | yes |
 | `data/scores/alphagenome_raw.parquet` | Pre-computed AlphaGenome score matrix | yes |
 | `data/scores/alphamissense_raw.parquet` | Pre-computed AlphaMissense score matrix | yes |
 
@@ -15,7 +16,7 @@ Required inputs for [`scripts/ukb/run_july_annotation_pipeline.py`](scripts/ukb/
 
 | Path | Description |
 |------|-------------|
-| `outputs/Supplementary_Table_1_Annotated_Variants.xlsx` | Three-sheet workbook: Combined_Master, High_Impact_Functional, GTEx_eQTL_Summary |
+| `outputs/Supplementary_Table_1_Annotated_Variants.xlsx` | Three-sheet workbook: Combined_Master, High_Impact_Functional, GTEx_eQTL_Summary. STALE relative to `variants_47_input_v2.csv` (not rebuilt; the July pipeline joins AlphaGenome). Affected rsids: rs28366003, rs1800774, rs41383, rs9916344, rs7207422, rs1801318, rs1981429, rs139170, rs155979, rs524533, rs882696. |
 
 ### Notes
 

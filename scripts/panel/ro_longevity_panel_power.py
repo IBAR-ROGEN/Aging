@@ -80,7 +80,7 @@ DISCLAIMER = (
     "not from Romanian data."
 )
 
-DEFAULT_VARIANTS = REPO_ROOT / "data" / "processed" / "variants_47_input.csv"
+DEFAULT_VARIANTS = REPO_ROOT / "data" / "processed" / "variants_47_input_v2.csv"
 DEFAULT_GENE_LIST = REPO_ROOT / "manuscript" / "tables" / "41_gene_candidate_list.csv"
 DEFAULT_GNOMAD_CACHE = REPO_ROOT / "data" / "geo" / "gnomad_r4_nfe_cache.json"
 DEFAULT_ENSEMBL_CACHE = REPO_ROOT / "data" / "geo" / "ensembl_r116_variation_cache"
