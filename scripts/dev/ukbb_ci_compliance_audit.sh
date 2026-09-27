@@ -75,6 +75,17 @@ should_prune_path() {
   esac
 }
 
+# Return 0 when git would not commit this path. Tracked files stay visible:
+# check-ignore without --no-index does not treat index entries as ignored.
+# Outside a git checkout, nothing is treated as ignored.
+is_gitignored() {
+  local rel="$1"
+  if ! git -C "$REPO_ROOT" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    return 1
+  fi
+  git -C "$REPO_ROOT" check-ignore -q -- "$rel"
+}
+
 # --- Check 1: sensitive / large genomic and clinical filenames in the tree ---
 # Security rationale: .vcf/.bam/.bed (and friends) can carry individual-level
 # genetic or functional data; committing them breaks segregation from the public
@@ -88,7 +99,7 @@ scan_sensitive_files() {
 
   while IFS= read -r -d '' f; do
     rel="${f#./}"
-    if should_prune_path "$f"; then
+    if should_prune_path "$f" || is_gitignored "$rel"; then
       continue
     fi
     hits+=("$rel")
@@ -107,7 +118,7 @@ scan_sensitive_files() {
   local csv_ped_hits=()
   while IFS= read -r -d '' f; do
     rel="${f#./}"
-    if should_prune_path "$f"; then
+    if should_prune_path "$f" || is_gitignored "$rel"; then
       continue
     fi
     csv_ped_hits+=("$rel")

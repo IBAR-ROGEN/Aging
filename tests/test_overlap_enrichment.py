@@ -19,8 +19,14 @@ _SNPS = _REPO_ROOT / "results" / "snps_validated.csv"
 @pytest.mark.skipif(not _LONGEVITY.is_file(), reason="longevity sqlite missing")
 @pytest.mark.skipif(not _SNPS.is_file(), reason="snps_validated.csv missing")
 def test_overlap_enrichment_run_match(tmp_path: Path) -> None:
-    """End-to-end enrichment against local inputs must report MATCH (41 genes)."""
+    """End-to-end enrichment against local inputs must report MATCH (41 genes).
+
+    The platform-universe GPL list is optional and gitignored. Point the run at
+    a path that is not on disk so the report's SKIPPED fallback does not depend
+    on whether ``data/ad_pd_gpl_ids.txt`` exists locally.
+    """
     out = tmp_path / "overlap_out"
+    missing_gpl = tmp_path / "missing_ad_pd_gpl_ids.txt"
     result = subprocess.run(
         [
             "uv",
@@ -35,6 +41,8 @@ def test_overlap_enrichment_run_match(tmp_path: Path) -> None:
             str(_LONGEVITY),
             "--snps-validated",
             str(_SNPS),
+            "--gpl-file",
+            str(missing_gpl),
             "--output-dir",
             str(out),
             "--cache-dir",

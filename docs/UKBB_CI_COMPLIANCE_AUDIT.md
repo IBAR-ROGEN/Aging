@@ -56,6 +56,8 @@ The script reads **`WORK`**, not `WORK_ROOT`; `WORK_ROOT` is an internal normali
 
 **Method:** `find` lists files under `REPO_ROOT` (with common junk paths pruned), then `grep` filters paths by extension (null-terminated stream).
 
+**Not reported:** paths git already ignores and that are not in the index. A local mock VCF under `test_data/` stays out of this check while `*.vcf` is ignored. A tracked file is still reported, including one that was force-added over an ignore rule.
+
 **Always reported (any size):** paths whose names match restricted genomic-style suffixes, including for example:
 
 - `.vcf`, `.vcf.gz`, `.vcf.bgz`, `.bcf`, `.bcf.csi`
