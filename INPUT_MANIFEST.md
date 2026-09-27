@@ -74,3 +74,10 @@ Required upstream artefact for [`scripts/integrative/run_pipeline.py`](scripts/i
 | `analysis/integrative/results/annotated_variants.parquet` | Variants remapped to tissue eQTL summaries |
 | `analysis/integrative/results/eqtl_summary.parquet` | Per-rsID GTEx summary |
 | `analysis/integrative/results/variant_risks.parquet` | Channel scores + `composite_risk` |
+
+---
+
+## September 2026: secure intake and dry runs
+
+Filled in by later steps.
+
