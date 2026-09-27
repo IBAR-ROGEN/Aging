@@ -90,6 +90,14 @@ uv run python scripts/audit_clock_artifacts.py
 
 The current checkout's report is [CLOCK_ARTIFACT_AUDIT.md](CLOCK_ARTIFACT_AUDIT.md): loadable clocks use fixture probe names `cg_test_*`, not Illumina IDs `cg########`. A MAE is TRACEABLE only when that metrics file records the same feature count as an artifact and either names that artifact or uses its probe-id pattern. Tests: `uv run pytest tests/test_audit_clock_artifacts.py -q`.
 
+## ONT and bisulfite on HG002 chr20
+
+`scripts/clock/ont_clock_site_coverage.py` compares ONT `(5mC + 5hmC) / valid` with bisulfite fraction at clock CpGs covered on chr20. The ONT alignment is the GIAB 2025.01 `SAMPLE.haplotagged.cram` (GRCh38 `chr20`). The bisulfite file is `gm24385_mod_2021.09/bisulphite/cpg/CpG.gz.bismark.cov.gz`. Do not use `gm24385_mod_2021.09/extra_analysis/all.bam`.
+
+Bismark `.cov` coordinates are 1-based and per strand. C(+) at position `p` and C(-) at `p+1` are merged into one CpG before the join. Zhou HM450 `CpG_beg` is already 0-based and is the modkit start. Illumina reads for a FASTQ delivery come from `HG002.GRCh38.300x_chr20.bam`, downsampled with `samtools view -s 0.1` (seed 0, about 30x).
+
+HG002, NA24385, and GM24385 are the same cell line. The ONT run (2024-06-19, R10.4.1 e8.2, sup v5.0.0) and the bisulfite coverage in the 2021.09 bucket were cultured and sequenced years apart, so part of any difference is biological. A local modkit pileup is the ONT measurement. The three public haplotype bedMethyl files are summed and cross-checked; they do not replace that pileup.
+
 ## See also
 
 - [CLOCK_LIBRARY.md](CLOCK_LIBRARY.md) — package API and `rogen-clock` CLI
