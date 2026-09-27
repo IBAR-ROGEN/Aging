@@ -1,7 +1,7 @@
 # GSE40279 (Hannum 2013) Elastic Net clock training
 
 **Project:** IBAR-ROGEN Aging  
-**Canonical CLI:** `uv run rogen-clock train|evaluate`  
+**Canonical CLI:** `uv run rogen-clock prepare-gse40279`, `train`, or `evaluate`  
 **Library:** `src/rogen_aging/clock/` — see **[docs/CLOCK_LIBRARY.md](CLOCK_LIBRARY.md)**  
 **Legacy wrappers:** `scripts/clock/train_clock_on_gse40279.py`, `scripts/clock/validate_clock.py` (deprecated)
 
@@ -9,13 +9,34 @@
 
 [GSE40279](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE40279) is a public Illumina HumanMethylation450 whole-blood dataset (Hannum et al., 2013; on the order of hundreds of samples). This repository provides a **training-only** CLI that fits a **`Pipeline(SimpleImputer, ElasticNetCV)`** on a **wide** table: one row per sample, one column per CpG probe (names starting with `cg`), plus **`chronological_age`**.
 
-The script does **not** download GEO Series Matrix files, parse IDATs, or map probe annotations. You must obtain the data from NCBI GEO and convert it to the expected column layout yourself (for example in R with `minfi`/`GEOquery`, or in Python after exporting β-values).
-
-A file whose name contains `gse40279` can still be the demo clock. `scripts/audit_clock_artifacts.py` opens every `.pkl`, `.joblib`, and `.sav` in the checkout read-only and writes [CLOCK_ARTIFACT_AUDIT.md](CLOCK_ARTIFACT_AUDIT.md). In this checkout those artifacts are flagged FIXTURE (`cg_test_*` probes). Do not evaluate that fixture as the Hannum model.
+`rogen-clock prepare-gse40279` downloads the GEO series matrix and writes the wide beta table. It does not train a model.
 
 ```bash
-uv run python scripts/audit_clock_artifacts.py
+uv run rogen-clock prepare-gse40279 \
+  --output data/methylation/GSE40279_processed.parquet
 ```
+
+| Path | Role |
+|------|------|
+| `data/methylation/GSE40279_processed.parquet` | Wide betas (`sample_id`, `chronological_age`, `cg*` float32) |
+| `models/gse40279_hannum450k_elasticnet.joblib` | Production clock. [CLOCK_ARTIFACT_AUDIT.md](CLOCK_ARTIFACT_AUDIT.md) flags it CANDIDATE REAL |
+| `models/gse40279_hannum450k_elasticnet.provenance.json` | Training provenance |
+| `models/gse40279_hannum450k_elasticnet_cpgs.csv` | Non-zero CpGs and weights |
+| `models/fixtures/fixture_clock_cg_test.pkl` | Demo clock. Probe names are `cg_test_*` |
+
+`rogen-clock evaluate` refuses a model whose features are all `cg_test_*` unless `--demo` is passed. The fixture path above is that demo clock. The production clock is `models/gse40279_hannum450k_elasticnet.joblib`.
+
+Which serializations are fixtures is the audit report, not a filename. Regenerate it with `uv run python scripts/audit_clock_artifacts.py`.
+
+### Provenance fields
+
+`models/gse40279_hannum450k_elasticnet.provenance.json` records `geo_accession`, `model_path`, `input_parquet`, `input_parquet_sha256`, `n_cpgs_features`, `n_train_samples`, `n_test_samples`, `probe_counts` (`input_cg`, `overlap_gse87571`, `after_missingness_le_5pct_on_train`, `after_abs_age_correlation_on_train`, `trained`), `filters`, `n_nonzero_coefficients`, `nonzero_cpg_csv`, `hyperparameters` (`alpha`, `l1_ratio`, `cv`, `cv_note`), `random_state`, `sklearn_version`, `git_commit`, `timestamp_utc`, and `holdout_metrics_from_train_clock`.
+
+From that file: `n_train_samples` 524, `n_test_samples` 132, `n_cpgs_features` 8000, `probe_counts.input_cg` 470043, `probe_counts.overlap_gse87571` 470043, `probe_counts.after_missingness_le_5pct_on_train` 470043, `probe_counts.after_abs_age_correlation_on_train` 51165, `probe_counts.trained` 8000, `n_nonzero_coefficients` 2314. `hyperparameters.cv` is 5. The `cv_note` says cv was lowered from 10 to 5 because 8000 training probes would make ElasticNetCV exceed about 2 hours on a laptop, and that no other hyperparameter was changed.
+
+Hold-out metrics in `holdout_metrics_from_train_clock` of `models/gse40279_hannum450k_elasticnet.provenance.json` (the same three values are in `outputs/gse40279_hannum450k_train_metrics.json`): `test_mae` 3.5248637199401855, `test_rmse` 4.727581024169922, `test_pearson_r` 0.9566776752471924.
+
+GSE87571 evaluation of this joblib: not yet run. `outputs/clock_metrics.json` is an older file whose `model_path` is `models/ro_clock_elasticnet_gse40279.pkl`, not the Hannum joblib.
 
 ## Expected input format
 
@@ -74,18 +95,18 @@ Example (paths are illustrative):
 
 ```bash
 uv run rogen-clock train \
-  --input_data data/gse40279_beta_age.parquet \
-  --output_model analysis/gse40279_elasticnet_clock.pkl \
-  --output_metrics analysis/gse40279_train_metrics.json
+  --input_data data/methylation/GSE40279_processed.parquet \
+  --output_model models/gse40279_hannum450k_elasticnet.joblib \
+  --output_metrics outputs/gse40279_hannum450k_train_metrics.json
 ```
 
 Equivalent script path:
 
 ```bash
 uv run python scripts/clock/run_clock.py train \
-  --input_data data/gse40279_beta_age.parquet \
-  --output_model analysis/gse40279_elasticnet_clock.pkl \
-  --output_metrics analysis/gse40279_train_metrics.json
+  --input_data data/methylation/GSE40279_processed.parquet \
+  --output_model models/gse40279_hannum450k_elasticnet.joblib \
+  --output_metrics outputs/gse40279_hannum450k_train_metrics.json
 ```
 
 ## Validating the saved model
@@ -115,7 +136,7 @@ uv run python -m rogen_aging.clock.external_data \
   --restrict-cpgs-file data/my_clock_selected_cpgs.txt
 
 uv run rogen-clock evaluate \
-  --model_path analysis/gse40279_elasticnet_clock.pkl \
+  --model_path models/gse40279_hannum450k_elasticnet.joblib \
   --test_data data/gse87571.parquet \
   --output_dir figures/validation_gse87571
 

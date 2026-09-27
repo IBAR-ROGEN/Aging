@@ -34,7 +34,9 @@ See [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md#data-flow) for the full path ref
 
 | Command | Purpose |
 |---------|---------|
-| `rogen-clock train …` / `rogen-clock evaluate …` | Epigenetic clock train & validation ([CLOCK_LIBRARY.md](CLOCK_LIBRARY.md)) |
+| `rogen-clock prepare-gse40279` / `train` / `evaluate` | GSE40279 matrix, Hannum clock train, and validation ([GSE40279_CLOCK_TRAINING.md](GSE40279_CLOCK_TRAINING.md)) |
+| `rogen-intake make-key` / `rogen-intake run` | Checksum, pseudonym, and leak check ([DATA_FLOW.md](DATA_FLOW.md)) |
+| `rogen-release-check` | Aggregate-table release guard. No `run` subcommand ([DATA_FLOW.md](DATA_FLOW.md)) |
 | `rogen-ukb-manifest build …` / `… extract …` | LA-SNP manifest + 1KG AF ([LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md](LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md)) |
 | `rogen-compare-af-gnomad …` | 1KG vs gnomAD v4 NFE ([LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md](LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md)) |
 | `rogen-compare-af-gnomad summarize …` | Markdown summary + top-|ΔAF| table from comparison CSV |
@@ -50,11 +52,13 @@ Legacy script paths under `scripts/*.py` and at the repo root remain as **deprec
 ### Epigenetic clock (Activity 2.1.10.1)
 
 - **Package:** `src/rogen_aging/clock/` (`data.py`, `model.py`, `train.py`, `evaluate.py`, `external_data.py`)
-- **Canonical CLI:** `uv run rogen-clock train|evaluate` or `scripts/clock/run_clock.py`
+- **Canonical CLI:** `uv run rogen-clock prepare-gse40279`, `train`, or `evaluate` (or `scripts/clock/run_clock.py`)
+- **Production clock:** `models/gse40279_hannum450k_elasticnet.joblib` ([CLOCK_ARTIFACT_AUDIT.md](CLOCK_ARTIFACT_AUDIT.md) flags it CANDIDATE REAL)
 - **GSE87571 external cohort:** `uv run python -m rogen_aging.clock.external_data --output data/gse87571.parquet`
 - **External-validation figure:** `uv run python scripts/figures/plot_clock_eval.py` → [CLOCK_EVAL_FIGURES.md](CLOCK_EVAL_FIGURES.md)
 - **Final metrics + three-panel figure:** `uv run python scripts/clock/evaluate_methylation_clock.py` → [METHYLATION_CLOCK_VALIDATION.md](METHYLATION_CLOCK_VALIDATION.md) · [INPUT_MANIFEST.md](../INPUT_MANIFEST.md)
-- **Artifact provenance (read-only):** `uv run python scripts/audit_clock_artifacts.py` → [CLOCK_ARTIFACT_AUDIT.md](CLOCK_ARTIFACT_AUDIT.md). A path containing `gse40279` is a fixture when its probe names are `cg_test_*`.
+- **Artifact provenance (read-only):** `uv run python scripts/audit_clock_artifacts.py` → [CLOCK_ARTIFACT_AUDIT.md](CLOCK_ARTIFACT_AUDIT.md). A serialization is a fixture when its probe names are `cg_test_*` (`models/fixtures/fixture_clock_cg_test.pkl`). `rogen-clock evaluate` refuses that model unless `--demo` is passed. The production clock is `models/gse40279_hannum450k_elasticnet.joblib`.
+- **ONT vs bisulfite at chr20 clock CpGs:** `uv run python scripts/clock/ont_clock_site_coverage.py` → [METHYLATION_CLOCK_VALIDATION.md](METHYLATION_CLOCK_VALIDATION.md). Method defined; run pending (toolchain not installed as of 2026-09-27).
 - **Romanian mock demo** (separate StandardScaler path): `scripts/clock/train_romanian_epigenetic_clock.py`
 - **Docs:** [CLOCK_LIBRARY.md](CLOCK_LIBRARY.md), [GSE40279_CLOCK_TRAINING.md](GSE40279_CLOCK_TRAINING.md), [CLOCK_ARTIFACT_AUDIT.md](CLOCK_ARTIFACT_AUDIT.md), [CLOCK_EVAL_FIGURES.md](CLOCK_EVAL_FIGURES.md), [METHYLATION_CLOCK_VALIDATION.md](METHYLATION_CLOCK_VALIDATION.md), [ROMANIAN_EPIGENETIC_CLOCK.md](ROMANIAN_EPIGENETIC_CLOCK.md), [ACTIVITIES.md](ACTIVITIES.md#21101--methylation-aging-clock)
 
@@ -124,7 +128,15 @@ eQTL Catalogue coverage (73 alleles × 14 `dataset_id` columns; cerebellum stays
 uv run python scripts/build_eqtl_coverage.py
 ```
 
-See [GENOMICS_ANALYSIS.md](GENOMICS_ANALYSIS.md) · module index: [analysis/genomics/README.md](../analysis/genomics/README.md).
+Illustrative power for the 47 prioritized variants (public frequencies only):
+
+```bash
+uv run python scripts/panel/ro_longevity_panel_power.py
+```
+
+See [GENOMICS_ANALYSIS.md](GENOMICS_ANALYSIS.md) · [RO_LONGEVITY_PANEL.md](RO_LONGEVITY_PANEL.md) · module index: [analysis/genomics/README.md](../analysis/genomics/README.md).
+
+Sequencing intake and the release guard: [DATA_FLOW.md](DATA_FLOW.md). `uv run rogen-intake make-key` and `uv run rogen-intake run`. `uv run rogen-release-check` takes `--table`, `--table-kind`, and `--report` directly. It has no `run` subcommand.
 
 ### July prioritized-variant annotation
 

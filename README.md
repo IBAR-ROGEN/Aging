@@ -178,6 +178,8 @@ Default risk-channel weights are VEP 0.25, AlphaGenome 0.25, AlphaMissense 0.25,
 | July prioritized-variant annotation (GTEx · VEP · Alpha scores) | [docs/JULY_ANNOTATION_PIPELINE.md](docs/JULY_ANNOTATION_PIPELINE.md) |
 | Integrative variant×tissue×phenotype risk | [docs/INTEGRATIVE_PIPELINE.md](docs/INTEGRATIVE_PIPELINE.md) |
 | Methylation clock validation (GSE87571) | [docs/METHYLATION_CLOCK_VALIDATION.md](docs/METHYLATION_CLOCK_VALIDATION.md) |
+| Sequencing intake and release guard | [docs/DATA_FLOW.md](docs/DATA_FLOW.md) |
+| Illustrative longevity-panel power | [docs/RO_LONGEVITY_PANEL.md](docs/RO_LONGEVITY_PANEL.md) |
 | Nomenclature reconciliation & manuscript figures | [docs/NOMENCLATURE_RECONCILE_FIGURES.md](docs/NOMENCLATURE_RECONCILE_FIGURES.md) |
 
 ### Navigation and reference

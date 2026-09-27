@@ -69,7 +69,7 @@ uv run python scripts/clock/evaluate_methylation_clock.py
 # → outputs/figures/Figure_Epigenetic_Clock_Panels.png/.pdf
 ```
 
-Required inputs are listed in [`INPUT_MANIFEST.md`](../INPUT_MANIFEST.md) (bare ElasticNet pickle at `models/ro_clock_elasticnet_gse40279.pkl`). Override paths or pass `--skip-manifest-check` for ad-hoc runs.
+Required inputs are listed in [`INPUT_MANIFEST.md`](../INPUT_MANIFEST.md). The production clock is `models/gse40279_hannum450k_elasticnet.joblib`. The `cg_test_*` demo clock is `models/fixtures/fixture_clock_cg_test.pkl`; `rogen-clock evaluate` refuses it unless `--demo` is passed. Override paths or pass `--skip-manifest-check` for ad-hoc runs.
 
 See **[METHYLATION_CLOCK_VALIDATION.md](METHYLATION_CLOCK_VALIDATION.md)**.
 

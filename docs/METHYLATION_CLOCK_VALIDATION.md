@@ -23,7 +23,7 @@ This complements `rogen-clock evaluate` (decade MAE / residual PNGs) and `plot_c
 |-------|--------------|-------------|
 | Methylation matrix | `data/methylation/GSE87571_processed.parquet` | Wide beta table (`sample_id` + `cg*` columns; probes×samples also accepted) |
 | Phenotype metadata | `data/methylation/GSE87571_meta.csv` | `sample_id` (or GEO accession) + `chronological_age` / `age` |
-| Trained model | `models/ro_clock_elasticnet_gse40279.pkl` | Fitted bare `sklearn.linear_model.ElasticNet` (Pipelines / ElasticNetCV rejected) |
+| Trained model | `models/gse40279_hannum450k_elasticnet.joblib` | GSE40279 pipeline (`SimpleImputer` → `ElasticNetCV`). [CLOCK_ARTIFACT_AUDIT.md](CLOCK_ARTIFACT_AUDIT.md) flags it CANDIDATE REAL |
 | Probe→gene annotation (optional) | `data/methylation/HM450_probe_annotation.csv` | `IlmnID` + `UCSC_RefGene_Name` (falls back to Horvath S3 table) |
 
 Preflight: the script reads [`INPUT_MANIFEST.md`](../INPUT_MANIFEST.md) and aborts if any required file is missing.
@@ -48,7 +48,7 @@ uv run python scripts/clock/evaluate_methylation_clock.py
 uv run python scripts/clock/evaluate_methylation_clock.py \
   --methylation data/methylation/GSE87571_processed.parquet \
   --meta data/methylation/GSE87571_meta.csv \
-  --model models/ro_clock_elasticnet_gse40279.pkl \
+  --model models/gse40279_hannum450k_elasticnet.joblib \
   --metrics-out outputs/clock_metrics.json \
   --figure-stem outputs/figures/Figure_Epigenetic_Clock_Panels \
   --annotation data/methylation/HM450_probe_annotation.csv \
@@ -64,7 +64,7 @@ uv run python scripts/clock/evaluate_methylation_clock.py \
 
 ## Technical notes
 
-- **Estimator contract:** the pickle must unpickle to exactly `sklearn.linear_model.ElasticNet`. `Pipeline`, `ElasticNetCV`, and other regressors raise `TypeError` (no silent retrain).
+- **Estimator contract:** a bare `sklearn.linear_model.ElasticNet`, or a `Pipeline` whose last step is `ElasticNet` or `ElasticNetCV`. `rogen-clock evaluate` refuses a model whose features are all `cg_test_*` unless `--demo` is passed.
 - **Feature alignment:** uses `rogen_aging.clock.evaluate.build_feature_matrix` to reorder CpGs to `feature_names_in_` and mean-impute probes missing from GSE87571.
 - **Strata:** middle bin is closed `[30, 60]`; empty strata report `MAE = null` in JSON / `NA` in the markdown summary.
 - **Tests:** `uv run pytest tests/test_evaluate_methylation_clock.py -q`
@@ -81,22 +81,27 @@ uv run python scripts/clock/evaluate_methylation_clock.py \
 
 ## Model provenance
 
-The default path `models/ro_clock_elasticnet_gse40279.pkl` is a **name**, not proof of a Hannum training run. Before treating a serialization as the GSE40279 clock, run the read-only audit:
+The production clock is `models/gse40279_hannum450k_elasticnet.joblib`. The demo clock with `cg_test_*` probe names is `models/fixtures/fixture_clock_cg_test.pkl`. Before treating any other serialization as the GSE40279 clock, regenerate the audit:
 
 ```bash
 uv run python scripts/audit_clock_artifacts.py
 # → docs/CLOCK_ARTIFACT_AUDIT.md
 ```
 
-The current checkout's report is [CLOCK_ARTIFACT_AUDIT.md](CLOCK_ARTIFACT_AUDIT.md): loadable clocks use fixture probe names `cg_test_*`, not Illumina IDs `cg########`. A MAE is TRACEABLE only when that metrics file records the same feature count as an artifact and either names that artifact or uses its probe-id pattern. Tests: `uv run pytest tests/test_audit_clock_artifacts.py -q`.
+[CLOCK_ARTIFACT_AUDIT.md](CLOCK_ARTIFACT_AUDIT.md) is the list of what is loaded in this checkout. A MAE is TRACEABLE only when that metrics file records the same feature count as an artifact and either names that artifact or uses its probe-id pattern. Tests: `uv run pytest tests/test_audit_clock_artifacts.py -q`.
 
 ## ONT and bisulfite on HG002 chr20
 
-`scripts/clock/ont_clock_site_coverage.py` compares ONT `(5mC + 5hmC) / valid` with bisulfite fraction at clock CpGs covered on chr20. The ONT alignment is the GIAB 2025.01 `SAMPLE.haplotagged.cram` (GRCh38 `chr20`). The bisulfite file is `gm24385_mod_2021.09/bisulphite/cpg/CpG.gz.bismark.cov.gz`. Do not use `gm24385_mod_2021.09/extra_analysis/all.bam`.
+Method defined; run pending (toolchain not installed as of 2026-09-27).
 
-Bismark `.cov` coordinates are 1-based and per strand. C(+) at position `p` and C(-) at `p+1` are merged into one CpG before the join. Zhou HM450 `CpG_beg` is already 0-based and is the modkit start. Illumina reads for a FASTQ delivery come from `HG002.GRCh38.300x_chr20.bam`, downsampled with `samtools view -s 0.1` (seed 0, about 30x).
+`scripts/clock/ont_clock_site_coverage.py` is the comparison. Nothing has been downloaded. Do not use `gm24385_mod_2021.09/extra_analysis/all.bam`.
 
-HG002, NA24385, and GM24385 are the same cell line. The ONT run (2024-06-19, R10.4.1 e8.2, sup v5.0.0) and the bisulfite coverage in the 2021.09 bucket were cultured and sequenced years apart, so part of any difference is biological. A local modkit pileup is the ONT measurement. The three public haplotype bedMethyl files are summed and cross-checked; they do not replace that pileup.
+Confirmed input URLs, copied from that script:
+
+- `https://ont-open-data.s3.amazonaws.com/giab_2025.01/analysis/wf-human-variation/sup/HG002/PAW70337/output/SAMPLE.haplotagged.cram`
+- `https://ont-open-data.s3.amazonaws.com/gm24385_mod_2021.09/bisulphite/cpg/CpG.gz.bismark.cov.gz`
+- `https://zhouserver.research.chop.edu/InfiniumAnnotation/current/HM450/HM450.hg38.manifest.tsv.gz`
+- `https://ftp-trace.ncbi.nlm.nih.gov/giab/ftp/data/AshkenazimTrio/HG002_NA24385_son/NIST_HiSeq_HG002_Homogeneity-10953946/NHGRI_Illumina300X_AJtrio_novoalign_bams/HG002.GRCh38.300x_chr20.bam`
 
 ## See also
 
