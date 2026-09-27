@@ -63,6 +63,7 @@ rogen-ukb-mock-rap = "rogen_aging.cli.ukb_mock_rap:entry"
 rogen-ukb-integrate = "rogen_aging.cli.ukb_integrate:entry"
 rogen-vcf-synthetic = "rogen_aging.cli.vcf_synthetic:entry"
 rogen-intake = "rogen_aging.cli.intake:main"
+rogen-release-check = "rogen_aging.cli.release_check:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

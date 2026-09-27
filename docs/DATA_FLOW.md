@@ -36,6 +36,32 @@ What may leave: those pseudonymized files and the intake report, and only after 
 
 The release zone is for sharing results outside the analysis group.
 
-Files that live here: aggregate tables only. They are allowed in only after the release guard that a later step will add. That guard is not part of intake.
+Files that live here: aggregate tables only. They are allowed in only after `rogen-release-check` passes. That guard is not part of intake. See [Release guard](#release-guard).
 
 What may leave: those aggregate tables. Individual-level sequence files, the linkage table, and the key do not enter this zone.
+
+## Release guard
+
+`rogen-release-check` runs on every aggregate table before it leaves the processing zone. The minimum cell count is `release_guard.min_cell_count` in `config/default.yaml`. The project default is 5, to be confirmed with the data custodian.
+
+```bash
+uv run rogen-release-check \
+  --table results/allele_counts.csv \
+  --table-kind allele_counts \
+  --n-samples 200 \
+  --report results/release_report.json \
+  --write-sanitized results/allele_counts_sanitized.csv
+```
+
+The command writes a JSON report with PASS or FAIL and a reason for each check.
+
+1. Individual-level data. Fails if a column is named like `sample_id`, `eid`, `participant`, `pseudonym`, `iid`, or `fid`; if any cell matches a pseudonym (`RO-` plus 12 hex characters); or if the row count equals `--n-samples`.
+2. Direct identifiers. Fails if a column looks like a date of birth, a full date, a postcode, or a name.
+3. Allele-count tables (`AC` and `AN`, or `allele_count` and `allele_number`). Drops a row when `AC < k` or `AN - AC < k`, and rounds allele frequencies (`AF` or `allele_frequency`) to 3 decimals.
+4. Strata tables. Suppresses phenotype-group counts below `k`, then suppresses one more count in that row when the row total would recover the hidden value.
+
+A sanitized copy is written only when `--write-sanitized` is set and checks 1 and 2 pass. Those two checks are never rewritten. If they fail, release stops.
+
+### Limitations
+
+This guard does not protect against differencing attacks across several released tables, or against membership inference from summary statistics. These are open limitations.
