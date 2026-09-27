@@ -26,7 +26,10 @@ def run_cmd(
         "--manifest",
         exists=True,
         dir_okay=False,
-        help="Delivery TSV: original_sample_id, file_name, file_type, checksum_type, checksum.",
+        help=(
+            "Delivery TSV: original_sample_id, file_name, file_type, "
+            "checksum_type, checksum, and optional comma-separated aliases."
+        ),
     ),
     delivery_dir: Path = typer.Option(
         ...,

@@ -15,7 +15,12 @@ from rogen_aging.config import find_repo_root
 from rogen_aging.intake.errors import IntakeError
 from rogen_aging.intake.key import load_pseudonym_key
 from rogen_aging.intake.leakcheck import leak_check
-from rogen_aging.intake.manifest import ManifestRow, load_manifest, verify_checksums
+from rogen_aging.intake.manifest import (
+    ManifestRow,
+    identifiers_to_scrub,
+    load_manifest,
+    verify_checksums,
+)
 from rogen_aging.intake.paths import is_within, resolve_lexical
 from rogen_aging.intake.pseudonym import pseudonym_for
 from rogen_aging.intake.report import (
@@ -71,10 +76,11 @@ def run_intake(
     with tempfile.TemporaryDirectory(prefix="rogen-intake-") as temporary:
         work = Path(temporary)
         produced = rewrite_delivery(work, delivery_dir, rows, pseudonyms)
-        leak_check(produced, [row.original_sample_id for row in rows])
+        scrub_ids = identifiers_to_scrub(rows)
+        leak_check(produced, scrub_ids)
         report = build_report(produced, root)
         text = report_text(report)
-        assert_report_excludes_original_ids(text, [row.original_sample_id for row in rows])
+        assert_report_excludes_original_ids(text, scrub_ids)
         (work / "intake_report.json").write_text(text, encoding="utf-8")
         allowed = {item.output_path.name for item in produced}
         allowed.add("intake_report.json")

@@ -17,6 +17,7 @@ MANIFEST_COLUMNS: tuple[str, ...] = (
     "checksum_type",
     "checksum",
 )
+OPTIONAL_MANIFEST_COLUMNS: tuple[str, ...] = ("aliases",)
 ALLOWED_FILE_TYPES: frozenset[str] = frozenset({"fastq", "bam", "cram", "vcf", "pod5"})
 ALLOWED_CHECKSUM_TYPES: frozenset[str] = frozenset({"md5", "sha256"})
 
@@ -30,6 +31,19 @@ class ManifestRow:
     file_type: str
     checksum_type: str
     checksum: str
+    aliases: tuple[str, ...] = ()
+
+    def search_ids(self) -> tuple[str, ...]:
+        """Original id plus aliases, in order, without case-insensitive duplicates."""
+        ordered: list[str] = []
+        seen: set[str] = set()
+        for sample_id in (self.original_sample_id, *self.aliases):
+            key = sample_id.casefold()
+            if not sample_id or key in seen:
+                continue
+            seen.add(key)
+            ordered.append(sample_id)
+        return tuple(ordered)
 
 
 def load_manifest(path: Path) -> list[ManifestRow]:
@@ -48,11 +62,16 @@ def load_manifest(path: Path) -> list[ManifestRow]:
         raise IntakeError(f"manifest not found: {path}")
     frame = pd.read_csv(path, sep="\t", dtype=str, keep_default_na=False)
     columns = [str(name) for name in frame.columns.tolist()]
-    if columns != list(MANIFEST_COLUMNS):
+    allowed = [
+        list(MANIFEST_COLUMNS),
+        [*MANIFEST_COLUMNS, *OPTIONAL_MANIFEST_COLUMNS],
+    ]
+    if columns not in allowed:
         raise IntakeError(
-            "manifest columns must be exactly "
+            "manifest columns must be "
             + ", ".join(MANIFEST_COLUMNS)
-            + f"; found {', '.join(columns)}"
+            + " with optional aliases; found "
+            + ", ".join(columns)
         )
     rows: list[ManifestRow] = []
     records = frame.to_dict(orient="records")
@@ -78,11 +97,40 @@ def load_manifest(path: Path) -> list[ManifestRow]:
                 file_type=file_type,
                 checksum_type=checksum_type,
                 checksum=checksum,
+                aliases=_parse_aliases(values.get("aliases", ""), sample_id),
             )
         )
     if not rows:
         raise IntakeError("manifest has no file rows")
     return rows
+
+
+def _parse_aliases(raw: str, primary: str) -> tuple[str, ...]:
+    """Split a comma-separated alias cell. The primary id is not repeated."""
+    found: list[str] = []
+    seen = {primary.casefold()}
+    for part in raw.split(","):
+        alias = part.strip()
+        key = alias.casefold()
+        if not alias or key in seen:
+            continue
+        seen.add(key)
+        found.append(alias)
+    return tuple(found)
+
+
+def identifiers_to_scrub(rows: list[ManifestRow]) -> list[str]:
+    """Every original id and alias the leak check must search."""
+    found: list[str] = []
+    seen: set[str] = set()
+    for row in rows:
+        for sample_id in row.search_ids():
+            key = sample_id.casefold()
+            if key in seen:
+                continue
+            seen.add(key)
+            found.append(sample_id)
+    return found
 
 
 def delivery_file(delivery_dir: Path, file_name: str) -> Path:

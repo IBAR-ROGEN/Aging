@@ -18,6 +18,7 @@ from rogen_aging.cli.intake import app
 from rogen_aging.config import find_repo_root
 from rogen_aging.intake import IntakeError, make_key, pseudonym_for, run_intake
 from rogen_aging.intake.key import KEY_ENV_VAR
+from rogen_aging.intake.rewrite import rewrite_sam_header
 
 _SAMPLE = "SMP-ALPHA-7Q"
 _COLUMNS = (
@@ -34,9 +35,12 @@ def _sha256(path: Path) -> str:
 
 
 def _write_manifest(path: Path, rows: list[dict[str, str]]) -> None:
-    lines = ["\t".join(_COLUMNS)]
+    columns = list(_COLUMNS)
+    if any("aliases" in row for row in rows):
+        columns.append("aliases")
+    lines = ["\t".join(columns)]
     for row in rows:
-        lines.append("\t".join(row[column] for column in _COLUMNS))
+        lines.append("\t".join(row.get(column, "") for column in columns))
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
@@ -261,6 +265,107 @@ def test_pod5_without_package_is_not_described_as_clean(
     assert "pod5 metadata not scanned" in report
     assert "clean" not in report.lower()
     assert _SAMPLE.lower() not in report.lower()
+
+
+def test_alias_in_fastq_header_fails_leak_check(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """An alias that is not the primary id is still a leak."""
+    delivery = tmp_path / "delivery"
+    delivery.mkdir()
+    payload = delivery / "reads.fastq"
+    payload.write_text("@NA24385\nACGT\n+\nFFFF\n", encoding="utf-8")
+    manifest = tmp_path / "manifest.tsv"
+    row = _row("reads.fastq", "fastq", _sha256(payload))
+    row["original_sample_id"] = "HG002"
+    row["aliases"] = "NA24385,GM24385"
+    _write_manifest(manifest, [row])
+    out_dir = tmp_path / "out"
+    custodian = tmp_path / "custodian"
+    _place_key(tmp_path / "pseudo.key", monkeypatch)
+
+    with pytest.raises(IntakeError, match="FASTQ read header"):
+        run_intake(manifest, delivery, out_dir, custodian)
+
+    assert not out_dir.exists()
+    assert not (custodian / "linkage.tsv").exists()
+
+
+def test_rg_sm_alias_is_rewritten_in_the_header() -> None:
+    """@RG SM may be an alias. That string leaves the header, and so does a @PG path."""
+    header = "\n".join(
+        [
+            "@HD\tVN:1.6\tSO:unsorted",
+            "@SQ\tSN:chr20\tLN:64444167",
+            "@RG\tID:HG002\tSM:NA24385\tLB:GM24385",
+            "@PG\tID:novoalign\tPN:novoalign\tCL:novoalign -d ref NA24385_R1.fastq",
+            "",
+        ]
+    )
+    rewritten = rewrite_sam_header(header, ("HG002", "NA24385", "GM24385"), "RO-0123456789ab")
+    assert "NA24385" not in rewritten
+    assert "GM24385" not in rewritten
+    assert "HG002" not in rewritten
+    assert "SM:RO-0123456789ab" in rewritten
+    assert "@PG" not in rewritten
+
+
+def test_bam_read_group_sm_alias_is_rewritten(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Intake removes an alias stored in @RG SM when samtools can rewrite the BAM."""
+    if shutil.which("samtools") is None:
+        pytest.skip("samtools is not installed")
+
+    delivery = tmp_path / "delivery"
+    delivery.mkdir()
+    sam = delivery / "reads.sam"
+    sam.write_text(
+        "\n".join(
+            [
+                "@HD\tVN:1.6\tSO:unsorted",
+                "@SQ\tSN:chr20\tLN:64444167",
+                "@RG\tID:HG002\tSM:NA24385\tLB:GM24385",
+                "@PG\tID:novoalign\tPN:novoalign\tCL:novoalign -d ref NA24385.fastq",
+                "r1\t0\tchr20\t1\t60\t1M\t*\t0\t0\tA\tF\tRG:Z:HG002",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    bam = delivery / "reads.bam"
+    built = shutil.which("samtools")
+    assert built is not None
+    proc = subprocess.run(
+        [built, "view", "-b", "-o", str(bam), str(sam)],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert proc.returncode == 0, proc.stderr
+    manifest = tmp_path / "manifest.tsv"
+    row = _row("reads.bam", "bam", _sha256(bam))
+    row["original_sample_id"] = "HG002"
+    row["aliases"] = "NA24385,GM24385"
+    _write_manifest(manifest, [row])
+    out_dir = tmp_path / "out"
+    custodian = tmp_path / "custodian"
+    key = _place_key(tmp_path / "pseudo.key", monkeypatch)
+
+    run_intake(manifest, delivery, out_dir, custodian)
+
+    pseudonym = pseudonym_for(key, "HG002")
+    header = subprocess.run(
+        [built, "view", "-H", str(out_dir / f"{pseudonym}.bam")],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert header.returncode == 0, header.stderr
+    assert "NA24385" not in header.stdout
+    assert "GM24385" not in header.stdout
+    assert "HG002" not in header.stdout
+    assert f"SM:{pseudonym}" in header.stdout
 
 
 def test_make_key_cli_does_not_print_the_key(tmp_path: Path) -> None:

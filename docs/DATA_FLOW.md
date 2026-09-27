@@ -13,7 +13,7 @@ The custodian is the person who receives the raw delivery and holds the link bet
 Files that live here:
 
 - the raw delivery, with the original file names and the original sample identifiers (FASTQ, BAM, CRAM, VCF, POD5)
-- the delivery manifest (original id, file name, file type, checksum)
+- the delivery manifest (original id, file name, file type, checksum, and an optional `aliases` column)
 - the pseudonym key file, mode 600, path given only by `ROGEN_PSEUDO_KEY_FILE`
 - `linkage.tsv`, original sample id next to the `RO-` pseudonym
 
@@ -30,7 +30,7 @@ Files that live here:
 
 The report is checked before it is published. If an original sample id appears in it, intake stops and the processing directory is not kept.
 
-What may leave: those pseudonymized files and the intake report, and only after the leak check has passed. The check looks at output file names, BAM/CRAM/VCF headers, and the first 10,000 FASTQ read headers. A hit deletes the temporary output and writes nothing. POD5 files are renamed after the checksum check. If the `pod5` package is not installed, the report says `pod5 metadata not scanned` and does not describe that metadata as clean.
+What may leave: those pseudonymized files and the intake report, and only after the leak check has passed. The check looks at output file names, BAM/CRAM/VCF headers, and the first 10,000 FASTQ read headers. It searches the manifest `original_sample_id` and every comma-separated alias on that row (for example `HG002` with aliases `NA24385` and `GM24385`). Header rewrite replaces those strings, including an `@RG SM` value that is an alias rather than the primary id. A hit deletes the temporary output and writes nothing. POD5 files are renamed after the checksum check. If the `pod5` package is not installed, the report says `pod5 metadata not scanned` and does not describe that metadata as clean.
 
 ## Release zone
 

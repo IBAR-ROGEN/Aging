@@ -86,9 +86,9 @@ def rewrite_delivery(
         if row.file_type in {"fastq", "pod5"}:
             shutil.copyfile(source, target)
         elif row.file_type in {"bam", "cram"}:
-            _rewrite_alignment(source, target, row.original_sample_id, pseudonym, work_dir)
+            _rewrite_alignment(source, target, row.search_ids(), pseudonym, work_dir)
         elif row.file_type == "vcf":
-            _rewrite_vcf(source, target, row.original_sample_id, pseudonym, work_dir)
+            _rewrite_vcf(source, target, row.search_ids(), pseudonym, work_dir)
         else:
             raise IntakeError(f"unsupported file_type {row.file_type!r}")
         produced.append(
@@ -106,25 +106,25 @@ def rewrite_delivery(
 def _rewrite_alignment(
     source: Path,
     target: Path,
-    original_id: str,
+    original_ids: tuple[str, ...],
     pseudonym: str,
     work_dir: Path,
 ) -> None:
     if shutil.which("samtools"):
-        _samtools_reheader(source, target, original_id, pseudonym, work_dir)
+        _samtools_reheader(source, target, original_ids, pseudonym, work_dir)
         return
     pysam_mod = _optional_module("pysam")
     if pysam_mod is None:
         raise IntakeError(
             "samtools is not installed and pysam is not installed; cannot rewrite BAM or CRAM"
         )
-    _pysam_reheader(pysam_mod, source, target, original_id, pseudonym)
+    _pysam_reheader(pysam_mod, source, target, original_ids, pseudonym)
 
 
 def _samtools_reheader(
     source: Path,
     target: Path,
-    original_id: str,
+    original_ids: tuple[str, ...],
     pseudonym: str,
     work_dir: Path,
 ) -> None:
@@ -138,7 +138,7 @@ def _samtools_reheader(
     if viewed.returncode != 0:
         detail = (viewed.stderr or "").strip()
         raise IntakeError(f"samtools view -H failed: {detail}")
-    header_text = rewrite_sam_header(viewed.stdout, original_id, pseudonym)
+    header_text = rewrite_sam_header(viewed.stdout, original_ids, pseudonym)
     header_path = work_dir / f".header-{pseudonym}.sam"
     header_path.write_text(header_text, encoding="utf-8")
     with target.open("wb") as handle:
@@ -153,10 +153,15 @@ def _samtools_reheader(
     if rewritten.returncode != 0:
         detail = rewritten.stderr.decode("utf-8", errors="replace").strip()
         raise IntakeError(f"samtools reheader failed: {detail}")
-    _rewrite_rg_tags(target, original_id, pseudonym, work_dir)
+    _rewrite_rg_tags(target, original_ids, pseudonym, work_dir)
 
 
-def _rewrite_rg_tags(bam_or_cram: Path, original_id: str, pseudonym: str, work_dir: Path) -> None:
+def _rewrite_rg_tags(
+    bam_or_cram: Path,
+    original_ids: tuple[str, ...],
+    pseudonym: str,
+    work_dir: Path,
+) -> None:
     """Replace alignment ``RG:Z`` values that still carry the original id.
 
     ``samtools reheader`` updates the header only. Read-group tags on
@@ -173,15 +178,15 @@ def _rewrite_rg_tags(bam_or_cram: Path, original_id: str, pseudonym: str, work_d
         detail = (streamed.stderr or "").strip()
         raise IntakeError(f"samtools view -h failed: {detail}")
     lines: list[str] = []
-    needle = f"RG:Z:{original_id}"
     replacement = f"RG:Z:{pseudonym}"
+    needles = {f"rg:z:{sample_id.casefold()}" for sample_id in original_ids}
     for line in streamed.stdout.splitlines():
-        if line.startswith("@") or needle not in line:
+        if line.startswith("@") or "RG:Z:" not in line.upper():
             lines.append(line)
             continue
         parts = []
         for field in line.split("\t"):
-            if field.lower() == needle.lower():
+            if field.casefold() in needles:
                 parts.append(replacement)
             else:
                 parts.append(field)
@@ -204,26 +209,28 @@ def _rewrite_rg_tags(bam_or_cram: Path, original_id: str, pseudonym: str, work_d
     rewritten.replace(bam_or_cram)
 
 
-def rewrite_sam_header(header: str, original_id: str, pseudonym: str) -> str:
-    """Rewrite ``@RG`` ID/SM/LB and drop ``@PG`` lines whose CL contains the id."""
+def rewrite_sam_header(
+    header: str, original_ids: tuple[str, ...] | list[str], pseudonym: str
+) -> str:
+    """Rewrite ``@RG`` ID/SM/LB and drop ``@PG`` lines whose CL contains any id."""
     lines: list[str] = []
     for raw_line in header.splitlines():
-        if raw_line.startswith("@PG") and _pg_cl_contains(raw_line, original_id):
+        if raw_line.startswith("@PG") and _pg_cl_contains(raw_line, original_ids):
             continue
         if raw_line.startswith("@RG"):
             lines.append(_rewrite_rg_line(raw_line, pseudonym))
             continue
-        lines.append(_replace_id(raw_line, original_id, pseudonym))
+        lines.append(_replace_ids(raw_line, original_ids, pseudonym))
     text = "\n".join(lines)
     if text and not text.endswith("\n"):
         text += "\n"
     return text
 
 
-def _pg_cl_contains(line: str, original_id: str) -> bool:
+def _pg_cl_contains(line: str, original_ids: tuple[str, ...] | list[str]) -> bool:
     for field in line.split("\t"):
         tag, sep, value = field.partition(":")
-        if tag == "CL" and sep and original_id.lower() in value.lower():
+        if tag == "CL" and sep and _contains_id(value, original_ids):
             return True
     return False
 
@@ -245,15 +252,22 @@ def _rewrite_rg_line(line: str, pseudonym: str) -> str:
     return "\t".join(rewritten)
 
 
-def _replace_id(text: str, original_id: str, pseudonym: str) -> str:
-    return re.sub(re.escape(original_id), pseudonym, text, flags=re.IGNORECASE)
+def _replace_ids(text: str, original_ids: tuple[str, ...] | list[str], pseudonym: str) -> str:
+    for original_id in sorted(original_ids, key=len, reverse=True):
+        text = re.sub(re.escape(original_id), pseudonym, text, flags=re.IGNORECASE)
+    return text
+
+
+def _contains_id(text: str, original_ids: tuple[str, ...] | list[str]) -> bool:
+    lowered = text.lower()
+    return any(sample_id.lower() in lowered for sample_id in original_ids)
 
 
 def _pysam_reheader(
     pysam_mod: Any,
     source: Path,
     target: Path,
-    original_id: str,
+    original_ids: tuple[str, ...],
     pseudonym: str,
 ) -> None:
     read_mode = "rc" if source.suffix.lower() == ".cram" else "rb"
@@ -267,14 +281,14 @@ def _pysam_reheader(
         kept_programs = []
         for program in header.get("PG", []):
             command = str(program.get("CL", ""))
-            if original_id.lower() in command.lower():
+            if _contains_id(command, original_ids):
                 continue
             kept_programs.append(program)
         header["PG"] = kept_programs
         with pysam_mod.AlignmentFile(str(target), write_mode, header=header) as outbound:
             for record in inbound:
                 tag = record.get_tag("RG") if record.has_tag("RG") else None
-                if isinstance(tag, str) and tag.lower() == original_id.lower():
+                if isinstance(tag, str) and _contains_id(tag, original_ids):
                     record.set_tag("RG", pseudonym, value_type="Z")
                 outbound.write(record)
 
@@ -282,15 +296,15 @@ def _pysam_reheader(
 def _rewrite_vcf(
     source: Path,
     target: Path,
-    original_id: str,
+    original_ids: tuple[str, ...],
     pseudonym: str,
     work_dir: Path,
 ) -> None:
     if shutil.which("bcftools"):
         _bcftools_reheader(source, target, pseudonym, work_dir)
-        _scrub_vcf_header_id(target, original_id, pseudonym)
+        _scrub_vcf_header_id(target, original_ids, pseudonym)
         return
-    _python_vcf_reheader(source, target, original_id, pseudonym)
+    _python_vcf_reheader(source, target, original_ids, pseudonym)
 
 
 def _bcftools_reheader(source: Path, target: Path, pseudonym: str, work_dir: Path) -> None:
@@ -318,7 +332,7 @@ def _bcftools_reheader(source: Path, target: Path, pseudonym: str, work_dir: Pat
         raise IntakeError(f"bcftools reheader failed: {detail}")
 
 
-def _scrub_vcf_header_id(path: Path, original_id: str, pseudonym: str) -> None:
+def _scrub_vcf_header_id(path: Path, original_ids: tuple[str, ...], pseudonym: str) -> None:
     """Replace any original id still present in VCF header lines after bcftools."""
     compressed = _is_gzip(path)
     text = _read_text(path)
@@ -326,8 +340,8 @@ def _scrub_vcf_header_id(path: Path, original_id: str, pseudonym: str) -> None:
     changed = False
     rewritten: list[str] = []
     for line in lines:
-        if line.startswith("#") and original_id.lower() in line.lower():
-            rewritten.append(_replace_id(line, original_id, pseudonym))
+        if line.startswith("#") and _contains_id(line, original_ids):
+            rewritten.append(_replace_ids(line, original_ids, pseudonym))
             changed = True
         else:
             rewritten.append(line)
@@ -335,7 +349,9 @@ def _scrub_vcf_header_id(path: Path, original_id: str, pseudonym: str) -> None:
         _write_text(path, "".join(rewritten), compressed)
 
 
-def _python_vcf_reheader(source: Path, target: Path, original_id: str, pseudonym: str) -> None:
+def _python_vcf_reheader(
+    source: Path, target: Path, original_ids: tuple[str, ...], pseudonym: str
+) -> None:
     compressed = _is_gzip(source)
     text = _read_text(source)
     if "\0" in text:
@@ -354,7 +370,7 @@ def _python_vcf_reheader(source: Path, target: Path, original_id: str, pseudonym
                 parts[index] = pseudonym
             line = "\t".join(parts) + newline
         elif line.startswith("#"):
-            line = _replace_id(line, original_id, pseudonym)
+            line = _replace_ids(line, original_ids, pseudonym)
         rewritten.append(line)
     if not found_chrom:
         raise IntakeError("VCF is missing a #CHROM header line")
