@@ -148,7 +148,8 @@ annotation:
 
 apis:
   ensembl_rest: https://rest.ensembl.org
-  ensembl_rest_dated: https://jun2026.rest.ensembl.org
+  # jun2026.rest.ensembl.org — jun2026 mirror returned 503 on 2026-09-27
+  ensembl_rest_dated: https://rest.ensembl.org
   gtex_api_base: https://gtexportal.org/api/v2
 
 release_guard:
