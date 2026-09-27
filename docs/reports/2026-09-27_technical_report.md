@@ -36,7 +36,7 @@ Commit `56740c1` archived the July fixture outputs and wrote `outputs/validation
 
 The age-correlation filter and the 8,000-probe cap are in `select_probes_from_parquet` (`src/rogen_aging/clock/hannum.py`). That function is what `train_published_gse40279` calls. `train_test_split` builds `train_idx` and `test_idx`. Missingness and Pearson r with age are computed on `batch[train_idx]` and `train_age` only (`_batch_train_stats`). Probes with absolute correlation at least `AGE_ABS_CORRELATION_MIN` (0.2) are kept, then `trained = correlated[:MAX_PROBES_FOR_ELASTICNET]` with `MAX_PROBES_FOR_ELASTICNET` set to 8,000. `test_idx` is counted and is not passed into the filter. The in-memory twin `select_training_probes` does the same on `frame.iloc[train_idx]`. Held-out GSE40279 metrics are the train/test split from `train_clock`. They are not optimistic from probe selection on test rows.
 
-`outputs/validation_metrics.json` stores `mae_by_decade`. It does not store mean signed error (predicted minus chronological). `evaluate_external` computes that residual in memory and writes the JSON and three PNG figures. No predictions file is under `outputs/`.
+`outputs/validation_metrics.json` stores `mae_by_decade`, `mean_signed_error`, and `mean_signed_error_by_decade`. Signed error is predicted age minus chronological age. Per-sample rows are in `outputs/predictions/GSE87571_processed_predictions.csv`, which is gitignored.
 
 `scripts/clock/ont_clock_site_coverage.py` defines an ONT versus bisulfite comparison at chr20 clock CpGs. `docs/METHYLATION_CLOCK_VALIDATION.md` says the method is defined, the ONT run is still pending, and nothing has been downloaded. The CLI tools are installed in micromamba `rogen-tools` (`docs/TOOLCHAIN_SEPT2026.md`).
 
@@ -52,7 +52,7 @@ Status: Hannum training DONE. GSE87571 evaluation DONE. ONT comparison BUILT-NOT
 
 `scripts/panel/ro_longevity_panel_power.py` reads the 47 prioritized variants and writes `analysis/panel/ro_longevity_panel.csv`, `analysis/panel/ro_longevity_power_grid.csv`, a heatmap, and `analysis/panel/ro_longevity_panel_provenance.json`. Frequencies are gnomAD v4 NFE from a local cache and 1000 Genomes phase 3 TSI, IBS, CEU, GBR, and FIN from Ensembl REST. They are not averaged and are not labeled as Romanian frequencies. Arm sizes and odds ratios in the power grid are illustrative. The provenance disclaimer says ROGEN sample size and design are not fixed.
 
-`tsi_nfe_maf_abs_diff_gt_0_05_descriptive` is an absolute MAF gap above 0.05. The provenance text says it is not a test. The separate count test uses a two-sided Fisher exact test, or Pearson chi-square when every expected count is at least 5, with Benjamini-Hochberg q-values. `tsi_differs_fdr05` is that test at q below 0.05. It compares alternate-allele frequency between public reference panels. It is not a Romanian or Southeast European frequency. Three rows are true. Eleven rows have an empty p-value because the gnomAD cache entry has no `ac_nfe` or `an_nfe`. The lists are in the results table.
+`tsi_nfe_maf_abs_diff_gt_0_05_descriptive` is an absolute MAF gap above 0.05. The provenance text says it is not a test. The separate count test uses a two-sided Fisher exact test, or Pearson chi-square when every expected count is at least 5, with Benjamini-Hochberg q-values. `tsi_differs_fdr05` is that test at q below 0.05. It compares alternate-allele frequency between public reference panels. It is not a Romanian or Southeast European frequency. A later re-query stored NFE AC and AN for the 11 cache variant IDs that lacked them. The test was rerun on all 47. Five rows have q below 0.05. Two of those five, rs9916344 and rs1801318, use a gnomAD alt that is not the panel-table alt. The lists are in the results table.
 
 `scripts/panel/ro_longevity_panel_sanity.py` prints NFE, CEU, and GBR alternate-allele frequencies. It flags an absolute NFE minus CEU gap above 0.15, and a complement mismatch, except when NFE AF is between 0.4 and 0.6. In that band both the frequency and its complement are near 0.5, so a smaller distance to 1 minus CEU is not treated as a swapped allele. No saved sanity log is in the tree, so a count of flags from a real run is not available.
 
@@ -64,7 +64,7 @@ Ensembl host: `config/default.yaml` keys `apis.ensembl_rest` and `apis.ensembl_r
 
 Test files: `tests/test_release_guard.py`, `tests/test_ro_longevity_panel_power.py` (includes the complement-skip test). Full-suite counts are in the results table.
 
-Status: release guard DONE on the two panel tables. Panel DONE on public reference data. TSI versus NFE count test DONE where counts were present (`n_tests` 36 in provenance). Sanity check BUILT-NOT-RUN as a saved execution (the script and unit test exist; no output file).
+Status: release guard DONE on the two panel tables. Panel DONE on public reference data. TSI versus NFE count test DONE on all 47 rows (`n_tests` 47 in provenance). Sanity check BUILT-NOT-RUN as a saved execution (the script and unit test exist; no output file).
 
 ### Other
 
@@ -115,7 +115,16 @@ Every number below is taken from the cited file, from a row tally of a cited CSV
 | GSE87571 MAE, 70-79 | 3.4909284037928425 | same file, `mae_by_decade["70-79"]` |
 | GSE87571 MAE, 80-89 | 3.6742114191469937 | same file, `mae_by_decade["80-89"]` |
 | GSE87571 MAE, 90+ | 2.345769246419271 | same file, `mae_by_decade["90+"]` |
-| GSE87571 mean signed error (predicted minus chronological), overall and by age stratum | not available | `outputs/validation_metrics.json` has no signed-error key. No predictions file under `outputs/` |
+| GSE87571 mean signed error, overall | 3.103233933939365 | `outputs/validation_metrics.json` key `mean_signed_error` (predicted minus chronological) |
+| GSE87571 mean signed error, age &lt;20 | 0.10627195358276367 | same file, `mean_signed_error_by_decade["<20"]` |
+| GSE87571 mean signed error, 20-29 | 2.541340007338413 | same file, `mean_signed_error_by_decade["20-29"]` |
+| GSE87571 mean signed error, 30-39 | 4.588518648262483 | same file, `mean_signed_error_by_decade["30-39"]` |
+| GSE87571 mean signed error, 40-49 | 4.829576081496018 | same file, `mean_signed_error_by_decade["40-49"]` |
+| GSE87571 mean signed error, 50-59 | 3.9135930513080797 | same file, `mean_signed_error_by_decade["50-59"]` |
+| GSE87571 mean signed error, 60-69 | 3.637227089174332 | same file, `mean_signed_error_by_decade["60-69"]` |
+| GSE87571 mean signed error, 70-79 | 2.604837397093414 | same file, `mean_signed_error_by_decade["70-79"]` |
+| GSE87571 mean signed error, 80-89 | 1.6411728236986243 | same file, `mean_signed_error_by_decade["80-89"]` |
+| GSE87571 mean signed error, 90+ | -1.1380411783854167 | same file, `mean_signed_error_by_decade["90+"]` |
 | Audit artifacts inspected | 4 | `docs/CLOCK_ARTIFACT_AUDIT.md` Counts |
 | Audit FIXTURE | 3 | same section |
 | Audit CANDIDATE REAL | 1 | same section |
@@ -130,16 +139,24 @@ Every number below is taken from the cited file, from a row tally of a cited CSV
 | Ensembl request failures | 0 | same file, `ensembl.request_failures` |
 | gnomAD cache hits | 47 | same file, `gnomad.cache_hits` |
 | gnomAD new queries | 0 | same file, `gnomad.new_queries` |
-| gnomAD cache entries with AC and AN | 36 | same file, `gnomad.allele_counts.entries_with_counts` |
-| TSI vs NFE tests | 36 | same file, `tsi_vs_nfe.n_tests` |
-| Of those, chi-square | 35 | same file, `tsi_vs_nfe.n_chi_square` |
+| gnomAD cache entries with AC and AN | 47 | same file, `gnomad.allele_counts.entries_with_counts` (11 fetched on the re-query) |
+| TSI vs NFE tests | 47 | same file, `tsi_vs_nfe.n_tests` |
+| Of those, chi-square | 46 | same file, `tsi_vs_nfe.n_chi_square` |
 | Of those, Fisher exact | 1 | same file, `tsi_vs_nfe.n_fisher` |
 | FDR threshold for that test | 0.05 | same file, `tsi_vs_nfe.fdr` |
-| Rows with `tsi_differs_fdr05` true | 3 | row tally of `analysis/panel/ro_longevity_panel.csv` |
-| rs3804474 | af_tsi 0.593457943925234, af_nfe 0.4935718278367803, af_diff 0.09988611608845366, q_tsi_vs_nfe 0.04226800304311284 | same CSV |
-| rs2116538 | af_tsi 0.878504672897196, af_nfe 0.7795259381249264, af_diff 0.09897873477226959, q_tsi_vs_nfe 0.00872929668450113 | same CSV |
-| rs9530108 | af_tsi 0.308411214953271, af_nfe 0.1631007140881239, af_diff 0.1453105008651471, q_tsi_vs_nfe 3.169302692610224e-07 | same CSV |
-| Variants not tested (empty `p_tsi_vs_nfe`) | 11: rs139170, rs1981429, rs9916344, rs41383, rs1800774, rs1801318, rs524533, rs7207422, rs155979, rs882696, rs28366003 | same CSV, rows with null `p_tsi_vs_nfe`. Each note is "TSI versus NFE allele-count test left empty; counts were not filled from another source". `data/geo/gnomad_r4_nfe_cache.json` has no `ac_nfe` or `an_nfe` on these 11 entries (`ac_nfe_matches_af` false). Provenance `gnomad.allele_counts.entries_with_counts` is 36 of 47 |
+| Rows with `tsi_differs_fdr05` true | 5 of 47 | row tally of `analysis/panel/ro_longevity_panel.csv` after the NFE AC/AN re-query |
+| rs9530108 | q_tsi_vs_nfe 4.137700737574459e-07 | same CSV. Cache variant ID matches the panel alt |
+| rs9916344 | q_tsi_vs_nfe 0.001763412034468652 | same CSV. Cache variant ID is 17-6494893-C-T; panel alt is A |
+| rs2116538 | q_tsi_vs_nfe 0.007597721188362095 | same CSV. Cache variant ID matches the panel alt |
+| rs1801318 | q_tsi_vs_nfe 0.03310993571710506 | same CSV. Cache variant ID is 2-206141952-T-C; panel alt is A |
+| rs3804474 | q_tsi_vs_nfe 0.03310993571710506 | same CSV. Cache variant ID matches the panel alt |
+| Variants not tested | 0 | same CSV, no empty `p_tsi_vs_nfe`. The 11 formerly empty rows now have gnomAD v4 NFE AC/AN from their cache variant IDs |
+| rs3804474 gnomAD v3 genomes `1kg:tsi` AF | 0.5970873786407767 (AC 123, AN 206) | gnomAD v3 `gnomad_r3` genome population `1kg:tsi` at `6-6621275-C-T`. Panel table not changed |
+| rs3804474 Ensembl 1000G phase 3 TSI AF | 0.593457943925234 | `analysis/panel/ro_longevity_panel.csv` column `af_tsi` |
+| rs2116538 gnomAD v3 genomes `1kg:tsi` AF | 0.8737864077669902 (AC 180, AN 206) | gnomAD v3 `gnomad_r3` genome population `1kg:tsi` at `2-137011850-G-A`. Panel table not changed |
+| rs2116538 Ensembl 1000G phase 3 TSI AF | 0.878504672897196 | same CSV, `af_tsi` |
+| rs9530108 gnomAD v3 genomes `1kg:tsi` AF | 0.3058252427184466 (AC 63, AN 206) | gnomAD v3 `gnomad_r3` genome population `1kg:tsi` at `13-35055927-A-G`. Panel table not changed |
+| rs9530108 Ensembl 1000G phase 3 TSI AF | 0.308411214953271 | same CSV, `af_tsi` |
 | Variants with NFE MAF below 0.01 | 0 true, 47 false | row tally of column `nfe_maf_below_0_01` in `analysis/panel/ro_longevity_panel.csv` |
 | Bonferroni alpha 0.05/47 | 0.0010638297872340426 | provenance `power.alpha_bonferroni_0.05_over_47` |
 | Genome-wide alpha | 5e-08 | provenance `power.alpha_genomewide` |
@@ -163,12 +180,12 @@ Every number below is taken from the cited file, from a row tally of a cited CSV
 | Intake | DONE-SYNTHETIC | `docs/DATA_FLOW.md`: no Romanian sequencing data; tests create the files. Code in `src/rogen_aging/intake/`. | Run on a real delivery only after the data protection review. |
 | Release guard | DONE | `rogen-release-check` return code 0 on both panel CSVs in `analysis/panel/ro_longevity_panel_provenance.json`. | Keep using `--table-kind summary` for frequency tables. |
 | Hannum clock training | DONE | `models/gse40279_hannum450k_elasticnet.provenance.json` timestamp 2026-09-27T08:42:19Z, GSE40279, 524 train and 132 test samples. | None for the fit itself. Refresh the audit headline if the "may exist" wording is still wanted. |
-| GSE87571 external validation | DONE | `outputs/validation_metrics.json` written 2026-09-27, `n_features_used` 8000, `n_samples` 729, commit `56740c1`. `docs/GSE40279_CLOCK_TRAINING.md` quotes n, MAE, median AE, and r from that file. | None for the recorded metrics. Mean signed error was not saved. |
+| GSE87571 external validation | DONE | `outputs/validation_metrics.json`, `n_features_used` 8000, `n_samples` 729. MAE is unchanged. `mean_signed_error` is 3.103233933939365. | Predictions CSV is gitignored under `outputs/predictions/`. |
 | Short-read HG002 dry run | BUILT-NOT-RUN | Illumina chr20 BAM URL is listed in `docs/METHYLATION_CLOCK_VALIDATION.md`. That page says nothing has been downloaded. | Download only when the dry run is started. Do not label the GIAB files as Romanian or ROGEN data. |
 | ONT HG002 methylation dry run | BUILT-NOT-RUN | HG002 CRAM URL is listed in the same doc. Run pending. | Same as the short-read item. `pod5` is still not installed if POD5 metadata must be scanned. |
 | ONT vs bisulfite comparison | BUILT-NOT-RUN | `scripts/clock/ont_clock_site_coverage.py` exists. Validation doc: ONT run still pending, nothing downloaded. Toolchain is in micromamba `rogen-tools`. | Run the comparison. The install is recorded; the download has not started. |
 | Longevity panel | DONE | `analysis/panel/ro_longevity_panel.csv` and provenance `generated_at_utc` 2026-09-27T09:21:56Z. Public gnomAD and Ensembl frequencies. | Do not describe the power ranks as a longevity result. |
-| TSI vs NFE statistical test | DONE | Provenance `tsi_vs_nfe.n_tests` 36, `n_chi_square` 35, `n_fisher` 1, `fdr` 0.05. The column `tsi_nfe_maf_abs_diff_gt_0_05_descriptive` is not this test. | Keep the descriptive gap column separate from `tsi_differs_fdr05` in any write-up. |
+| TSI vs NFE statistical test | DONE | Provenance `tsi_vs_nfe.n_tests` 47, `n_chi_square` 46, `n_fisher` 1, `fdr` 0.05. Five rows have q below 0.05. | Keep the descriptive gap column separate from `tsi_differs_fdr05`. rs9916344 and rs1801318 are significant on a gnomAD alt that is not the panel alt. |
 | Alias-ID support in intake | DONE-SYNTHETIC | Commit `ddd9ac7`. `docs/DATA_FLOW.md` names HG002 with aliases NA24385 and GM24385 as the leak-check example. Tests are synthetic. | Confirm on a real header only when a delivery exists. |
 
 ## 5. Decisions and problems
@@ -195,7 +212,7 @@ The age-correlation filter and the 8,000-probe cap use the training split only. 
 4. Send `docs/DATA_FLOW.md` for data-protection review. The file says it has not been reviewed.
 5. If a sanity log is required, run `scripts/panel/ro_longevity_panel_sanity.py` and keep the output. There is no saved flag count today.
 6. The eQTL coverage script is committed and unmentioned in the September manifest section. Say whether that matrix is in scope for the next write-up.
-7. Mean signed error on GSE87571 is not in `outputs/validation_metrics.json` and no predictions file was saved. A later evaluation can write it. Do not recompute it from a new model fit if the point is to keep the 2026-09-27 numbers.
+7. rs9916344 and rs1801318 are q < 0.05 using gnomAD NFE counts for a different alt than the panel table. Decide whether those two tests should stay in the 5 of 47.
 
 ## 7. Provenance
 

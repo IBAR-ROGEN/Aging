@@ -13,6 +13,7 @@ import joblib
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import polars as pl
 import seaborn as sns
 from scipy.stats import pearsonr
 from sklearn.base import BaseEstimator
@@ -491,12 +492,37 @@ def plot_predicted_vs_chronological(
     plt.close(fig)
 
 
+def _prediction_sample_ids(frame: pd.DataFrame) -> list[str]:
+    """Sample IDs for a predictions table, from the column or the row index."""
+    if "sample_id" in frame.columns:
+        return [str(value) for value in frame["sample_id"].tolist()]
+    return [str(value) for value in frame.index.tolist()]
+
+
+def _write_predictions(
+    frame: pd.DataFrame,
+    chronological_age: pd.Series,
+    predicted_age: np.ndarray,
+    path: Path,
+) -> None:
+    """Write ``sample_id``, chronological age, and predicted age."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    pl.DataFrame(
+        {
+            "sample_id": _prediction_sample_ids(frame),
+            "chronological_age": chronological_age.to_numpy(dtype=float),
+            "predicted_age": predicted_age.astype(float),
+        }
+    ).write_csv(path)
+
+
 def evaluate_clock(
     model_path: Path,
     test_data: Path,
     output_dir: Path,
     *,
     demo: bool = False,
+    predictions_path: Path | None = None,
 ) -> dict[str, Any]:
     """Run held-out evaluation; write figures and ``validation_metrics.json``.
 
@@ -505,6 +531,7 @@ def evaluate_clock(
         test_data: Path to a wide test table with ages and ``cg*`` columns.
         output_dir: Directory for metrics JSON and residual/MAE figures.
         demo: When false, a model whose features are all ``cg_test_*`` is refused.
+        predictions_path: When set, write per-sample predictions to this CSV.
 
     Returns:
         Metrics dictionary including overall MAE, Pearson r, decade MAE, and
@@ -552,6 +579,9 @@ def evaluate_clock(
     decade_mae = eval_df.groupby("decade", observed=True)["residual"].apply(
         lambda s: float(np.mean(np.abs(s.to_numpy(dtype=float))))
     )
+    decade_signed = eval_df.groupby("decade", observed=True)["residual"].apply(
+        lambda s: float(np.mean(s.to_numpy(dtype=float)))
+    )
     decade_table = decade_mae.rename("mae").reset_index()
 
     report = alignment_fields(alignment)
@@ -564,6 +594,8 @@ def evaluate_clock(
         "n_features_used": int(x.shape[1]),
         "imputed_missing_cpgs": report["missing_cpg_ids"],
         "mae_by_decade": decade_mae.astype(float).to_dict(),
+        "mean_signed_error": float(np.mean(residual)),
+        "mean_signed_error_by_decade": decade_signed.astype(float).to_dict(),
         **report,
     }
     metrics_path = output_dir / "validation_metrics.json"
@@ -576,6 +608,8 @@ def evaluate_clock(
         y_pred,
         output_dir / "Fig_Clock_Predicted_vs_Chronological.png",
     )
+    if predictions_path is not None:
+        _write_predictions(df, y, y_pred, predictions_path)
     print_alignment_summary(report)
 
     return {**metrics, "metrics_path": str(metrics_path)}

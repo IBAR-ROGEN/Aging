@@ -74,6 +74,7 @@ results/*
 !results/.gitkeep
 outputs/*
 !outputs/.gitkeep
+outputs/predictions/
 figures/*
 !figures/.gitkeep
 

@@ -20,7 +20,7 @@ from rogen_aging.clock.validate_matrix import (
     validate_methylation_matrix,
     write_validation_outputs,
 )
-from rogen_aging.config import get_config
+from rogen_aging.config import find_repo_root, get_config
 from rogen_aging.config.cli import config_option, load_cli_config
 
 app = typer.Typer(
@@ -84,10 +84,26 @@ def evaluate_cmd(
         "--demo",
         help="Allow evaluation of a cg_test_* fixture model.",
     ),
+    save_predictions: bool = typer.Option(
+        False,
+        "--save-predictions",
+        help=("Write sample_id, chronological_age, and predicted_age to " "outputs/predictions/."),
+    ),
 ) -> None:
     """Evaluate a trained clock on held-out data and write figures/metrics."""
     load_cli_config(config)
-    result = evaluate_clock(model_path, test_data, output_dir, demo=demo)
+    predictions_path = None
+    if save_predictions:
+        predictions_path = (
+            find_repo_root() / "outputs" / "predictions" / f"{test_data.stem}_predictions.csv"
+        )
+    result = evaluate_clock(
+        model_path,
+        test_data,
+        output_dir,
+        demo=demo,
+        predictions_path=predictions_path,
+    )
     imputed = result.pop("imputed_missing_cpgs", [])
     typer.echo(json.dumps(result, indent=2))
     if imputed:

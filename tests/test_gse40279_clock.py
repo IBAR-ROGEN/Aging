@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import polars as pl
 import pytest
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import ElasticNet
@@ -126,3 +128,40 @@ def test_evaluate_refuses_cg_test_fixture_without_demo(tmp_path: Path) -> None:
     result = evaluate_clock(model_path, data_path, tmp_path / "demo", demo=True)
     assert Path(result["metrics_path"]).is_file()
     assert (tmp_path / "demo" / "Fig_Clock_Predicted_vs_Chronological.png").is_file()
+
+
+def test_evaluate_saves_predictions_and_signed_error(tmp_path: Path) -> None:
+    rng = np.random.default_rng(1)
+    ages = np.linspace(20.0, 80.0, 12)
+    x = pd.DataFrame({"cg00000001": rng.uniform(0.1, 0.9, size=12)})
+    y = ages
+    pipe = Pipeline(
+        [
+            ("imputer", SimpleImputer()),
+            ("elasticnet", ElasticNet(alpha=0.01, max_iter=5000, random_state=0)),
+        ]
+    )
+    pipe.fit(x, y)
+    model_path = tmp_path / "clock.joblib"
+    import joblib
+
+    joblib.dump(pipe, model_path)
+    table = x.copy()
+    table.insert(0, "sample_id", [f"S{index:02d}" for index in range(len(table))])
+    table.insert(1, "chronological_age", ages)
+    data_path = tmp_path / "betas.parquet"
+    table.to_parquet(data_path, index=False)
+    predictions_path = tmp_path / "predictions.csv"
+    result = evaluate_clock(
+        model_path,
+        data_path,
+        tmp_path / "out",
+        predictions_path=predictions_path,
+    )
+    saved = pl.read_csv(predictions_path)
+    assert saved.columns == ["sample_id", "chronological_age", "predicted_age"]
+    assert saved.height == 12
+    signed = saved["predicted_age"] - saved["chronological_age"]
+    assert result["mean_signed_error"] == pytest.approx(float(signed.mean()))
+    metrics = json.loads(Path(result["metrics_path"]).read_text(encoding="utf-8"))
+    assert "mean_signed_error_by_decade" in metrics

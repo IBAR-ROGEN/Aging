@@ -350,12 +350,16 @@ def ensure_nfe_allele_counts(
             continue
         if entry.get("ac_nfe_matches_af") is False:
             continue
-        variant_id = to_gnomad_variant_id(
-            str(row["chrom"]),
-            int(row["pos"]),
-            str(row["ref"]),
-            str(row["alt"]),
-        )
+        cached_variant_id = entry.get("variant_id")
+        if isinstance(cached_variant_id, str) and cached_variant_id.strip():
+            variant_id = cached_variant_id.strip()
+        else:
+            variant_id = to_gnomad_variant_id(
+                str(row["chrom"]),
+                int(row["pos"]),
+                str(row["ref"]),
+                str(row["alt"]),
+            )
         missing.append((rsid, variant_id))
     fetched = 0
     if missing:
@@ -403,7 +407,7 @@ def ensure_nfe_allele_counts(
         if nfe_counts_from_cache(cache.get(normalize_rsid(str(row["rsid"]))))[0] is not None
     )
     return {
-        "source": "cache fields ac_nfe and an_nfe for the panel alt",
+        "source": "cache fields ac_nfe and an_nfe for the cached gnomAD variant_id",
         "entries_with_counts": with_counts,
         "fetched_this_run": fetched,
         "af_gnomad_nfe_modified": False,
@@ -801,10 +805,16 @@ def build_panel_rows(
                 f"used 2 x {TSI_PHASE3_N_SAMPLES} (1000 Genomes phase 3 TSI sample size)"
             )
         if p_value is None:
-            notes.append(
-                "TSI versus NFE allele-count test left empty; "
-                "counts were not filled from another source"
-            )
+            if nfe_ac is None or nfe_an is None:
+                notes.append(
+                    "TSI versus NFE allele-count test left empty; "
+                    "gnomAD v4 did not return NFE allele count and allele number"
+                )
+            else:
+                notes.append(
+                    "TSI versus NFE allele-count test left empty; "
+                    "counts were not filled from another source"
+                )
 
         gene = str(variant["gene_symbol"])
         longevity_class = class_by_gene.get(gene.upper())
