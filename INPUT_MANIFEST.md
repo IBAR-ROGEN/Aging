@@ -48,6 +48,7 @@ Required inputs for [`scripts/clock/evaluate_methylation_clock.py`](scripts/cloc
 ## Notes
 
 - Preferred model path is `models/ro_clock_elasticnet_gse40279.pkl`.
+- That filename is not provenance. `uv run python scripts/audit_clock_artifacts.py` writes [`docs/CLOCK_ARTIFACT_AUDIT.md`](docs/CLOCK_ARTIFACT_AUDIT.md). In the current checkout the named pickle is a fixture (`cg_test_*` probes).
 - If that pickle is missing, the evaluator accepts
   `models/methylation_clock_v1.joblib` (Pipeline) and/or can materialize the
   pickle via `uv run python scripts/dev/write_pipeline_fixtures.py` or

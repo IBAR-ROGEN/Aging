@@ -54,8 +54,9 @@ Legacy script paths under `scripts/*.py` and at the repo root remain as **deprec
 - **GSE87571 external cohort:** `uv run python -m rogen_aging.clock.external_data --output data/gse87571.parquet`
 - **External-validation figure:** `uv run python scripts/figures/plot_clock_eval.py` → [CLOCK_EVAL_FIGURES.md](CLOCK_EVAL_FIGURES.md)
 - **Final metrics + three-panel figure:** `uv run python scripts/clock/evaluate_methylation_clock.py` → [METHYLATION_CLOCK_VALIDATION.md](METHYLATION_CLOCK_VALIDATION.md) · [INPUT_MANIFEST.md](../INPUT_MANIFEST.md)
+- **Artifact provenance (read-only):** `uv run python scripts/audit_clock_artifacts.py` → [CLOCK_ARTIFACT_AUDIT.md](CLOCK_ARTIFACT_AUDIT.md). A path containing `gse40279` is a fixture when its probe names are `cg_test_*`.
 - **Romanian mock demo** (separate StandardScaler path): `scripts/clock/train_romanian_epigenetic_clock.py`
-- **Docs:** [CLOCK_LIBRARY.md](CLOCK_LIBRARY.md), [GSE40279_CLOCK_TRAINING.md](GSE40279_CLOCK_TRAINING.md), [CLOCK_EVAL_FIGURES.md](CLOCK_EVAL_FIGURES.md), [METHYLATION_CLOCK_VALIDATION.md](METHYLATION_CLOCK_VALIDATION.md), [ROMANIAN_EPIGENETIC_CLOCK.md](ROMANIAN_EPIGENETIC_CLOCK.md), [ACTIVITIES.md](ACTIVITIES.md#21101--methylation-aging-clock)
+- **Docs:** [CLOCK_LIBRARY.md](CLOCK_LIBRARY.md), [GSE40279_CLOCK_TRAINING.md](GSE40279_CLOCK_TRAINING.md), [CLOCK_ARTIFACT_AUDIT.md](CLOCK_ARTIFACT_AUDIT.md), [CLOCK_EVAL_FIGURES.md](CLOCK_EVAL_FIGURES.md), [METHYLATION_CLOCK_VALIDATION.md](METHYLATION_CLOCK_VALIDATION.md), [ROMANIAN_EPIGENETIC_CLOCK.md](ROMANIAN_EPIGENETIC_CLOCK.md), [ACTIVITIES.md](ACTIVITIES.md#21101--methylation-aging-clock)
 
 ### UK Biobank (synthetic + LA-SNP)
 
@@ -115,6 +116,12 @@ uv run python analysis/validate_genomics_tables/validate_genomics_tables.py \
 uv run python analysis/overlap_enrichment/run_overlap_enrichment.py --output-dir results
 uv run python analysis/variant_functional_annotation/run_variant_functional_annotation.py \
   --input results/snps_validated.csv --output-dir results
+```
+
+eQTL Catalogue coverage (73 alleles × 14 `dataset_id` columns; cerebellum stays two studies). Inputs and outputs live under git-ignored `results/`:
+
+```bash
+uv run python scripts/build_eqtl_coverage.py
 ```
 
 See [GENOMICS_ANALYSIS.md](GENOMICS_ANALYSIS.md) · module index: [analysis/genomics/README.md](../analysis/genomics/README.md).

@@ -4,7 +4,7 @@
 **Activity:** 2.1.10.1 — methylation aging clock (GSE40279 train, GSE87571 validate)  
 **Script:** [`scripts/clock/evaluate_methylation_clock.py`](../scripts/clock/evaluate_methylation_clock.py) (deprecated shim: [`evaluate_methylation_clock.py`](../evaluate_methylation_clock.py))  
 **Library:** `rogen_aging.clock` (`load_model`, `build_feature_matrix`)  
-**Related:** [CLOCK_LIBRARY.md](CLOCK_LIBRARY.md) · [CLOCK_EVAL_FIGURES.md](CLOCK_EVAL_FIGURES.md) · [GSE40279_CLOCK_TRAINING.md](GSE40279_CLOCK_TRAINING.md)
+**Related:** [CLOCK_LIBRARY.md](CLOCK_LIBRARY.md) · [CLOCK_EVAL_FIGURES.md](CLOCK_EVAL_FIGURES.md) · [GSE40279_CLOCK_TRAINING.md](GSE40279_CLOCK_TRAINING.md) · [CLOCK_ARTIFACT_AUDIT.md](CLOCK_ARTIFACT_AUDIT.md)
 
 ## Purpose
 
@@ -79,12 +79,24 @@ uv run python scripts/clock/evaluate_methylation_clock.py \
 | Age-stratified MAE | MAE within `<30`, `30–60` (inclusive), and `>60` years |
 | Residual (panel B) | chronological − predicted |
 
+## Model provenance
+
+The default path `models/ro_clock_elasticnet_gse40279.pkl` is a **name**, not proof of a Hannum training run. Before treating a serialization as the GSE40279 clock, run the read-only audit:
+
+```bash
+uv run python scripts/audit_clock_artifacts.py
+# → docs/CLOCK_ARTIFACT_AUDIT.md
+```
+
+The current checkout's report is [CLOCK_ARTIFACT_AUDIT.md](CLOCK_ARTIFACT_AUDIT.md): loadable clocks use fixture probe names `cg_test_*`, not Illumina IDs `cg########`. A MAE is TRACEABLE only when that metrics file records the same feature count as an artifact and either names that artifact or uses its probe-id pattern. Tests: `uv run pytest tests/test_audit_clock_artifacts.py -q`.
+
 ## See also
 
 - [CLOCK_LIBRARY.md](CLOCK_LIBRARY.md) — package API and `rogen-clock` CLI
 - [CLOCK_EVAL_FIGURES.md](CLOCK_EVAL_FIGURES.md) — two-panel `plot_clock_eval.py` figure
+- [CLOCK_ARTIFACT_AUDIT.md](CLOCK_ARTIFACT_AUDIT.md) — which serializations are fixtures
 - [ACTIVITIES.md](ACTIVITIES.md#21101--methylation-aging-clock) — activity 2.1.10.1 map
 
 ---
 
-**Last updated:** July 27, 2026
+**Last updated:** September 27, 2026

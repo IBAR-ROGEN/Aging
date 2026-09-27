@@ -73,19 +73,31 @@ Required inputs are listed in [`INPUT_MANIFEST.md`](../INPUT_MANIFEST.md) (bare 
 
 See **[METHYLATION_CLOCK_VALIDATION.md](METHYLATION_CLOCK_VALIDATION.md)**.
 
+Confirm a serialization is a real Illumina clock before using it as GSE40279:
+
+```bash
+uv run python scripts/audit_clock_artifacts.py
+# → docs/CLOCK_ARTIFACT_AUDIT.md
+```
+
+See **[CLOCK_ARTIFACT_AUDIT.md](CLOCK_ARTIFACT_AUDIT.md)**.
+
 ## Tests
 
 ```bash
-uv run pytest tests/test_clock_regression.py tests/test_evaluate_methylation_clock.py tests/test_package_imports.py -q
+uv run pytest tests/test_clock_regression.py tests/test_evaluate_methylation_clock.py tests/test_audit_clock_artifacts.py tests/test_package_imports.py -q
 ```
 
 `test_clock_regression.py` asserts that `train_clock()` reproduces the pre-refactor GSE40279 training metrics on `test_data/mock_clock_wide.csv`. Both code paths call the real `sklearn.linear_model.ElasticNetCV` with **`alphas=20`** (20-point alpha grid per `l1_ratio`). Use `alphas`, not the removed `n_alphas` keyword, so tests pass on scikit-learn **1.9+** in CI.
 
 `test_evaluate_methylation_clock.py` covers manifest preflight, bare-ElasticNet loading (Pipeline / ElasticNetCV rejection), age-stratum metrics, cohort alignment edge cases, and end-to-end metric/figure writers.
 
+`test_audit_clock_artifacts.py` checks that a metrics file is TRACEABLE only when its feature count matches an artifact and the file names that artifact or uses its probe ids.
+
 ## Related documentation
 
 - [GSE40279 Clock Training](GSE40279_CLOCK_TRAINING.md)
+- [Clock artifact audit](CLOCK_ARTIFACT_AUDIT.md)
 - [Clock eval figure (`plot_clock_eval.py`)](CLOCK_EVAL_FIGURES.md)
 - [Methylation clock validation (`evaluate_methylation_clock.py`)](METHYLATION_CLOCK_VALIDATION.md)
 - [Romanian Epigenetic Clock](ROMANIAN_EPIGENETIC_CLOCK.md)
@@ -93,4 +105,4 @@ uv run pytest tests/test_clock_regression.py tests/test_evaluate_methylation_clo
 
 ---
 
-**Last updated:** July 27, 2026
+**Last updated:** September 27, 2026

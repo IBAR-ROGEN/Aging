@@ -44,7 +44,7 @@ rogen_aging/
 
 ## `scripts/`
 
-Grouped by workflow. Flat `scripts/*.py` paths are **deprecation shims** that forward to these folders.
+Grouped by workflow. Most flat `scripts/*.py` paths are **deprecation shims** that forward to these folders. Two flat scripts are canonical: `audit_clock_artifacts.py` (clock provenance → [CLOCK_ARTIFACT_AUDIT.md](CLOCK_ARTIFACT_AUDIT.md)) and `build_eqtl_coverage.py` (eQTL coverage matrix → [GENOMICS_ANALYSIS.md](GENOMICS_ANALYSIS.md)).
 
 | Folder | Contents |
 |--------|----------|
@@ -83,6 +83,8 @@ Run with `uv run pytest` after `uv sync --extra dev`. Imports use `rogen_aging.*
 | `test_synthetic_vcf.py` / `test_mock_clinical_csv.py` | VCF generator and mock clinical CSV |
 | `test_af_comparison_summary.py` | gnomAD comparison summarizer |
 | `test_integrative.py` | Variant×tissue×phenotype integrative pipeline |
+| `test_audit_clock_artifacts.py` | Clock MAE is TRACEABLE only when feature count and probe names match |
+| `test_eqtl_coverage.py` | eQTL coverage refuses a 13-dataset table and keeps two columns for one tissue |
 
 **CI:** `.github/workflows/ci.yml` runs `uv sync --extra dev`, `uv run ruff check src scripts tests`, `uv run pytest -q`, then `./scripts/dev/ukbb_ci_compliance_audit.sh` on every push/PR to `main`. Lockfile: `uv.lock` is committed for reproducible installs.
 
@@ -95,6 +97,7 @@ Run with `uv run pytest` after `uv sync --extra dev`. Imports use `rogen_aging.*
 | [FIGURES.md](FIGURES.md) | Manuscript figure assets |
 | [CODE_MODULES_REFERENCE.md](CODE_MODULES_REFERENCE.md) | Package and CLI reference |
 | [LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md](LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md) | LA-SNP manifest, 1KG extract, gnomAD compare + summarize |
+| [CLOCK_ARTIFACT_AUDIT.md](CLOCK_ARTIFACT_AUDIT.md) | Read-only check that GSE40279-named clocks are fixtures or real Illumina models |
 | Per-topic guides | Clock, UKB, methylation, compliance, … |
 
 ## Data flow
