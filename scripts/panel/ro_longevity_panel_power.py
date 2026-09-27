@@ -68,6 +68,10 @@ TSI_PHASE3_N_SAMPLES = 107
 FDR_THRESHOLD = 0.05
 CHI_SQUARE_MIN_EXPECTED = 5.0
 NFE_COUNT_AF_TOLERANCE = 1e-4
+NFE_AF_MIN = 0.001
+ALLELE_AF_MAX_ABS_DIFF = 0.15
+NFE_AF_GBR_CHECK_MIN = 0.4
+NFE_AF_GBR_CHECK_MAX = 0.6
 PANEL_DIFFERENCE = "differs between public reference panels (1000G TSI vs gnomAD NFE)"
 
 DISCLAIMER = (
@@ -277,6 +281,129 @@ def alt_allele_frequency(
     return None, (
         f"1000 Genomes phase 3 {subpopulation} alleles do not match ref/alt; frequency left empty"
     )
+
+
+def listed_population_frequencies(
+    populations: list[dict[str, Any]] | None,
+    subpopulation: str,
+) -> list[tuple[str, float]]:
+    """Allele frequencies Ensembl lists for one 1000 Genomes phase 3 subpopulation."""
+    listed: list[tuple[str, float]] = []
+    if not populations:
+        return listed
+    for row in populations:
+        if not isinstance(row, dict):
+            continue
+        if _population_code(str(row.get("population", ""))) != subpopulation:
+            continue
+        frequency = row.get("frequency")
+        allele = row.get("allele")
+        if frequency is None or allele is None:
+            continue
+        listed.append((str(allele).strip().upper(), float(frequency)))
+    return listed
+
+
+def same_allele_frequency(
+    populations: list[dict[str, Any]] | None,
+    subpopulation: str,
+    ref: str,
+    alt: str,
+) -> float | None:
+    """Frequency of ``alt`` itself in one 1000 Genomes phase 3 subpopulation.
+
+    The complement of the reference is used only when Ensembl lists the
+    reference and no other allele. A different listed alternate is not used.
+    """
+    listed = listed_population_frequencies(populations, subpopulation)
+    alt_u = alt.strip().upper()
+    ref_u = ref.strip().upper()
+    for allele, frequency in listed:
+        if allele == alt_u:
+            return frequency
+    others = [allele for allele, _frequency in listed if allele != ref_u]
+    if others or not listed:
+        return None
+    for allele, frequency in listed:
+        if allele == ref_u:
+            return 1.0 - frequency
+    return None
+
+
+def frequency_check_population(af_nfe: float) -> str:
+    """GBR replaces CEU when the NFE frequency is in the 0.4-0.6 band."""
+    if NFE_AF_GBR_CHECK_MIN <= af_nfe <= NFE_AF_GBR_CHECK_MAX:
+        return "GBR"
+    return "CEU"
+
+
+def panel_alt_frequency_failure(
+    *,
+    in_gnomad: bool,
+    af_nfe: float | None,
+    af_ceu: float | None,
+    af_gbr: float | None,
+) -> str | None:
+    """Why a panel alt fails the frequency rule, or None when it passes.
+
+    A pass requires the alt in gnomAD v4, NFE AF >= 0.001, and an absolute
+    gap under 0.15 versus the Ensembl 1000 Genomes frequency of that same
+    allele. The comparison population is GBR when NFE AF is in 0.4-0.6, and
+    CEU otherwise.
+    """
+    if not in_gnomad or af_nfe is None:
+        return "panel alt absent from gnomAD v4"
+    if af_nfe < NFE_AF_MIN:
+        return "NFE AF below 0.001"
+    check = frequency_check_population(af_nfe)
+    compare = af_gbr if check == "GBR" else af_ceu
+    if compare is None:
+        return f"Ensembl 1000G {check} frequency of the panel alt is missing"
+    if abs(af_nfe - compare) >= ALLELE_AF_MAX_ABS_DIFF:
+        return f"absolute {check} frequency gap is at least 0.15"
+    return None
+
+
+def _ensembl_populations(payload: Any) -> list[dict[str, Any]] | None:
+    if not isinstance(payload, dict) or payload.get("__ensembl_request_failed__") is True:
+        return None
+    raw = payload.get("populations")
+    if not isinstance(raw, list):
+        return None
+    return [item for item in raw if isinstance(item, dict)]
+
+
+def require_tested_nfe_af_matches_ceu(
+    rows: list[dict[str, Any]],
+    ensembl_payloads: dict[str, Any | None],
+    *,
+    excluded: set[str],
+) -> None:
+    """Stop when a tested variant has NFE AF < 0.001 or a CEU gap above 0.15."""
+    failures: list[str] = []
+    for row in rows:
+        rsid = str(row["rsid"])
+        if rsid in excluded:
+            continue
+        af_nfe = row.get("af_nfe")
+        af_value = float(af_nfe) if isinstance(af_nfe, (int, float)) else None
+        populations = _ensembl_populations(ensembl_payloads.get(rsid))
+        af_ceu = same_allele_frequency(
+            populations,
+            "CEU",
+            str(row["ref"]),
+            str(row["alt"]),
+        )
+        if af_value is None or af_value < NFE_AF_MIN:
+            failures.append(f"{rsid} NFE AF {af_nfe} CEU AF {af_ceu}")
+            continue
+        if af_ceu is None or abs(af_value - af_ceu) > ALLELE_AF_MAX_ABS_DIFF:
+            failures.append(f"{rsid} NFE AF {af_value} CEU AF {af_ceu}")
+    if failures:
+        _stop(
+            "STOP: tested variant has NFE AF < 0.001 or |gnomAD NFE AF - "
+            "Ensembl 1000G CEU AF| > 0.15: " + "; ".join(failures)
+        )
 
 
 def _as_count(value: Any) -> int | None:
@@ -1316,6 +1443,7 @@ def main(
         ensembl_payloads,
         held_out_notes=held_out_notes,
     )
+    require_tested_nfe_af_matches_ceu(rows, ensembl_payloads, excluded=held_out)
     tsi_vs_nfe = apply_tsi_nfe_fdr(rows)
     rows = assign_testability_rank(rows)
     panel = panel_frame(rows)

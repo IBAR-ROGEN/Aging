@@ -11,3 +11,5 @@ rs1981429,20,45347053,G,C,20-45347053-G-T,C,,,,,20-45347053-G-C,false,,,,panel a
 rs139170,22,44203572,C,G,22-44203572-C-T,G,,,,,22-44203572-C-G,false,,,,panel alt absent from gnomAD v4,C,G|T,false,true
 rs524533,6,44272822,C,A,6-44272822-C-T,A,,,,,6-44272822-C-A,false,,,,panel alt absent from gnomAD v4,C,A|G|T,false,true
 rs882696,8,15545789,T,A,8-15545789-T-C,A,,,,,8-15545789-T-A,false,,,,panel alt absent from gnomAD v4,T,A|C|G,false,true
+rs28366003,16,56608579,A,C,16-56608579-A-C,C,,,,,16-56608579-A-C,true,11,1151536,9.552458629170082e-06,panel alt present in gnomAD but absent or near-absent in NFE; frequency inconsistent with 1000G,A,C|G,true,true
+rs155979,5,96434194,G,A,5-96434194-G-A,A,,,,,5-96434194-G-A,true,0,68044,0,panel alt present in gnomAD but absent or near-absent in NFE; frequency inconsistent with 1000G,G,A|C|T,true,true

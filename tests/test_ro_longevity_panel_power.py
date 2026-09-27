@@ -242,6 +242,80 @@ def test_unmatched_alleles_stay_empty() -> None:
     assert note is not None
 
 
+def _ceu_populations(*alleles: tuple[str, float]) -> list[dict[str, object]]:
+    return [
+        {"population": "1000GENOMES:phase_3:CEU", "allele": allele, "frequency": frequency}
+        for allele, frequency in alleles
+    ]
+
+
+def test_same_allele_frequency_does_not_use_a_different_alt() -> None:
+    populations = _ceu_populations(("G", 0.16), ("C", 0.84))
+    assert panel.same_allele_frequency(populations, "CEU", "G", "A") is None
+    assert panel.same_allele_frequency(populations, "CEU", "G", "C") == 0.84
+    only_ref = _ceu_populations(("A", 0.8))
+    assert panel.same_allele_frequency(only_ref, "CEU", "A", "G") == pytest.approx(0.2)
+
+
+def test_frequency_rule_uses_gbr_inside_the_middle_band() -> None:
+    assert (
+        panel.panel_alt_frequency_failure(
+            in_gnomad=True,
+            af_nfe=0.50,
+            af_ceu=0.90,
+            af_gbr=0.52,
+        )
+        is None
+    )
+    assert panel.panel_alt_frequency_failure(
+        in_gnomad=True,
+        af_nfe=0.50,
+        af_ceu=0.52,
+        af_gbr=0.90,
+    ) == ("absolute GBR frequency gap is at least 0.15")
+    assert (
+        panel.panel_alt_frequency_failure(
+            in_gnomad=True,
+            af_nfe=0.20,
+            af_ceu=0.22,
+            af_gbr=None,
+        )
+        is None
+    )
+    assert panel.panel_alt_frequency_failure(
+        in_gnomad=True,
+        af_nfe=0.0,
+        af_ceu=0.84,
+        af_gbr=0.86,
+    ) == ("NFE AF below 0.001")
+    assert panel.panel_alt_frequency_failure(
+        in_gnomad=False,
+        af_nfe=None,
+        af_ceu=None,
+        af_gbr=None,
+    ) == ("panel alt absent from gnomAD v4")
+
+
+def test_guard_stops_when_tested_nfe_af_is_below_0_001_or_ceu_gap_exceeds_0_15() -> None:
+    low = {"rsid": "rs1", "ref": "G", "alt": "A", "af_nfe": 0.0}
+    gap = {"rsid": "rs2", "ref": "A", "alt": "G", "af_nfe": 0.2}
+    populations = {
+        "rs1": {"populations": _ceu_populations(("G", 0.16), ("C", 0.84))},
+        "rs2": {"populations": _ceu_populations(("A", 0.6), ("G", 0.4))},
+    }
+    with pytest.raises(panel.typer.Exit):
+        panel.require_tested_nfe_af_matches_ceu([low], populations, excluded=set())
+    with pytest.raises(panel.typer.Exit):
+        panel.require_tested_nfe_af_matches_ceu([gap], populations, excluded=set())
+    panel.require_tested_nfe_af_matches_ceu([low], populations, excluded={"rs1"})
+    ok = {"rsid": "rs3", "ref": "A", "alt": "G", "af_nfe": 0.2}
+    panel.require_tested_nfe_af_matches_ceu(
+        [ok],
+        {"rs3": {"populations": _ceu_populations(("A", 0.78), ("G", 0.22))}},
+        excluded=set(),
+    )
+
+
 def test_complement_check_skips_frequencies_near_one_half() -> None:
     assert sanity.complement_test_applies(0.2) is True
     assert sanity.complement_test_applies(0.4) is False
