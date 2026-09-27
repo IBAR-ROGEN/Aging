@@ -1,5 +1,5 @@
 #!/bin/sh
-# Strip Cursor attribution trailers before the commit is finalized.
+# Strip common AI-agent attribution trailers before the commit is finalized.
 if [ -f "$1" ]; then
   sed -i '' '/cursoragent@cursor\.com/d' "$1"
   sed -i '' '/^Made-with: Cursor/d' "$1"
