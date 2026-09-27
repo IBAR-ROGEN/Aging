@@ -9,6 +9,11 @@ from pathlib import Path
 import typer
 
 from rogen_aging.clock.evaluate import evaluate_clock
+from rogen_aging.clock.gse40279 import (
+    EXPECTED_N_SAMPLES,
+    Gse40279SampleCountError,
+    prepare_gse40279,
+)
 from rogen_aging.clock.train import train_clock
 from rogen_aging.clock.validate_matrix import (
     MissingValuePolicy,
@@ -21,6 +26,7 @@ from rogen_aging.config.cli import config_option, load_cli_config
 app = typer.Typer(
     add_completion=False, no_args_is_help=True, help="Train or evaluate an epigenetic clock."
 )
+
 
 @app.command("train")
 def train_cmd(
@@ -40,6 +46,9 @@ def train_cmd(
     random_state: int | None = typer.Option(
         None, "--random_state", help="Random seed. Default: from config."
     ),
+    cv: int | None = typer.Option(
+        None, "--cv", help="ElasticNetCV folds. Default: clock.elasticnet.cv from config."
+    ),
 ) -> None:
     """Train an epigenetic clock and write model plus metrics."""
     load_cli_config(config)
@@ -53,6 +62,7 @@ def train_cmd(
         output_metrics,
         test_size=resolved_test_size,
         random_state=resolved_random_state,
+        cv=cv,
     )
     typer.echo(
         f"# CpGs used: {metrics['n_cpgs_features']} | alpha: {metrics['alpha']:.6g} | "
@@ -69,10 +79,15 @@ def evaluate_cmd(
         ..., "--output_dir", help="Directory for figures and metrics JSON."
     ),
     config: Path | None = config_option(),
+    demo: bool = typer.Option(
+        False,
+        "--demo",
+        help="Allow evaluation of a cg_test_* fixture model.",
+    ),
 ) -> None:
     """Evaluate a trained clock on held-out data and write figures/metrics."""
     load_cli_config(config)
-    result = evaluate_clock(model_path, test_data, output_dir)
+    result = evaluate_clock(model_path, test_data, output_dir, demo=demo)
     imputed = result.pop("imputed_missing_cpgs", [])
     typer.echo(json.dumps(result, indent=2))
     if imputed:
@@ -80,6 +95,41 @@ def evaluate_cmd(
             f"Imputed {len(imputed)} missing model CpGs (see metrics JSON for names).",
             err=True,
         )
+
+
+@app.command("prepare-gse40279")
+def prepare_gse40279_cmd(
+    output: Path = typer.Option(
+        Path("data/methylation/GSE40279_processed.parquet"),
+        "--output",
+        help="Wide parquet: sample_id, chronological_age, cg* float32 betas.",
+    ),
+    geo_cache_dir: Path = typer.Option(
+        Path("data/geo"),
+        "--geo-cache-dir",
+        help="Directory for the GEO series matrix download.",
+    ),
+    series_matrix: Path | None = typer.Option(
+        None,
+        "--series-matrix",
+        help="Local series matrix (.txt or .txt.gz). Downloaded from GEO when omitted.",
+    ),
+) -> None:
+    """Download GSE40279 and write the wide beta matrix. Does not alter sample count."""
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
+    try:
+        counts = prepare_gse40279(
+            output,
+            geo_cache_dir=geo_cache_dir,
+            series_matrix_path=series_matrix,
+            expected_n_samples=EXPECTED_N_SAMPLES,
+        )
+    except Gse40279SampleCountError as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=1) from exc
+    typer.echo(f"samples: {counts['n_samples']}")
+    typer.echo(f"probes: {counts['n_probes']}")
+    typer.echo(f"wrote: {output}")
 
 
 @app.command("validate-matrix")
@@ -165,6 +215,7 @@ def validate_matrix_cmd(
 def main() -> None:
     """Console entry for ``rogen-clock``."""
     app()
+
 
 if __name__ == "__main__":
     main()

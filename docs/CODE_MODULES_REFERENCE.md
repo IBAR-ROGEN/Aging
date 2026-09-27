@@ -46,6 +46,8 @@ See [ACTIVITIES.md](ACTIVITIES.md) for the full tree. Highlights:
 - **`analysis/validate_genomics_tables/`**, **`analysis/overlap_enrichment/`**, **`analysis/variant_functional_annotation/`** — GRCh38 genomics validation ([GENOMICS_ANALYSIS.md](GENOMICS_ANALYSIS.md); index: [analysis/genomics/README.md](../analysis/genomics/README.md))
 - **`scripts/ukb/run_july_annotation_pipeline.py`** — July batch GTEx v8 + VEP + AlphaGenome/AlphaMissense Excel export ([JULY_ANNOTATION_PIPELINE.md](JULY_ANNOTATION_PIPELINE.md))
 - **`scripts/clock/evaluate_methylation_clock.py`** — GSE87571 external validation of a bare ElasticNet clock; writes `outputs/clock_metrics.json` + three-panel figure ([METHYLATION_CLOCK_VALIDATION.md](METHYLATION_CLOCK_VALIDATION.md), [INPUT_MANIFEST.md](../INPUT_MANIFEST.md))
+- **`scripts/audit_clock_artifacts.py`** — read-only provenance audit of `.pkl` / `.joblib` / `.sav` clocks; writes [CLOCK_ARTIFACT_AUDIT.md](CLOCK_ARTIFACT_AUDIT.md). Canonical flat script, not a deprecation shim.
+- **`scripts/build_eqtl_coverage.py`** — allele × eQTL Catalogue `dataset_id` coverage matrix and categorical heatmap under `results/` ([GENOMICS_ANALYSIS.md](GENOMICS_ANALYSIS.md)). Canonical flat script, not a deprecation shim.
 - **`scripts/integrative/`** — variant×tissue map, phenotype risk, end-to-end pipeline ([INTEGRATIVE_PIPELINE.md](INTEGRATIVE_PIPELINE.md))
 - **`scripts/dev/`** — `security_check.sh`, CI audit, ONT pipeline validation, R bootstrap, `find_r.sh`
 

@@ -56,6 +56,14 @@ ipython_config.py
 # Secrets
 .env
 .envrc
+*.key
+*.hmac_key
+secrets/
+
+# Secure intake and dry-run data
+data/intake/
+data/custodian/
+data/dryrun/
 
 # Project outputs (placeholders stay in git)
 data/*

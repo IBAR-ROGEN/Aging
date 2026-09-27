@@ -28,6 +28,7 @@ def train_clock(
     *,
     test_size: float | None = None,
     random_state: int | None = None,
+    cv: int | None = None,
 ) -> dict[str, Any]:
     """Fit a clock pipeline on a wide table and write model + metrics JSON.
 
@@ -40,6 +41,7 @@ def train_clock(
             ``clock.test_size`` from the active config.
         random_state: Seed for the train/test split and ElasticNetCV. Defaults
             to ``clock.random_state`` from the active config.
+        cv: ElasticNetCV fold count. Defaults to ``clock.elasticnet.cv``.
 
     Returns:
         The metrics dictionary written to ``output_metrics``.
@@ -68,7 +70,7 @@ def train_clock(
         test_size=resolved_test_size,
         random_state=resolved_random_state,
     )
-    pipe = make_clock_pipeline(random_state=resolved_random_state)
+    pipe = make_clock_pipeline(random_state=resolved_random_state, cv=cv)
     logger.info("Fitting Pipeline(imputer, ElasticNetCV) …")
     pipe.fit(x_train, y_train)
     y_pred = pipe.predict(x_test)
@@ -94,6 +96,7 @@ def train_clock(
         "selected_cpgs": selected,
         "test_size": resolved_test_size,
         "random_state": resolved_random_state,
+        "cv": int(pipe.named_steps["elasticnet"].cv),
     }
     output_metrics.parent.mkdir(parents=True, exist_ok=True)
     output_metrics.write_text(json.dumps(metrics, indent=2), encoding="utf-8")

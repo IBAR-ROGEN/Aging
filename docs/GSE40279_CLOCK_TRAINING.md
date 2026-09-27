@@ -11,6 +11,12 @@
 
 The script does **not** download GEO Series Matrix files, parse IDATs, or map probe annotations. You must obtain the data from NCBI GEO and convert it to the expected column layout yourself (for example in R with `minfi`/`GEOquery`, or in Python after exporting β-values).
 
+A file whose name contains `gse40279` can still be the demo clock. `scripts/audit_clock_artifacts.py` opens every `.pkl`, `.joblib`, and `.sav` in the checkout read-only and writes [CLOCK_ARTIFACT_AUDIT.md](CLOCK_ARTIFACT_AUDIT.md). In this checkout those artifacts are flagged FIXTURE (`cg_test_*` probes). Do not evaluate that fixture as the Hannum model.
+
+```bash
+uv run python scripts/audit_clock_artifacts.py
+```
+
 ## Expected input format
 
 | Requirement | Detail |

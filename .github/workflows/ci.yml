@@ -53,7 +53,7 @@ jobs:
           test -f data/scores/alphamissense_raw.parquet
           test -f analysis/integrative/fixtures/annotated_variants.parquet
           test -f analysis/integrative/fixtures/eqtls.parquet
-          test -f models/ro_clock_elasticnet_gse40279.pkl
+          test -f models/fixtures/fixture_clock_cg_test.pkl
 
       - name: Upload pipeline fixtures
         uses: actions/upload-artifact@v4
@@ -67,7 +67,7 @@ jobs:
             data/cache/july_annotation/
             data/methylation/
             analysis/integrative/fixtures/
-            models/ro_clock_elasticnet_gse40279.pkl
+            models/fixtures/fixture_clock_cg_test.pkl
 
   lint:
     name: Ruff lint

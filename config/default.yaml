@@ -7,7 +7,7 @@ repo:
 
 paths:
   models:
-    clock_elasticnet: models/ro_clock_elasticnet_gse40279.pkl
+    clock_elasticnet: models/gse40279_hannum450k_elasticnet.joblib
     clock_joblib_fallback: models/methylation_clock_v1.joblib
   methylation:
     gse87571_processed: data/methylation/GSE87571_processed.parquet
@@ -148,5 +148,10 @@ annotation:
 
 apis:
   ensembl_rest: https://rest.ensembl.org
-  ensembl_rest_dated: https://jun2026.rest.ensembl.org
+  # jun2026.rest.ensembl.org — jun2026 mirror returned 503 on 2026-09-27
+  ensembl_rest_dated: https://rest.ensembl.org
   gtex_api_base: https://gtexportal.org/api/v2
+
+release_guard:
+  # project default, to be confirmed with the data custodian
+  min_cell_count: 5

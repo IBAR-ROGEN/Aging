@@ -556,7 +556,8 @@ def create_clock_validation_plot(
     """Create Figure 3: Methylation Clock Accuracy scatter plot.
 
     This script generates the scatter plot for Activity 2.1.10, showing the
-    relationship between chronological age and DNAm predicted age with MAE ~ 2.1 years.
+    relationship between chronological age and DNAm predicted age.
+    SIMULATED TARGET, not a model result (MAE ~ 2.1 years).
 
     Args:
         output_path: Path to save the figure. If None, saves to ``figures/`` directory.
@@ -572,7 +573,7 @@ def create_clock_validation_plot(
     n_samples = 150
     chronological_age = rng.uniform(20, 90, n_samples)
 
-    # Simulate DNAm Age with small error (MAE ~ 2.1)
+    # SIMULATED TARGET, not a model result (MAE ~ 2.1)
     error = rng.normal(0, 2.6, n_samples)  # Random noise
     dnam_age = chronological_age + error
 

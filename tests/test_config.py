@@ -25,7 +25,9 @@ def test_default_config_loads() -> None:
     assert Path(str(cfg.repo.root)).is_dir()
     assert default_config_path().is_file()
     assert float(cfg.integrative.risk_weights.vep_impact) == pytest.approx(0.25)
-    assert cfg_path(cfg, "paths", "models", "clock_elasticnet").name.endswith(".pkl")
+    assert cfg_path(cfg, "paths", "models", "clock_elasticnet").name == (
+        "gse40279_hannum450k_elasticnet.joblib"
+    )
 
 
 def test_production_profile_merges() -> None:

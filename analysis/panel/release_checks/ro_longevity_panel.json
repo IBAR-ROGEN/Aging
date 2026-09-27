@@ -1,0 +1,30 @@
+{
+  "table": "/Users/mityatoren/code/rogen_aging/analysis/panel/ro_longevity_panel.csv",
+  "table_kind": "summary",
+  "min_cell_count": 5,
+  "n_samples": null,
+  "release_blocked": false,
+  "sanitized_written": false,
+  "checks": [
+    {
+      "check": "individual_level",
+      "status": "PASS",
+      "reason": "no individual-level column and no RO- pseudonym; --n-samples was not supplied"
+    },
+    {
+      "check": "direct_identifiers",
+      "status": "PASS",
+      "reason": "no date-of-birth, full-date, postcode, or name column"
+    },
+    {
+      "check": "allele_count_cells",
+      "status": "PASS",
+      "reason": "not applied: table kind is summary"
+    },
+    {
+      "check": "strata_cells",
+      "status": "PASS",
+      "reason": "not applied: table kind is summary"
+    }
+  ]
+}

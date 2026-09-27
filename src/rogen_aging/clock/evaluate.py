@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import pickle
+import re
 import warnings
 from pathlib import Path
 from typing import Any, cast
@@ -18,6 +19,26 @@ from sklearn.base import BaseEstimator
 from sklearn.metrics import mean_absolute_error
 
 from rogen_aging.clock.data import load_wide_table
+
+FIXTURE_FEATURE_RE = re.compile(r"^cg_test_\d+$")
+
+
+def model_is_cg_test_fixture(model: Any) -> bool:
+    """True when every recorded feature name is a ``cg_test_*`` demo probe."""
+    names = _extract_feature_names_in(model)
+    if not names:
+        return False
+    return all(FIXTURE_FEATURE_RE.fullmatch(name) is not None for name in names)
+
+
+def refuse_fixture_model(model: Any, *, demo: bool) -> None:
+    """Stop evaluation of the demo clock unless ``demo`` was requested."""
+    if demo or not model_is_cg_test_fixture(model):
+        return
+    raise ValueError(
+        "Refusing to evaluate: every feature name matches ^cg_test_\\d+$. "
+        "This model is a fixture, not a GSE40279 clock. Pass --demo to evaluate it."
+    )
 
 
 def load_model(model_path: Path) -> Any:
@@ -124,10 +145,110 @@ def _imputer_statistics(model: Any) -> np.ndarray | None:
     return None
 
 
+def _elasticnet_abs_coef(model: Any, n_features: int) -> np.ndarray:
+    """Return ``|coef_|`` aligned to ``n_features``, or zeros if unavailable.
+
+    Args:
+        model: Fitted estimator or Pipeline ending in ElasticNet / ElasticNetCV.
+        n_features: Length of the coefficient vector to report against.
+
+    Returns:
+        1-D absolute coefficients. Zeros when ``coef_`` is missing.
+    """
+    enet: Any = model
+    if hasattr(model, "named_steps"):
+        steps = getattr(model, "named_steps")
+        enet = steps["elasticnet"] if "elasticnet" in steps else list(steps.values())[-1]
+    if not hasattr(enet, "coef_"):
+        return np.zeros(n_features, dtype=float)
+    coef = np.abs(np.ravel(enet.coef_).astype(float))
+    if coef.shape[0] == n_features:
+        return np.asarray(coef, dtype=float)
+    out = np.zeros(n_features, dtype=float)
+    n_copy = min(n_features, coef.shape[0])
+    out[:n_copy] = coef[:n_copy]
+    return out
+
+
+def _fraction_of_model_weight_imputed(
+    abs_coef: np.ndarray,
+    missing_mask: np.ndarray,
+) -> float:
+    """Return sum(|coef|) on missing CpGs / sum(|coef|) on all clock CpGs.
+
+    Args:
+        abs_coef: Per-feature absolute coefficients.
+        missing_mask: Boolean mask of features absent from the test matrix.
+
+    Returns:
+        Fraction in ``[0, 1]``. ``0.0`` when the denominator is zero.
+    """
+    total = float(np.sum(abs_coef))
+    if total <= 0.0 or not np.isfinite(total):
+        return 0.0
+    return float(np.sum(abs_coef[missing_mask]) / total)
+
+
+class _AlignmentReport(dict[str, Any]):
+    """Alignment diagnostics.
+
+    Iterating and ``len()`` follow ``missing_cpg_ids`` so existing ``x, imputed =
+    build_feature_matrix(...)`` callers still see a list of absent probe IDs.
+    """
+
+    def __iter__(self) -> Any:
+        return iter(self.get("missing_cpg_ids", []))
+
+    def __len__(self) -> int:
+        return int(self.get("n_missing_imputed", 0))
+
+
+def _alignment_report(
+    *,
+    n_clock_cpgs: int,
+    missing_cpg_ids: list[str],
+    n_nan_cells_in_present_cpgs: int,
+    abs_coef: np.ndarray,
+    missing_mask: np.ndarray,
+) -> _AlignmentReport:
+    """Build the reporting dict returned next to the aligned matrix."""
+    n_missing = len(missing_cpg_ids)
+    return _AlignmentReport(
+        {
+            "n_clock_cpgs": int(n_clock_cpgs),
+            "n_present": int(n_clock_cpgs - n_missing),
+            "n_missing_imputed": int(n_missing),
+            "missing_cpg_ids": list(missing_cpg_ids),
+            "n_nan_cells_in_present_cpgs": int(n_nan_cells_in_present_cpgs),
+            "fraction_of_model_weight_imputed": _fraction_of_model_weight_imputed(
+                abs_coef, missing_mask
+            ),
+        }
+    )
+
+
+def alignment_fields(report: dict[str, Any]) -> dict[str, Any]:
+    """Copy the six alignment keys for metrics JSON (plain JSON-safe values)."""
+    return {
+        "n_clock_cpgs": int(report["n_clock_cpgs"]),
+        "n_present": int(report["n_present"]),
+        "n_missing_imputed": int(report["n_missing_imputed"]),
+        "missing_cpg_ids": [str(x) for x in report["missing_cpg_ids"]],
+        "n_nan_cells_in_present_cpgs": int(report["n_nan_cells_in_present_cpgs"]),
+        "fraction_of_model_weight_imputed": float(report["fraction_of_model_weight_imputed"]),
+    }
+
+
+def print_alignment_summary(report: dict[str, Any]) -> None:
+    """Print missing-CpG count and imputed weight fraction to stdout."""
+    print(f"n_missing_imputed: {int(report['n_missing_imputed'])}")
+    print(f"fraction_of_model_weight_imputed: {float(report['fraction_of_model_weight_imputed'])}")
+
+
 def build_feature_matrix(
     df: pd.DataFrame,
     model: Any,
-) -> tuple[pd.DataFrame, list[str]]:
+) -> tuple[pd.DataFrame, dict[str, Any]]:
     """Align test CpGs to training features.
 
     When ``model`` is a Pipeline with a fitted imputer, missing values are left
@@ -141,8 +262,12 @@ def build_feature_matrix(
             ``feature_names_in_``).
 
     Returns:
-        A pair ``(X, imputed_names)`` where ``X`` is the aligned feature
-        matrix and ``imputed_names`` lists training sites absent from ``df``.
+        A pair ``(X, report)`` where ``X`` is the aligned feature matrix and
+        ``report`` is a dict with ``n_clock_cpgs``, ``n_present``,
+        ``n_missing_imputed``, ``missing_cpg_ids``,
+        ``n_nan_cells_in_present_cpgs``, and
+        ``fraction_of_model_weight_imputed``. Iterating ``report`` still yields
+        absent probe IDs (same as the former ``imputed_names`` list).
 
     Raises:
         ValueError: If ``chronological_age`` or ``cg*`` columns are missing,
@@ -166,15 +291,20 @@ def build_feature_matrix(
         flat_mean = float(np.nanmean(present_cg.to_numpy(dtype=float))) if cg_cols else 0.5
         if not np.isfinite(flat_mean):
             flat_mean = 0.5
+        n_nan_present = 0
+        missing_mask = np.zeros(len(expected), dtype=bool)
 
         for idx, name in enumerate(expected):
             train_fill = (
                 float(train_stats[idx])
-                if train_stats is not None and idx < len(train_stats) and np.isfinite(train_stats[idx])
+                if train_stats is not None
+                and idx < len(train_stats)
+                and np.isfinite(train_stats[idx])
                 else None
             )
             if name in df.columns:
                 col = pd.to_numeric(df[name], errors="coerce")
+                n_nan_present += int(col.isna().sum())
                 if defer_to_pipeline:
                     x[name] = col
                 elif train_fill is not None:
@@ -196,9 +326,17 @@ def build_feature_matrix(
                     stacklevel=2,
                 )
                 imputed.append(name)
+                missing_mask[idx] = True
                 x[name] = np.nan if defer_to_pipeline else fill
 
-        return x, imputed
+        abs_coef = _elasticnet_abs_coef(model, len(expected))
+        return x, _alignment_report(
+            n_clock_cpgs=len(expected),
+            missing_cpg_ids=imputed,
+            n_nan_cells_in_present_cpgs=n_nan_present,
+            abs_coef=abs_coef,
+            missing_mask=missing_mask,
+        )
 
     n_feat = _n_features_in(model)
     if n_feat is not None and len(cg_cols) != n_feat:
@@ -209,14 +347,25 @@ def build_feature_matrix(
         )
 
     x = df.reindex(columns=cg_cols).apply(pd.to_numeric, errors="coerce")
+    n_nan_present = int(x.isna().to_numpy().sum())
+    n_clock = int(x.shape[1])
+    abs_coef = _elasticnet_abs_coef(model, n_clock)
+    missing_mask = np.zeros(n_clock, dtype=bool)
+    report = _alignment_report(
+        n_clock_cpgs=n_clock,
+        missing_cpg_ids=imputed,
+        n_nan_cells_in_present_cpgs=n_nan_present,
+        abs_coef=abs_coef,
+        missing_mask=missing_mask,
+    )
     if defer_to_pipeline:
-        return x, imputed
+        return x, report
     row_mean = x.mean(axis=1)
     x = x.T.fillna(row_mean).T
     col_mean = x.mean(axis=0)
     x = x.fillna(col_mean)
     x = x.fillna(0.5)
-    return x, imputed
+    return x, report
 
 
 def assign_age_decade(ages: pd.Series) -> pd.Series:
@@ -283,10 +432,71 @@ def plot_mae_by_decade(decade_df: pd.DataFrame, out_path: Path) -> None:
     plt.close(fig)
 
 
+def plot_predicted_vs_chronological(
+    age: np.ndarray,
+    predicted: np.ndarray,
+    out_path: Path,
+) -> None:
+    """Scatter predicted age against chronological age.
+
+    Both axes share the same limits. The identity line and the ordinary
+    least-squares fit are drawn with different styles.
+
+    Args:
+        age: Chronological ages (years).
+        predicted: Predicted ages (years).
+        out_path: Destination PNG path.
+    """
+    age = np.asarray(age, dtype=float)
+    predicted = np.asarray(predicted, dtype=float)
+    low = float(min(np.min(age), np.min(predicted)))
+    high = float(max(np.max(age), np.max(predicted)))
+    span = high - low
+    pad = 0.02 * span if span > 0 else 1.0
+    low -= pad
+    high += pad
+    slope, intercept = np.polyfit(age, predicted, 1)
+    grid = np.array([low, high], dtype=float)
+    fig, ax = plt.subplots(figsize=(7.0, 7.0))
+    ax.scatter(
+        age,
+        predicted,
+        alpha=0.75,
+        edgecolors="black",
+        linewidths=0.25,
+        s=36,
+        label="samples",
+        zorder=2,
+    )
+    ax.plot(grid, grid, color="black", linestyle="--", linewidth=1.2, label="y = x", zorder=3)
+    ax.plot(
+        grid,
+        slope * grid + intercept,
+        color="#C44E52",
+        linestyle="-",
+        linewidth=1.6,
+        label="linear fit",
+        zorder=4,
+    )
+    ax.set_xlim(low, high)
+    ax.set_ylim(low, high)
+    ax.set_aspect("equal", adjustable="box")
+    ax.set_xlabel("Chronological age (years)")
+    ax.set_ylabel("Predicted age (years)")
+    ax.set_title("Predicted vs chronological age")
+    ax.grid(True, linestyle=":", linewidth=0.6, alpha=0.75)
+    ax.legend(loc="best", frameon=True)
+    fig.tight_layout()
+    fig.savefig(out_path, dpi=160)
+    plt.close(fig)
+
+
 def evaluate_clock(
     model_path: Path,
     test_data: Path,
     output_dir: Path,
+    *,
+    demo: bool = False,
 ) -> dict[str, Any]:
     """Run held-out evaluation; write figures and ``validation_metrics.json``.
 
@@ -294,6 +504,7 @@ def evaluate_clock(
         model_path: Path to a saved clock (``.joblib`` / pickle).
         test_data: Path to a wide test table with ages and ``cg*`` columns.
         output_dir: Directory for metrics JSON and residual/MAE figures.
+        demo: When false, a model whose features are all ``cg_test_*`` is refused.
 
     Returns:
         Metrics dictionary including overall MAE, Pearson r, decade MAE, and
@@ -307,6 +518,7 @@ def evaluate_clock(
     output_dir.mkdir(parents=True, exist_ok=True)
 
     model = load_model(model_path)
+    refuse_fixture_model(model, demo=demo)
     df = load_wide_table(test_data)
 
     y = pd.to_numeric(df["chronological_age"], errors="coerce")
@@ -319,11 +531,12 @@ def evaluate_clock(
     df = df.loc[valid_mask].copy()
     y = y.loc[valid_mask]
 
-    x, imputed_names = build_feature_matrix(df, model)
+    x, alignment = build_feature_matrix(df, model)
     estimator = cast(BaseEstimator, model)
     y_pred = np.asarray(estimator.predict(x), dtype=float)
 
     mae_overall = float(mean_absolute_error(y.to_numpy(), y_pred))
+    median_ae = float(np.median(np.abs(y.to_numpy(dtype=float) - y_pred)))
     r_value, r_p = pearsonr(y.to_numpy(dtype=float), y_pred.astype(float))
 
     residual = y_pred - y.to_numpy(dtype=float)
@@ -341,19 +554,28 @@ def evaluate_clock(
     )
     decade_table = decade_mae.rename("mae").reset_index()
 
+    report = alignment_fields(alignment)
     metrics: dict[str, Any] = {
         "mae_overall": mae_overall,
+        "median_ae": median_ae,
         "pearson_r": float(r_value),
         "pearson_p": float(r_p),
         "n_samples": int(len(y)),
         "n_features_used": int(x.shape[1]),
-        "imputed_missing_cpgs": imputed_names,
+        "imputed_missing_cpgs": report["missing_cpg_ids"],
         "mae_by_decade": decade_mae.astype(float).to_dict(),
+        **report,
     }
     metrics_path = output_dir / "validation_metrics.json"
     metrics_path.write_text(json.dumps(metrics, indent=2), encoding="utf-8")
 
     plot_residuals(y.to_numpy(dtype=float), residual, output_dir / "Fig_Clock_Residuals.png")
     plot_mae_by_decade(decade_table, output_dir / "Fig_Clock_MAE_by_decade.png")
+    plot_predicted_vs_chronological(
+        y.to_numpy(dtype=float),
+        y_pred,
+        output_dir / "Fig_Clock_Predicted_vs_Chronological.png",
+    )
+    print_alignment_summary(report)
 
     return {**metrics, "metrics_path": str(metrics_path)}

@@ -138,3 +138,24 @@ claims.
 | `analysis/variant_functional_annotation/` | `run_variant_functional_annotation.py` |
 
 See also [ACTIVITIES.md](ACTIVITIES.md) (activity IDs **2.1.7.2**–**2.1.7.4**).
+
+## eQTL Catalogue coverage matrix
+
+`scripts/build_eqtl_coverage.py` builds a categorical allele × dataset table from two git-ignored inputs:
+
+| Input | Role |
+|-------|------|
+| `results/eqtl_associations_full.csv` | Association rows. This snapshot is 1,650 rows, 43 rsIDs, 14 `dataset_id` values, 13 tissue names. |
+| `results/annotation_layer.csv` | 73 allele rows with `eqtl_query_status`. |
+
+```bash
+uv run python scripts/build_eqtl_coverage.py
+# → results/eqtl_coverage_matrix.csv
+# → results/fig_eqtl_coverage.png
+```
+
+Columns are `dataset_id`, not tissue. Cerebellum is two studies (QTD000161 and QTD000166); a 13-column tissue matrix is rejected. Each cell is one of: association at FDR<0.05, tested with no association at FDR<0.05, allele not represented in the resource, or variant absent from that dataset. Absence is never written as 0, NA, or an imputed value. FDR<0.05 is the Benjamini–Hochberg value already stored in `fdr_bh` (within the returned rows, not a genome-wide correction).
+
+rsID identity, including CETP I405V versus rs5882, stays in `validate_genomics_tables`. This script does not remap alleles.
+
+Tests: `uv run pytest tests/test_eqtl_coverage.py -q`.

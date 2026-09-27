@@ -542,8 +542,8 @@ def write_clock_fixtures(
     """Ensure clock model (+ optional synthetic methylation) exist for eval demos.
 
     Prefers re-serializing ``methylation_clock_v1.joblib`` (Pipeline or bare
-    ElasticNet) to ``ro_clock_elasticnet_gse40279.pkl``. When methylation inputs
-    are missing, writes a tiny synthetic cohort under ``data/methylation/``.
+    ElasticNet) to ``models/fixtures/fixture_clock_cg_test.pkl``. When methylation
+    inputs are missing, writes a tiny synthetic cohort under ``data/methylation/``.
 
     Args:
         repo_root: Repository root used to resolve default paths.
@@ -552,7 +552,7 @@ def write_clock_fixtures(
     Returns:
         Mapping of logical name → written path.
     """
-    model_pkl = repo_root / "models" / "ro_clock_elasticnet_gse40279.pkl"
+    model_pkl = repo_root / "models" / "fixtures" / "fixture_clock_cg_test.pkl"
     model_joblib = repo_root / "models" / "methylation_clock_v1.joblib"
     meth_path = repo_root / "data" / "methylation" / "GSE87571_processed.parquet"
     meta_path = repo_root / "data" / "methylation" / "GSE87571_meta.csv"

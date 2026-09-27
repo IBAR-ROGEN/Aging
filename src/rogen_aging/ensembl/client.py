@@ -80,7 +80,7 @@ class EnsemblClient:
         backoff_cap_sec: float = DEFAULT_BACKOFF_CAP_SEC,
         session: requests.Session | None = None,
         user_agent: str = (
-            "rogen-aging-ensembl/0.1 " "(ROGEN; academic research; Ensembl REST 116/GRCh38)"
+            "rogen-aging-ensembl/0.1 (ROGEN; academic research; Ensembl REST 116/GRCh38)"
         ),
     ) -> None:
         if release != ENSEMBL_RELEASE:
@@ -267,14 +267,23 @@ class EnsemblClient:
             allow_404=allow_404,
         )
 
-    def get_variation(self, variant_id: str, *, phenotypes: bool = False) -> dict[str, Any] | None:
+    def get_variation(
+        self,
+        variant_id: str,
+        *,
+        phenotypes: bool = False,
+        pops: bool = False,
+    ) -> dict[str, Any] | None:
         """Fetch a variation record by rsID / variant name (GRCh38 mappings).
 
-        Endpoint: ``GET /variation/{species}/{id}``.
+        Endpoint: ``GET /variation/{species}/{id}``. Population allele
+        frequencies are included only when ``pops`` is true.
         """
         params: dict[str, Any] = {"content-type": "application/json"}
         if phenotypes:
             params["phenotypes"] = 1
+        if pops:
+            params["pops"] = 1
         path = f"variation/{quote(self.species, safe='')}/{quote(variant_id, safe='')}"
         payload = self.get_json(path, params=params, allow_404=True)
         if payload is None:

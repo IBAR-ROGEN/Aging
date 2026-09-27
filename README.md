@@ -195,7 +195,7 @@ Default risk-channel weights are VEP 0.25, AlphaGenome 0.25, AlphaMissense 0.25,
 
 | Topic | Document |
 |-------|----------|
-| Epigenetic clock library | [docs/CLOCK_LIBRARY.md](docs/CLOCK_LIBRARY.md) · [GSE40279 training](docs/GSE40279_CLOCK_TRAINING.md) · [eval figures](docs/CLOCK_EVAL_FIGURES.md) · [Romanian clock](docs/ROMANIAN_EPIGENETIC_CLOCK.md) |
+| Epigenetic clock library | [docs/CLOCK_LIBRARY.md](docs/CLOCK_LIBRARY.md) · [GSE40279 training](docs/GSE40279_CLOCK_TRAINING.md) · [artifact audit](docs/CLOCK_ARTIFACT_AUDIT.md) · [eval figures](docs/CLOCK_EVAL_FIGURES.md) · [Romanian clock](docs/ROMANIAN_EPIGENETIC_CLOCK.md) |
 | LA-SNP VEP / GTEx annotation | [docs/LA_SNP_VEP_ANNOTATION.md](docs/LA_SNP_VEP_ANNOTATION.md) · [docs/LA_SNP_GTEX_ANNOTATION.md](docs/LA_SNP_GTEX_ANNOTATION.md) |
 | LA-SNP public allele-frequency validation | [docs/LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md](docs/LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md) · [AF figures](docs/AF_COMPARISON_FIGURES.md) |
 | Genomics validation (GRCh38) | [docs/GENOMICS_ANALYSIS.md](docs/GENOMICS_ANALYSIS.md) |

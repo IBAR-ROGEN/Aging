@@ -37,7 +37,12 @@ from scipy.stats import pearsonr  # noqa: E402
 from sklearn.linear_model import ElasticNet, ElasticNetCV  # noqa: E402
 from sklearn.metrics import mean_absolute_error, median_absolute_error  # noqa: E402
 
-from rogen_aging.clock.evaluate import build_feature_matrix  # noqa: E402
+from rogen_aging.clock.evaluate import (  # noqa: E402
+    alignment_fields,
+    build_feature_matrix,
+    print_alignment_summary,
+    refuse_fixture_model,
+)
 from rogen_aging.config import cfg_path, find_repo_root, get_config, load_cli_config  # noqa: E402
 from rogen_aging.config.cli import config_option  # noqa: E402
 
@@ -794,6 +799,7 @@ def run_validation(
     *,
     skip_manifest_check: bool = False,
     allow_positional_align: bool = False,
+    demo: bool = False,
 ) -> dict[str, Any]:
     """Run end-to-end GSE87571 validation: predict, score, plot, and persist.
 
@@ -828,6 +834,7 @@ def run_validation(
         allow_positional_align=allow_positional_align,
     )
     model = load_elasticnet_clock(model_path)
+    refuse_fixture_model(model, demo=demo)
 
     y = pd.to_numeric(wide["chronological_age"], errors="coerce")
     valid = y.notna()
@@ -839,14 +846,16 @@ def run_validation(
     wide = wide.loc[valid].copy()
     y = y.loc[valid]
 
-    x, imputed = build_feature_matrix(wide, model)
+    x, alignment = build_feature_matrix(wide, model)
+    imputed = list(alignment["missing_cpg_ids"])
     y_pred = np.asarray(model.predict(x), dtype=float)
     y_true = y.to_numpy(dtype=float)
     residual = y_pred - y_true
 
     metrics = compute_metrics(y_true, y_pred)
     metrics["n_features_used"] = int(x.shape[1])
-    metrics["n_imputed_missing_cpgs"] = int(len(imputed))
+    metrics["n_imputed_missing_cpgs"] = int(alignment["n_missing_imputed"])
+    metrics.update(alignment_fields(alignment))
     metrics["model_path"] = str(model_path)
     metrics["methylation_path"] = str(methylation_path)
     metrics["meta_path"] = str(meta_path)
@@ -878,6 +887,7 @@ def run_validation(
     print(f"Metrics JSON: {metrics_path}")
     print(f"Figure PNG:   {png_path}")
     print(f"Figure PDF:   {pdf_path}")
+    print_alignment_summary(alignment)
     if imputed:
         print(
             f"Note: imputed {len(imputed)} model CpGs absent from the validation matrix.",
@@ -1001,6 +1011,7 @@ def main(
         top_n_cpgs=resolved_top_n,
         skip_manifest_check=skip_manifest_check,
         allow_positional_align=allow_positional_align,
+        demo=demo,
     )
 
 
