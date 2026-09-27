@@ -7,6 +7,7 @@ import sys
 from pathlib import Path
 from types import ModuleType
 
+import polars as pl
 import pytest
 
 _REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -56,6 +57,37 @@ def test_wrong_row_count_stops(tmp_path: Path) -> None:
     path.write_text("chrom,pos,ref,alt,rsid,gene_symbol\n1,10,A,G,rs1,GENE\n", encoding="utf-8")
     with pytest.raises(panel.typer.Exit):
         panel.load_variants(path)
+
+
+def test_cache_alt_mismatch_stops() -> None:
+    variants = pl.DataFrame(
+        {
+            "chrom": ["17"],
+            "pos": [6494893],
+            "ref": ["C"],
+            "alt": ["A"],
+            "rsid": ["rs9916344"],
+            "gene_symbol": ["GENE"],
+        }
+    )
+    cache = {"rs9916344": {"variant_id": "17-6494893-C-T"}}
+    with pytest.raises(panel.typer.Exit):
+        panel.require_cache_alt_matches_panel(variants, cache)
+
+
+def test_cache_alt_match_does_not_stop() -> None:
+    variants = pl.DataFrame(
+        {
+            "chrom": ["17"],
+            "pos": [6494893],
+            "ref": ["C"],
+            "alt": ["T"],
+            "rsid": ["rs9916344"],
+            "gene_symbol": ["GENE"],
+        }
+    )
+    cache = {"rs9916344": {"variant_id": "17-6494893-C-T"}}
+    panel.require_cache_alt_matches_panel(variants, cache)
 
 
 def test_maf_is_the_smaller_allele_frequency() -> None:

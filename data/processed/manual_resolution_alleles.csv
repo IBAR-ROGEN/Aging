@@ -1,0 +1,6 @@
+rsid,chrom,pos,ref,panel_alt,gnomad_cache_variant_id,alt_allele,af_ceu,af_tsi,af_nfe_gnomad_genomes,af_nfe_gnomad_exomes,gnomad_v4_queried_variant_id,gnomad_v4_exists,gnomad_v4_nfe_ac,gnomad_v4_nfe_an,gnomad_v4_nfe_af,note
+rs9916344,17,6494893,C,A,17-6494893-C-T,A,,,,,17-6494893-C-A,false,,,,alt allele mismatch between panel and gnomAD cache
+rs9916344,17,6494893,C,A,17-6494893-C-T,G,,,,,17-6494893-C-A,false,,,,alt allele mismatch between panel and gnomAD cache
+rs9916344,17,6494893,C,A,17-6494893-C-T,T,0.52020202020202,0.644859813084112,0.5093,,17-6494893-C-A,false,,,,alt allele mismatch between panel and gnomAD cache
+rs1801318,2,206141952,T,A,2-206141952-T-C,A,,,,,2-206141952-T-A,false,,,,alt allele mismatch between panel and gnomAD cache
+rs1801318,2,206141952,T,A,2-206141952-T-C,C,0.282828282828283,0.401869158878505,0.3115,0.3088,2-206141952-T-A,false,,,,alt allele mismatch between panel and gnomAD cache

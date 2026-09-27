@@ -91,6 +91,40 @@ def _stop(message: str) -> None:
     raise typer.Exit(code=1)
 
 
+def cache_variant_id_alt(variant_id: str) -> str:
+    """Return the alt allele from a gnomAD ``chrom-pos-ref-alt`` ID."""
+    parts = variant_id.split("-")
+    if len(parts) < 4 or not parts[-1]:
+        _stop(f"STOP: gnomAD cache variant ID is not chrom-pos-ref-alt: {variant_id}")
+    return parts[-1]
+
+
+def require_cache_alt_matches_panel(
+    variants: pl.DataFrame,
+    cache: dict[str, dict[str, Any]],
+) -> None:
+    """Stop when a cached gnomAD variant ID alt is not the panel alt."""
+    mismatches: list[str] = []
+    for row in variants.iter_rows(named=True):
+        rsid = normalize_rsid(str(row["rsid"]))
+        entry = cache.get(rsid)
+        if not isinstance(entry, dict):
+            continue
+        variant_id = entry.get("variant_id")
+        if not isinstance(variant_id, str) or not variant_id.strip():
+            continue
+        cached_alt = cache_variant_id_alt(variant_id.strip())
+        panel_alt = str(row["alt"]).strip()
+        if cached_alt.upper() != panel_alt.upper():
+            mismatches.append(
+                f"{rsid} panel alt {panel_alt}, cache variant ID {variant_id.strip()}"
+            )
+    if mismatches:
+        _stop(
+            "STOP: gnomAD cache variant ID alt differs from the panel alt: " + "; ".join(mismatches)
+        )
+
+
 def maf_from_af(allele_frequency: float | None) -> float | None:
     """Return the minor-allele frequency of a diallelic frequency, or None."""
     if allele_frequency is None:
@@ -1197,6 +1231,7 @@ def main(
     variant_frame = load_variants(variants)
     classes = load_longevitymap_classes(gene_list)
     gnomad_cache_map, gnomad_counts = fetch_nfe_frequencies(variant_frame, gnomad_cache)
+    require_cache_alt_matches_panel(variant_frame, gnomad_cache_map)
     nfe_allele_counts = ensure_nfe_allele_counts(variant_frame, gnomad_cache, gnomad_cache_map)
     rsids = [normalize_rsid(str(rsid)) for rsid in variant_frame["rsid"].to_list()]
     ensembl_payloads, ensembl_counts, ensembl_release, ensembl_host = fetch_ensembl_variations(
