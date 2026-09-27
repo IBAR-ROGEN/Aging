@@ -36,7 +36,7 @@ def run_cmd(
     table_kind: str = typer.Option(
         ...,
         "--table-kind",
-        help="allele_counts (AC/AN) or strata (phenotype-group counts).",
+        help="allele_counts (AC/AN), strata (phenotype-group counts), or summary (identifier checks only).",
     ),
     report: Path = typer.Option(
         ...,

@@ -17,9 +17,9 @@ import polars as pl
 from omegaconf import DictConfig, OmegaConf
 
 CheckStatus = Literal["PASS", "FAIL"]
-TableKind = Literal["allele_counts", "strata"]
+TableKind = Literal["allele_counts", "strata", "summary"]
 
-_TABLE_KINDS: frozenset[str] = frozenset({"allele_counts", "strata"})
+_TABLE_KINDS: frozenset[str] = frozenset({"allele_counts", "strata", "summary"})
 _AC_NAMES: frozenset[str] = frozenset({"ac", "allele_count"})
 _AN_NAMES: frozenset[str] = frozenset({"an", "allele_number"})
 _AF_NAMES: frozenset[str] = frozenset({"af", "allele_frequency"})
@@ -332,7 +332,12 @@ def run_release_guard(
         raise ReleaseGuardError(f"table kind must be one of: {allowed}")
     if min_cell_count < 1:
         raise ReleaseGuardError("min_cell_count must be at least 1")
-    kind: TableKind = "allele_counts" if table_kind == "allele_counts" else "strata"
+    if table_kind == "allele_counts":
+        kind: TableKind = "allele_counts"
+    elif table_kind == "strata":
+        kind = "strata"
+    else:
+        kind = "summary"
 
     individual = check_individual_level(frame, n_samples=n_samples)
     identifiers = check_direct_identifiers(frame)
@@ -344,12 +349,24 @@ def run_release_guard(
             "PASS",
             "not applied: table kind is allele_counts",
         )
-    else:
+    elif kind == "strata":
         sanitized, strata = suppress_strata(frame, min_cell_count=min_cell_count)
         allele = CheckResult(
             "allele_count_cells",
             "PASS",
             "not applied: table kind is strata",
+        )
+    else:
+        sanitized = frame
+        allele = CheckResult(
+            "allele_count_cells",
+            "PASS",
+            "not applied: table kind is summary",
+        )
+        strata = CheckResult(
+            "strata_cells",
+            "PASS",
+            "not applied: table kind is summary",
         )
 
     checks = (individual, identifiers, allele, strata)

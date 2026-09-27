@@ -101,6 +101,17 @@ def test_allele_complementary_suppression() -> None:
     assert result.sanitized["AF"][0] == pytest.approx(0.123)
 
 
+def test_summary_kind_leaves_frequencies_unchanged() -> None:
+    frame = pl.DataFrame({"rsid": ["rs1"], "maf_nfe": [0.01], "power": [0.2]})
+    check, result = _check(frame, "summary", "strata_cells")
+    assert check.status == "PASS"
+    assert "not applied: table kind is summary" in check.reason
+    assert result.sanitized is not None
+    assert result.sanitized["maf_nfe"].to_list() == [0.01]
+    assert result.sanitized["power"].to_list() == [0.2]
+    assert result.release_blocked is False
+
+
 def test_strata_complementary_suppression() -> None:
     frame = pl.DataFrame(
         {
