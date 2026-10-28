@@ -8,6 +8,7 @@ those helpers and does not invent betas when the download fails.
 from __future__ import annotations
 
 import logging
+from collections.abc import Sequence
 from pathlib import Path
 
 import numpy as np
@@ -256,6 +257,140 @@ def load_gse40279_phenotypes(series_matrix_path: Path) -> pd.DataFrame:
         raise FileNotFoundError(path)
     sample_rows, _header = _read_series_metadata(path)
     return parse_sample_phenotypes(sample_rows)
+
+
+def _stream_cg_matrix_restricted(
+    path: Path,
+    n_samples: int,
+    *,
+    restrict_cpgs: set[str] | None,
+) -> tuple[np.ndarray, list[str], set[str]]:
+    """Stream cg* rows; optionally keep only ``restrict_cpgs``.
+
+    Returns:
+        Beta matrix ``(n_probes, n_samples)``, ordered probe ids, and the
+        subset of ``restrict_cpgs`` that were present in the GEO file.
+    """
+    chunks: list[np.ndarray] = []
+    probe_ids: list[str] = []
+    present: set[str] = set()
+    buffer = np.empty((_CHUNK_PROBES, n_samples), dtype=np.float32)
+    buffer_names: list[str] = []
+    filled = 0
+    seen: set[str] = set()
+    in_table = False
+    skipped_header = False
+    with _open_text(path) as handle:
+        for line in handle:
+            stripped = line.strip()
+            lower = stripped.lower()
+            if not in_table:
+                if any(lower == marker.lower() for marker in _TABLE_BEGIN_MARKERS):
+                    in_table = True
+                continue
+            if any(lower == marker.lower() for marker in _TABLE_END_MARKERS):
+                break
+            if not stripped or stripped.startswith("!"):
+                continue
+            parts = [_strip_geo_field(item) for item in _split_soft_line(stripped)]
+            if not skipped_header:
+                skipped_header = True
+                continue
+            probe_id = parts[0]
+            if not (probe_id.startswith("cg") or probe_id.startswith("ch.")):
+                continue
+            if restrict_cpgs is not None and probe_id not in restrict_cpgs:
+                continue
+            if probe_id in seen:
+                raise ValueError(f"Duplicate CpG id {probe_id} in {path}.")
+            seen.add(probe_id)
+            present.add(probe_id)
+            buffer[filled] = _parse_beta_row(parts[1:], n_samples)
+            buffer_names.append(probe_id)
+            filled += 1
+            if filled == _CHUNK_PROBES:
+                chunks.append(buffer.copy())
+                probe_ids.extend(buffer_names)
+                logger.info("Read %s restricted cg probes", len(probe_ids))
+                buffer_names = []
+                filled = 0
+    if not skipped_header:
+        raise ValueError(f"Series matrix table in {path} has no header row.")
+    if filled:
+        chunks.append(buffer[:filled].copy())
+        probe_ids.extend(buffer_names)
+    if not chunks:
+        raise ValueError(f"No matching cg*/ch.* beta rows found in {path}.")
+    matrix = np.concatenate(chunks, axis=0)
+    return matrix, probe_ids, present
+
+
+def load_gse40279_from_series_matrix(
+    series_matrix_path: Path,
+    *,
+    restrict_cpgs: Sequence[str] | None = None,
+    expected_n_samples: int = EXPECTED_N_SAMPLES,
+) -> tuple[pd.DataFrame, dict[str, object]]:
+    """Load the full GEO series-matrix betas (not the training-prepared parquet).
+
+    Sample order matches ``!Sample_geo_accession`` / matrix columns (same order
+    as :func:`prepare_gse40279`), so ``train_test_split`` indices stay valid.
+
+    Args:
+        series_matrix_path: Local ``GSE40279_series_matrix.txt.gz``.
+        restrict_cpgs: Optional Illumina probe filter (union of clock features).
+        expected_n_samples: Published cohort size.
+
+    Returns:
+        Wide sample×probe frame with ``chronological_age``, ``sex``, ``female``,
+        ``ethnicity``, and a report dict with probes requested vs present in GEO.
+    """
+    path = Path(series_matrix_path)
+    if not path.is_file():
+        raise FileNotFoundError(path)
+    sample_rows, header = _read_series_metadata(path)
+    gsms_raw = sample_rows.get("!Sample_geo_accession", [])
+    if not isinstance(gsms_raw, list):
+        raise ValueError("!Sample_geo_accession was not parsed.")
+    gsms = [str(item) for item in gsms_raw]
+    if len(gsms) != expected_n_samples:
+        raise Gse40279SampleCountError(len(gsms), expected=expected_n_samples)
+    ages = _parse_chronological_ages(sample_rows, len(gsms))
+    sample_ids, ordered_ages = _align_samples(gsms, ages, header)
+    wanted: set[str] | None = None
+    if restrict_cpgs is not None:
+        wanted = {
+            str(c) for c in restrict_cpgs if str(c).startswith("cg") or str(c).startswith("ch.")
+        }
+        if not wanted:
+            raise ValueError("restrict_cpgs contained no Illumina probe IDs (cg*/ch.*).")
+    betas, probe_ids, present = _stream_cg_matrix_restricted(
+        path, len(sample_ids), restrict_cpgs=wanted
+    )
+    # samples × probes
+    frame = pd.DataFrame(betas.T, index=pd.Index(sample_ids, name="sample_id"), columns=probe_ids)
+    frame.insert(0, "chronological_age", np.asarray(ordered_ages, dtype=np.float32))
+    phenotypes = parse_sample_phenotypes(sample_rows).set_index("sample_id")
+    frame["sex"] = phenotypes.reindex(frame.index)["sex"].to_numpy()
+    frame["female"] = phenotypes.reindex(frame.index)["female"].to_numpy()
+    frame["ethnicity"] = phenotypes.reindex(frame.index)["ethnicity"].to_numpy()
+    absent_from_geo = sorted(wanted - present) if wanted is not None else []
+    report: dict[str, object] = {
+        "source": "GEO series matrix (full accession; not training-prepared parquet)",
+        "path": str(path),
+        "n_samples": len(sample_ids),
+        "n_probes_loaded": len(probe_ids),
+        "n_probes_requested": len(wanted) if wanted is not None else None,
+        "probes_absent_from_geo": absent_from_geo,
+        "n_probes_absent_from_geo": len(absent_from_geo),
+        "imputation_note": (
+            "CpGs absent from the GEO series matrix itself are left missing in the "
+            "DataFrame; pyaging KNN imputation fills them at predict time."
+            if absent_from_geo
+            else "All requested Illumina probes were present in the GEO series matrix."
+        ),
+    }
+    return frame, report
 
 
 def prepare_gse40279(

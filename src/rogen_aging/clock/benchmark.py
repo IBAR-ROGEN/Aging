@@ -14,7 +14,6 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
 import pandas as pd  # noqa: E402
-import polars as pl  # noqa: E402
 from scipy import stats  # noqa: E402
 from sklearn.linear_model import LinearRegression  # noqa: E402
 from sklearn.metrics import mean_absolute_error  # noqa: E402
@@ -22,7 +21,7 @@ from sklearn.model_selection import train_test_split  # noqa: E402
 
 from rogen_aging.clock.evaluate import build_feature_matrix, load_model  # noqa: E402
 from rogen_aging.clock.external_data import load_gse87571  # noqa: E402
-from rogen_aging.clock.gse40279 import load_gse40279_phenotypes  # noqa: E402
+from rogen_aging.clock.gse40279 import load_gse40279_from_series_matrix  # noqa: E402
 from rogen_aging.config import find_repo_root, get_config  # noqa: E402
 
 REPO_ROOT = find_repo_root()
@@ -37,7 +36,12 @@ TARGET_CLOCKS: tuple[str, ...] = (
 OPTIONAL_CLOCKS: tuple[str, ...] = ("grimage2",)
 PACE_CLOCKS: frozenset[str] = frozenset({"dunedinpace"})
 OUR_CLOCK_LABEL = "rogen_hannum_retrain"
-META_COLS: tuple[str, ...] = ("chronological_age", "sex", "female", "ethnicity")
+# Phenotype metadata for AnnData.obs. GrimAge2 needs ``female`` and ``age`` as
+# *data* columns (features), so they must not appear here.
+META_COLS: tuple[str, ...] = ("chronological_age", "sex", "ethnicity")
+GRIMAGE2_DATA_FEATURES: frozenset[str] = frozenset({"female", "age"})
+RETRAIN_HOLDOUT_MAE = 3.5248637199401855
+RETRAIN_HOLDOUT_MAE_TOL = 5e-4
 
 PROVENANCE_N_TRAIN = 524
 PROVENANCE_N_TEST = 132
@@ -50,6 +54,7 @@ class CohortBundle:
     name: str
     frame: pd.DataFrame
     notes: list[str]
+    geo_probe_report: dict[str, Any] | None = None
 
 
 def _repo_relative(path: Path) -> str:
@@ -154,39 +159,108 @@ def load_gse87571_cohort(
 
 def load_gse40279_heldout_cohort(
     *,
-    parquet_path: Path,
     series_matrix: Path,
     restrict_cpgs: Sequence[str] | None,
+    parquet_path: Path | None = None,
 ) -> CohortBundle:
-    """Load GSE40279 held-out test rows only; never include training samples."""
-    phenotypes = load_gse40279_phenotypes(series_matrix).set_index("sample_id")
-    schema = pl.scan_parquet(parquet_path).collect_schema().names()
-    cg_cols = [c for c in schema if c.startswith("cg") or c.startswith("ch.")]
-    if restrict_cpgs is not None:
-        wanted = set(str(c) for c in restrict_cpgs)
-        cg_cols = [c for c in cg_cols if c in wanted]
-    columns = ["sample_id", "chronological_age", *cg_cols]
-    full = pl.read_parquet(parquet_path, columns=columns).to_pandas()
+    """Load GSE40279 held-out test rows from the full GEO series matrix.
+
+    Betas come from the GEO series matrix, not the training-prepared parquet.
+    ``parquet_path`` is accepted only for API compatibility and is ignored.
+    """
+    del parquet_path  # Benchmark matrix is the GEO series file, not the parquet.
+    full, geo_report = load_gse40279_from_series_matrix(
+        series_matrix,
+        restrict_cpgs=restrict_cpgs,
+    )
     if len(full) != PROVENANCE_N_TRAIN + PROVENANCE_N_TEST:
         raise ValueError(
-            f"GSE40279 parquet has {len(full)} rows; expected "
+            f"GSE40279 series matrix has {len(full)} rows; expected "
             f"{PROVENANCE_N_TRAIN + PROVENANCE_N_TEST}."
         )
     _train_idx, test_idx = reconstruct_gse40279_split(len(full))
-    held = full.iloc[test_idx].copy()
-    held = held.set_index("sample_id", drop=True)
-    # Align phenotype columns
-    held["sex"] = phenotypes.reindex(held.index)["sex"].to_numpy()
-    held["female"] = phenotypes.reindex(held.index)["female"].to_numpy()
-    held["ethnicity"] = phenotypes.reindex(held.index)["ethnicity"].to_numpy()
+    held = full.iloc[list(test_idx)].copy()
     if held["sex"].isna().any():
         raise ValueError("GSE40279 held-out samples missing sex; refusing to drop.")
+    if len(held) != PROVENANCE_N_TEST:
+        raise ValueError(
+            f"GSE40279 held-out has {len(held)} samples; expected {PROVENANCE_N_TEST}."
+        )
+    absent_raw = geo_report.get("probes_absent_from_geo")
+    absent: list[str] = [str(item) for item in absent_raw] if isinstance(absent_raw, list) else []
     notes = [
         "GSE40279: held-out test split only (test_size=0.2, random_state=42).",
+        "Betas loaded from the full GEO series matrix, not the training-prepared parquet.",
         "Published Hannum was trained on GSE40279; its predictions here are in-sample.",
         "Retrained Hannum is scored only on these test rows, never on training rows.",
+        str(geo_report.get("imputation_note") or ""),
     ]
-    return CohortBundle(name="GSE40279_heldout", frame=held, notes=notes)
+    if absent:
+        notes.append(
+            f"{len(absent)} requested Illumina probes are absent from the GEO file "
+            "and rely on pyaging KNN imputation."
+        )
+    return CohortBundle(
+        name="GSE40279_heldout",
+        frame=held,
+        notes=notes,
+        geo_probe_report=geo_report,
+    )
+
+
+def prepare_pyaging_frame(frame: pd.DataFrame) -> tuple[pd.DataFrame, list[str]]:
+    """Build the DataFrame and metadata_cols for ``df_to_adata``.
+
+    ``female`` (0/1) and ``age`` stay as data columns for GrimAge2. They are
+    never placed in ``metadata_cols``.
+    """
+    df = frame.copy()
+    if "female" in df.columns:
+        df["female"] = pd.to_numeric(df["female"], errors="coerce").astype("float64")
+    if "chronological_age" in df.columns:
+        df["age"] = pd.to_numeric(df["chronological_age"], errors="coerce")
+    meta_present = [c for c in META_COLS if c in df.columns]
+    for forbidden in GRIMAGE2_DATA_FEATURES:
+        if forbidden in meta_present:
+            raise ValueError(
+                f"{forbidden!r} must be a data column for GrimAge2, not metadata_cols."
+            )
+    return df, meta_present
+
+
+def assert_grimage2_data_features_present(uns_summary: dict[str, Any]) -> None:
+    """Fail if pyaging still lists ``female`` or ``age`` as GrimAge2 missing features."""
+    if "grimage2" not in uns_summary:
+        return
+    missing = [str(item) for item in (uns_summary["grimage2"].get("missing_features") or [])]
+    bad = sorted(feat for feat in GRIMAGE2_DATA_FEATURES if feat in missing)
+    if bad:
+        raise ValueError(
+            "grimage2 missing_features still includes data columns that must be "
+            f"supplied (not imputed): {bad}. Keep female and age out of metadata_cols."
+        )
+
+
+def missing_features_before(
+    frame: pd.DataFrame,
+    clock_names: Sequence[str],
+    *,
+    cache_dir: Path,
+) -> dict[str, list[str]]:
+    """Clock features absent from ``frame`` columns before pyaging imputation."""
+    from pyaging.predict import _pred as pyaging_pred
+
+    load_clock = getattr(pyaging_pred, "load_clock")
+    present = set(frame.columns.astype(str))
+    if "chronological_age" in present:
+        present.add("age")
+    report: dict[str, list[str]] = {}
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    for name in clock_names:
+        model = load_clock(name, dir=str(cache_dir))
+        feats = [str(f) for f in (getattr(model, "features", None) or [])]
+        report[name] = sorted(feat for feat in feats if feat not in present)
+    return report
 
 
 def predict_pyaging(
@@ -198,17 +272,7 @@ def predict_pyaging(
     """Run pyaging clocks; return obs predictions and per-clock uns summaries."""
     import pyaging as pya
 
-    meta_present = [c for c in META_COLS if c in frame.columns]
-    # df_to_adata wants age/sex as metadata; keep female for GrimAge2
-    df = frame.copy()
-    # Ensure female is numeric 0/1 for GrimAge2
-    if "female" in df.columns:
-        df["female"] = pd.to_numeric(df["female"], errors="coerce").astype("float64")
-    if "chronological_age" in df.columns:
-        # GrimAge2 also uses an ``age`` feature name
-        df["age"] = pd.to_numeric(df["chronological_age"], errors="coerce")
-        if "age" not in meta_present:
-            meta_present = [*meta_present, "age"]
+    df, meta_present = prepare_pyaging_frame(frame)
     cache_dir.mkdir(parents=True, exist_ok=True)
     adata = pya.pp.df_to_adata(
         df,
@@ -231,6 +295,7 @@ def predict_pyaging(
             "missing_features": list(adata.uns.get(f"{name}_missing_features", []) or []),
             "metadata": dict(adata.uns.get(f"{name}_metadata", {}) or {}),
         }
+    assert_grimage2_data_features_present(uns_summary)
     return preds, uns_summary
 
 
@@ -269,8 +334,13 @@ def metrics_for_clock(
         "mean_signed_error": float(np.mean(signed)),
     }
     if clock in PACE_CLOCKS:
+        # Pace clock: keep r and acceleration residual; leave age-unit errors empty.
+        row["mean_signed_error"] = None
         row["mae"] = None
-        row["mae_note"] = "DunedinPACE is a rate; MAE vs chronological age is not reported."
+        row["mae_note"] = (
+            "DunedinPACE is a rate; MAE and mean signed error vs chronological age "
+            "are not reported."
+        )
     else:
         row["mae"] = float(mean_absolute_error(chronological_age, predicted))
         row["mae_note"] = None

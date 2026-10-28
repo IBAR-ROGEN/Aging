@@ -22,6 +22,9 @@ import typer
 
 from rogen_aging.clock.benchmark import (
     OUR_CLOCK_LABEL,
+    PROVENANCE_N_TEST,
+    RETRAIN_HOLDOUT_MAE,
+    RETRAIN_HOLDOUT_MAE_TOL,
     TARGET_CLOCKS,
     age_acceleration,
     bonferroni_adjust,
@@ -30,6 +33,7 @@ from rogen_aging.clock.benchmark import (
     load_gse40279_heldout_cohort,
     load_gse87571_cohort,
     metrics_for_clock,
+    missing_features_before,
     plot_accel_by_sex,
     plot_predicted_vs_age,
     predict_pyaging,
@@ -44,11 +48,17 @@ from rogen_aging.config import find_repo_root
 REPO_ROOT = find_repo_root()
 DEFAULT_OUT = REPO_ROOT / "analysis" / "clocks_benchmark"
 DEFAULT_MODEL = REPO_ROOT / "models" / "gse40279_hannum450k_elasticnet.joblib"
-DEFAULT_GSE40279 = REPO_ROOT / "data" / "methylation" / "GSE40279_processed.parquet"
 DEFAULT_GSE40279_MATRIX = REPO_ROOT / "data" / "geo" / "GSE40279_series_matrix.txt.gz"
 DEFAULT_GSE87571_MATRIX = REPO_ROOT / "data" / "geo" / "GSE87571_series_matrix.txt.gz"
 DEFAULT_GEO_CACHE = REPO_ROOT / "data" / "geo"
 DEFAULT_PYAGING_CACHE = REPO_ROOT / "pyaging_data"
+
+
+def _repo_rel(path: Path) -> str:
+    try:
+        return path.resolve().relative_to(REPO_ROOT.resolve()).as_posix()
+    except ValueError:
+        return path.as_posix()
 
 
 def _write_csv(frame: pd.DataFrame, path: Path) -> None:
@@ -59,7 +69,6 @@ def _write_csv(frame: pd.DataFrame, path: Path) -> None:
 def main(
     out_dir: Path = typer.Option(DEFAULT_OUT, "--out-dir", help="Aggregate output directory."),
     model: Path = typer.Option(DEFAULT_MODEL, "--model", help="Retrained Hannum joblib."),
-    gse40279_parquet: Path = typer.Option(DEFAULT_GSE40279, "--gse40279-parquet"),
     gse40279_matrix: Path = typer.Option(DEFAULT_GSE40279_MATRIX, "--gse40279-matrix"),
     gse87571_matrix: Path = typer.Option(DEFAULT_GSE87571_MATRIX, "--gse87571-matrix"),
     geo_cache_dir: Path = typer.Option(DEFAULT_GEO_CACHE, "--geo-cache-dir"),
@@ -111,25 +120,40 @@ def main(
     )
     typer.echo(f"GSE87571: {gse87571.frame.shape[0]} samples × {gse87571.frame.shape[1]} columns")
 
-    typer.echo("Loading GSE40279 held-out test split…")
+    typer.echo("Loading GSE40279 held-out test split from GEO series matrix…")
     gse40279 = load_gse40279_heldout_cohort(
-        parquet_path=gse40279_parquet,
         series_matrix=gse40279_matrix,
         restrict_cpgs=restrict,
     )
     typer.echo(
         f"GSE40279_heldout: {gse40279.frame.shape[0]} samples × {gse40279.frame.shape[1]} columns"
     )
+    if gse40279.frame.shape[0] != PROVENANCE_N_TEST:
+        typer.echo(
+            f"STOP: GSE40279 held-out n={gse40279.frame.shape[0]}, expected {PROVENANCE_N_TEST}",
+            err=True,
+        )
+        raise typer.Exit(code=1)
 
     cohorts = [gse87571, gse40279]
     metric_rows: list[dict[str, Any]] = []
     sex_rows: list[dict[str, Any]] = []
     per_sample_parts: list[pd.DataFrame] = []
     uns_by_cohort: dict[str, Any] = {}
+    missing_before_by_cohort: dict[str, dict[str, list[str]]] = {}
     clocks_used = list(clocks)
     clock_metadata: dict[str, Any] = {}
 
     for cohort in cohorts:
+        typer.echo(f"Missing features before imputation on {cohort.name}…")
+        missing_before_by_cohort[cohort.name] = missing_features_before(
+            cohort.frame,
+            clocks_used,
+            cache_dir=pyaging_cache,
+        )
+        for clock_name, absent in missing_before_by_cohort[cohort.name].items():
+            typer.echo(f"  {clock_name}: {len(absent)} absent from matrix before KNN")
+
         typer.echo(f"Predicting pyaging clocks on {cohort.name}…")
         try:
             preds, uns = predict_pyaging(
@@ -142,7 +166,7 @@ def main(
                 typer.echo(f"GrimAge2 failed on {cohort.name}: {exc}")
                 grimage_skip_reason = (
                     f"GrimAge2 predict_age failed with available inputs "
-                    f"(sex/age + CpGs): {type(exc).__name__}: {exc}"
+                    f"(female/age data columns + CpGs): {type(exc).__name__}: {exc}"
                 )
                 clocks_used = [c for c in clocks_used if c != "grimage2"]
                 preds, uns = predict_pyaging(
@@ -156,6 +180,10 @@ def main(
         for name, payload in uns.items():
             if name not in clock_metadata and isinstance(payload.get("metadata"), dict):
                 clock_metadata[name] = payload["metadata"]
+            after = list(payload.get("missing_features") or [])
+            typer.echo(
+                f"  {name} after: {len(after)} missing_features (percent_na={payload.get('percent_na')})"
+            )
 
         typer.echo(f"Predicting retrained Hannum on {cohort.name}…")
         our = predict_rogen_hannum(cohort.frame, model)
@@ -233,6 +261,31 @@ def main(
     sex_table = pd.DataFrame(sex_rows)
     all_clocks_final = [*clocks_used, OUR_CLOCK_LABEL]
 
+    retrain_holdout = metrics.loc[
+        (metrics["clock"] == OUR_CLOCK_LABEL) & (metrics["cohort"] == "GSE40279_heldout")
+    ]
+    if retrain_holdout.empty:
+        typer.echo("STOP: missing rogen_hannum_retrain metrics on GSE40279_heldout", err=True)
+        raise typer.Exit(code=1)
+    holdout_mae = float(retrain_holdout.iloc[0]["mae"])
+    holdout_n = int(retrain_holdout.iloc[0]["n"])
+    if holdout_n != PROVENANCE_N_TEST:
+        typer.echo(
+            f"STOP: retrain held-out n={holdout_n}, expected {PROVENANCE_N_TEST}",
+            err=True,
+        )
+        raise typer.Exit(code=1)
+    if abs(holdout_mae - RETRAIN_HOLDOUT_MAE) > RETRAIN_HOLDOUT_MAE_TOL:
+        typer.echo(
+            f"STOP: retrain held-out MAE={holdout_mae}, expected ~{RETRAIN_HOLDOUT_MAE}",
+            err=True,
+        )
+        raise typer.Exit(code=1)
+    typer.echo(
+        f"Retrained Hannum held-out check: n={holdout_n}, MAE={holdout_mae:.6f} "
+        f"(matches {RETRAIN_HOLDOUT_MAE:.6f} within {RETRAIN_HOLDOUT_MAE_TOL})"
+    )
+
     # Acceleration correlation matrices per cohort
     corr_frames: list[pd.DataFrame] = []
     for cohort_name in per_sample["cohort"].unique():
@@ -298,6 +351,19 @@ def main(
     ]
 
     overlap = training_overlap_notes(clock_metadata)
+    missing_after_by_cohort = {
+        cohort_name: {
+            clock_name: list(payload.get("missing_features") or [])
+            for clock_name, payload in uns.items()
+        }
+        for cohort_name, uns in uns_by_cohort.items()
+    }
+    geo_report = gse40279.geo_probe_report or {}
+    if "path" in geo_report:
+        geo_report = {
+            **geo_report,
+            "path": _repo_rel(Path(str(geo_report["path"]))),
+        }
     provenance = {
         "generated_at_utc": started,
         "finished_at_utc": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -313,10 +379,18 @@ def main(
         "grimage2": {
             "included": "grimage2" in clocks_used,
             "skip_reason": grimage_skip_reason,
+            "data_features": ["female", "age"],
+            "note": (
+                "female (0/1) and age are data columns passed to df_to_adata; "
+                "they are excluded from metadata_cols so they are not imputed."
+            ),
         },
         "our_clock": {
             "label": OUR_CLOCK_LABEL,
-            "model_path": str(model),
+            "model_path": _repo_rel(model),
+            "heldout_mae": holdout_mae,
+            "heldout_mae_expected": RETRAIN_HOLDOUT_MAE,
+            "heldout_n": holdout_n,
         },
         "split": {
             "gse40279_test_size": 0.2,
@@ -324,23 +398,27 @@ def main(
             "n_train_expected": 524,
             "n_test_expected": 132,
             "never_score_train_with_our_model": True,
+            "gse40279_matrix_source": "GEO series matrix (not training-prepared parquet)",
         },
         "cpg_restriction": {
             "n_probes": len(restrict),
             "note": "Columns restricted to the union of Illumina features required by selected clocks.",
         },
+        "gse40279_geo_probe_report": geo_report,
         "cohort_notes": {
             gse87571.name: gse87571.notes,
             gse40279.name: gse40279.notes,
         },
+        "missing_features_before": missing_before_by_cohort,
+        "missing_features_after": missing_after_by_cohort,
         "pyaging_uns": uns_by_cohort,
         "training_overlap": overlap,
         "outputs": {
-            "metrics": str(metrics_path.relative_to(REPO_ROOT)),
-            "acceleration": str(accel_path.relative_to(REPO_ROOT)),
-            "sex_models": str(sex_path.relative_to(REPO_ROOT)),
-            "acceleration_correlation": str(corr_path.relative_to(REPO_ROOT)),
-            "per_sample": str(sample_path.relative_to(REPO_ROOT)),
+            "metrics": _repo_rel(metrics_path),
+            "acceleration": _repo_rel(accel_path),
+            "sex_models": _repo_rel(sex_path),
+            "acceleration_correlation": _repo_rel(corr_path),
+            "per_sample": _repo_rel(sample_path),
         },
         "release_check": release_checks,
     }

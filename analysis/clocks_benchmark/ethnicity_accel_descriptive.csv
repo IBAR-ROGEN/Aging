@@ -1,13 +1,13 @@
 clock,cohort,ethnicity,count,mean,std
 horvath2013,GSE40279_heldout,Caucasian - European,97,0.22009076101713324,4.7779159277106205
 horvath2013,GSE40279_heldout,Hispanic - Mexican,35,-0.609965823390352,5.083304185409731
-hannum,GSE40279_heldout,Caucasian - European,97,-0.13124261063272674,4.222656330140556
-hannum,GSE40279_heldout,Hispanic - Mexican,35,0.36372952089645555,4.189882443858245
+hannum,GSE40279_heldout,Caucasian - European,97,-0.18297860964475657,4.319495887150768
+hannum,GSE40279_heldout,Hispanic - Mexican,35,0.5071121467297388,4.364162962788428
 dnamphenoage,GSE40279_heldout,Caucasian - European,97,-0.2518154463003677,7.77967045732495
 dnamphenoage,GSE40279_heldout,Hispanic - Mexican,35,0.6978885226038715,5.3529187612373414
 dunedinpace,GSE40279_heldout,Caucasian - European,97,-0.019356592290147398,0.14414989254555838
 dunedinpace,GSE40279_heldout,Hispanic - Mexican,35,0.05364541291840881,0.13085908960943513
-grimage2,GSE40279_heldout,Caucasian - European,97,-0.4593973733801529,4.767975490006108
-grimage2,GSE40279_heldout,Hispanic - Mexican,35,1.2731870062250006,4.639661222481031
+grimage2,GSE40279_heldout,Caucasian - European,97,-0.48225337399211515,4.844032376141281
+grimage2,GSE40279_heldout,Hispanic - Mexican,35,1.3365307793496521,4.794782066569068
 rogen_hannum_retrain,GSE40279_heldout,Caucasian - European,97,0.2140591274087429,4.582026980801089
 rogen_hannum_retrain,GSE40279_heldout,Hispanic - Mexican,35,-0.593249581675637,3.232949577906998

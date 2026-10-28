@@ -70,7 +70,7 @@ The script reads **`WORK`**, not `WORK_ROOT`; `WORK_ROOT` is an internal normali
 
 ## Check 2: Hardcoded absolute paths in `.py` and `.sh`
 
-**Rationale:** Literals such as `/home/...`, `/data/...`, or `/Users/...` encode machine-specific layout and can signal where restricted copies might live. CI should push contributors toward environment variables, config, or allowed roots.
+**Rationale:** Literals such as home-directory roots, `/data/...`, or macOS user-home roots encode machine-specific layout and can signal where restricted copies might live. CI should push contributors toward environment variables, config, or allowed roots.
 
 **Method:** For each `*.py` and `*.sh` file, `grep` extracts **double-quoted or single-quoted** substrings that start with `/`. Each candidate is classified as allowed or not.
 

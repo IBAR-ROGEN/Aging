@@ -42,7 +42,7 @@ Independent recomputation from `overlapping_genes_with_snps.xlsx`. Manuscript-st
 | Cluster list size AD-down [GRCh38/hg38] | 833 | NA | NEEDS REVIEW | Supplementary Table 3.xlsx not in repository |
 | Cluster list size PD-up [GRCh38/hg38] | 318 | NA | NEEDS REVIEW | Supplementary Table 3.xlsx not in repository |
 | Cluster list size PD-down [GRCh38/hg38] | 229 | NA | NEEDS REVIEW | Supplementary Table 3.xlsx not in repository |
-| All 41 significant genes present in >=1 cluster list [GRCh38/hg38] | yes | NA | NEEDS REVIEW | Missing file: /Users/mityatoren/code/rogen_aging/data/Supplementary Table 3.xlsx |
+| All 41 significant genes present in >=1 cluster list [GRCh38/hg38] | yes | NA | NEEDS REVIEW | Missing file: data/Supplementary Table 3.xlsx |
 
 ## Proposed corrections
 
@@ -92,4 +92,4 @@ Add data/Supplementary Table 3.xlsx to verify all 41 significant genes appear in
 - **coordinate**: PCSK1/rs155979: GRCh38 pos 96434194 outside span 96390332-96433247 (GRCh38/hg38)
 - **coordinate**: PCSK1/rs3762985: GRCh38 pos 96435023 outside span 96390332-96433247 (GRCh38/hg38)
 - **coordinate**: SEMA4A/rs1468772: GRCh38 pos 156146697 outside span 156147372-156177743 (GRCh38/hg38)
-- **cluster_lists**: Supplementary Table 3 not found at /Users/mityatoren/code/rogen_aging/data/Supplementary Table 3.xlsx; cannot verify 41 significant genes against AD/PD cluster lists (GRCh38/hg38)
+- **cluster_lists**: Supplementary Table 3 not found at data/Supplementary Table 3.xlsx; cannot verify 41 significant genes against AD/PD cluster lists (GRCh38/hg38)

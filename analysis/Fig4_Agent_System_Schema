@@ -2,7 +2,7 @@ digraph "Fig 4: LongevityForest Multi-Agent Architecture" {
 	graph [bgcolor=white fontcolor="#2D3436" fontname="Sans-Serif" fontsize=20 label="Fig 4: LongevityForest Multi-Agent Architecture" nodesep=0.60 pad=0.5 rankdir=LR ranksep=0.75 splines=ortho]
 	node [fixedsize=true fontcolor="#2D3436" fontname="Sans-Serif" fontsize=13 height=1.4 imagescale=true labelloc=b shape=box style=rounded width=1.4]
 	edge [color="#7B8894"]
-	"21726bad5aae4dea9d667dedc02bf09e" [label=Researcher height=1.9 image="/Users/mityatoren/code/rogen_aging/.venv/lib/python3.12/site-packages/resources/onprem/client/user.png" shape=none]
+	"21726bad5aae4dea9d667dedc02bf09e" [label=Researcher height=1.9 shape=none]
 	"1c7a4c9c28914cd4acc519ec71225d28" [label="Cursor IDE
 (User Interface)" fillcolor="#007ACC" style="rounded,filled"]
 	"1082ec4617864a3eaf7f5add49853cd8" [label="Model Context
