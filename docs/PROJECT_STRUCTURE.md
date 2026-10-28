@@ -54,6 +54,9 @@ Grouped by workflow. Most flat `scripts/*.py` paths are **deprecation shims** th
 | `figures/` | `plot_*`, `render_*`, `generate_*`, `reconcile_and_generate_figures.py` |
 | `alphagenome/` | Sequence comparer + analysis + visualize |
 | `integrative/` | `run_pipeline.py`, `map_variant_tissues.py`, `integrate_phenotypes.py` |
+| `panel/` | Longevity-panel power, heatmap, NFE/CEU sanity ([RO_LONGEVITY_PANEL.md](RO_LONGEVITY_PANEL.md)) |
+| `longevity/` | Candidate-gene lookup in Timmers/Deelen GWAS ([LONGEVITY_GWAS_LOOKUP.md](LONGEVITY_GWAS_LOOKUP.md)) |
+| `dryrun/` | Public HG002 short-read and related dry-run drivers |
 | `eda/` | Mock epigenetic EDA |
 | `dev/` | `security_check.sh`, `install_pre_commit_hook.sh`, `summarize_af_comparison.py`, R bootstrap, utilities |
 

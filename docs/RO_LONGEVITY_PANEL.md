@@ -79,6 +79,12 @@ After the two CSV tables are written, each is passed to `rogen-release-check --t
 
 Variants that still need a human allele choice are listed with repo evidence in [PENDING_ALLELES.md](PENDING_ALLELES.md). That note does not choose an allele.
 
+Resolved panel alleles can be looked up in public lifespan/longevity GWAS
+(Timmers 2019; Deelen 2019 90th/99th) with
+[`scripts/longevity/longevity_gwas_lookup.py`](../scripts/longevity/longevity_gwas_lookup.py).
+See [LONGEVITY_GWAS_LOOKUP.md](LONGEVITY_GWAS_LOOKUP.md). Most candidates are not
+expected to replicate.
+
 ## What this does not say
 
 No variant is described as enriched, significant, or associated with longevity in Romanians. A high rank means the public-reference MAF and the chosen odds ratio would give a higher chance of rejecting the null in a study of that size. It does not mean the variant has that odds ratio, and it does not mean a ROGEN cohort of that size exists.

@@ -99,3 +99,31 @@ Intake (`rogen-intake`) is exercised on synthetic fixtures (`tests/test_intake.p
 
 **ONT vs bisulfite HG002 dry run (done, 2026-10-28).** Region `chr20:10000000-20000000`, ONT CRAM via HTTPS + `.crai` (never `all.bam`), `rogen-intake`, `modkit` 0.6.4 `--cpg --combine-strands`. Results: [`docs/METHYLATION_CLOCK_VALIDATION.md`](docs/METHYLATION_CLOCK_VALIDATION.md) and `analysis/dryrun/hg002_ont_methylation_metrics.json`. Large intermediates stay under gitignored `data/dryrun/`.
 
+---
+
+## Longevity / lifespan GWAS lookup (candidate-gene replication)
+
+Required inputs for [`scripts/longevity/longevity_gwas_lookup.py`](scripts/longevity/longevity_gwas_lookup.py).
+Only `alt_status == "resolved"` rows from the panel are tested; others are recorded as `not_tested`.
+
+| Path | Role | Required |
+|------|------|----------|
+| `data/processed/variants_47_input_v2.csv` | Panel variants (`chrom`, `pos`, `ref`, `alt`, `rsid`, `gene_symbol`, `alt_status`) | yes |
+| `data/processed/allele_evidence_47.csv` | LongevityMap allele (`longevitymap_alt_allele`); empty → `needs_curation` | preferred |
+| `analysis/panel/allele_audit_47.csv` | Panel MAF for the palindrome guard | preferred |
+| `config/gwas_sources.yaml` | Per-file columns, genome build, effect units, citations | yes |
+| `data/external/gwas/lifegen_phase2_bothpl_alldr_2017_09_18.tsv.gz` | Timmers 2019 parental lifespan (DataShare doi:10.7488/ds/2463) | yes (hand download) |
+| `data/external/gwas/Results_90th_percentile.txt.gz` | Deelen 2019 longevity 90th percentile (GCST008598) | yes (hand download) |
+| `data/external/gwas/Results_99th_percentile.txt.gz` | Deelen 2019 longevity 99th percentile (GCST008599) | yes (hand download) |
+
+### Outputs
+
+| Path | Description |
+|------|-------------|
+| `analysis/longevity/longevity_gwas_lookup.csv` | Variant × trait effects on the panel alt |
+| `analysis/longevity/longevity_gwas_lookup_provenance.json` | sha256, citations, multiple-testing counts |
+| `analysis/longevity/longevity_gwas_lookup_forest.png` | BH q < 0.05 hits, or top 10 by p |
+| `analysis/longevity/release_checks/longevity_gwas_lookup.json` | Release-check report |
+
+See [docs/LONGEVITY_GWAS_LOOKUP.md](docs/LONGEVITY_GWAS_LOOKUP.md). Summary-stat `.gz` files stay under gitignored `data/external/gwas/`.
+
