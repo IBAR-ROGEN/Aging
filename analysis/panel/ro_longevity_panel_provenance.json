@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-09-27T13:43:40Z",
+  "generated_at_utc": "2026-10-28T07:56:18Z",
   "disclaimer": "Cohort sizes and odds ratios are illustrative. ROGEN sample size and design are not fixed. Frequencies are from public reference populations, not from Romanian data.",
   "input_variants": {
     "path": "data/processed/variants_47_input_v2.csv",
@@ -26,7 +26,7 @@
     "allele_counts": {
       "source": "cache fields ac_nfe and an_nfe for the cached gnomAD variant_id",
       "entries_with_counts": 47,
-      "fetched_this_run": 2,
+      "fetched_this_run": 0,
       "af_gnomad_nfe_modified": false
     }
   },
@@ -133,5 +133,14 @@
       "stderr": "",
       "status": "passed"
     }
-  ]
+  ],
+  "sanity_check": {
+    "panel_path": "analysis/panel/ro_longevity_panel.csv",
+    "output_path": "analysis/panel/ro_longevity_panel_sanity.tsv",
+    "flag_count": 0,
+    "af_gap": 0.15,
+    "complement_skip_lo": 0.4,
+    "complement_skip_hi": 0.6,
+    "note": "Complement test skipped when NFE AF is between 0.4 and 0.6: the allele frequency and its complement are both near 0.5, so a smaller distance to 1 - CEU does not show that the alleles were swapped."
+  }
 }

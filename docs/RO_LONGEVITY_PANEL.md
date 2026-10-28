@@ -73,7 +73,7 @@ Outputs, written under `analysis/panel/`:
 
 After the two CSV tables are written, each is passed to `rogen-release-check --table PATH --table-kind summary --report PATH`. That kind runs the individual-level and direct-identifier checks and does not treat frequencies or power as cell counts. The return code, captured output, and JSON report path are stored in the provenance JSON. The scientific tables are not replaced by a sanitized copy.
 
-The figure caption repeats the cohort-size disclaimer above.
+**Figure caption for `ro_longevity_power_heatmap.png`.** Cohort sizes and odds ratios are illustrative. ROGEN sample size and design are not fixed. Frequencies are from public reference populations, not from Romanian data.
 
 ## What this does not say
 

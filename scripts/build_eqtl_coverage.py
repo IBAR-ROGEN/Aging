@@ -36,6 +36,7 @@ DEFAULT_ASSOCIATIONS = REPO_ROOT / "results" / "eqtl_associations_full.csv"
 DEFAULT_ANNOTATION = REPO_ROOT / "results" / "annotation_layer.csv"
 DEFAULT_MATRIX_OUT = REPO_ROOT / "results" / "eqtl_coverage_matrix.csv"
 DEFAULT_FIGURE_OUT = REPO_ROOT / "results" / "fig_eqtl_coverage.png"
+DEFAULT_DATASETS_USED = REPO_ROOT / "analysis" / "eqtl" / "eqtl_datasets_used.tsv"
 
 # Ground-truth counts from the annotation run (do not "fix" by collapsing tissues).
 EXPECTED_ASSOC_ROWS = 1650
@@ -434,6 +435,14 @@ def write_matrix_csv(wide: pl.DataFrame, path: Path, provenance: str) -> None:
         wide.write_csv(handle)
 
 
+def write_datasets_used(dataset_ids: list[str], path: Path) -> int:
+    """Write the exact dataset_id list (one per row) and return the count."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    frame = pl.DataFrame({"dataset_id": dataset_ids})
+    frame.write_csv(path, separator="\t")
+    return frame.height
+
+
 def render_heatmap(
     wide: pl.DataFrame,
     path: Path,
@@ -540,9 +549,13 @@ def build_coverage(
     )
     write_matrix_csv(wide, matrix_path, provenance)
     render_heatmap(wide, figure_path, provenance)
+    dataset_ids = datasets.get_column("dataset_id").to_list()
+    n_datasets = write_datasets_used(dataset_ids, DEFAULT_DATASETS_USED)
     return {
         "n_rows": wide.height,
         "n_dataset_columns": wide.width - len(INDEX_COLUMNS),
+        "n_datasets_used": n_datasets,
+        "datasets_used_path": str(DEFAULT_DATASETS_USED),
         "matrix_path": str(matrix_path),
         "figure_path": str(figure_path),
         "provenance": provenance,
@@ -578,6 +591,10 @@ def main(
         f"to {result['matrix_path']}"
     )
     typer.echo(f"Wrote heatmap to {result['figure_path']}")
+    typer.echo(
+        f"Wrote {result['n_datasets_used']} dataset_id values to {result['datasets_used_path']}"
+    )
+    typer.echo(f"dataset_id count: {result['n_datasets_used']}")
     typer.echo("")
     typer.echo(result["provenance"])
 

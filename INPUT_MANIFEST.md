@@ -85,5 +85,15 @@ Required upstream artefact for [`scripts/integrative/run_pipeline.py`](scripts/i
 
 ## September 2026: secure intake and dry runs
 
-Filled in by later steps.
+From the provenance files currently in the tree:
+
+| Artefact | What it shows |
+|----------|---------------|
+| `analysis/panel/ro_longevity_panel_provenance.json` | Panel input `data/processed/variants_47_input_v2.csv` (`n_rows` 47). gnomAD v4 NFE from `data/geo/gnomad_r4_nfe_cache.json` (`cache_hits` 47, `new_queries` 0). Ensembl REST release 116, host `https://rest.ensembl.org`, populations TSI/IBS/CEU/GBR/FIN (`cache_hits` 47, `new_queries` 0). TSI vs NFE count test `n_tests` 47. Both panel CSV release checks `status` `passed`, return code 0. `sanity_check.flag_count` 0. `generated_at_utc` 2026-10-28T07:56:18Z. |
+| `analysis/panel/release_checks/ro_longevity_panel.json` | `release_blocked` false for the panel frequency table (summary kind). |
+| `analysis/panel/release_checks/ro_longevity_power_grid.json` | `release_blocked` false for the power grid (summary kind). |
+
+Intake (`rogen-intake`) is exercised on synthetic fixtures only (`tests/test_intake.py`). No Romanian sequencing delivery is in the tree.
+
+**HG002 dry runs have not run yet.** The ONT CRAM, bisulfite coverage, HM450 manifest, and Illumina chr20 BAM URLs are listed in `docs/METHYLATION_CLOCK_VALIDATION.md`; nothing from those URLs has been downloaded.
 

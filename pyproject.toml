@@ -53,6 +53,10 @@ dev = [
     "types-requests>=2.32",
 ]
 genomics = []
+seq = [
+    "pysam>=0.22",
+    "pod5>=0.3",
+]
 
 [project.scripts]
 rogen-clock = "rogen_aging.cli.clock:main"

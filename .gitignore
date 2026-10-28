@@ -125,6 +125,9 @@ docs/_build/
 !data/network/*.csv
 !manuscript/tables/*.csv
 *.tsv
+!analysis/panel/ro_longevity_panel_sanity.tsv
+!analysis/eqtl/eqtl_datasets_used.tsv
+!tests/fixtures/hm450_hg38_five_chr20.tsv
 *.bed
 *.bed.gz
 *.fastq

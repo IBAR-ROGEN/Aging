@@ -1236,7 +1236,7 @@ def render_power_heatmap(grid: pl.DataFrame, panel: pl.DataFrame, path: Path) ->
         )
         axis.set_title(f"allelic OR {odds_ratio:g}")
         axis.set_xticks(np.arange(len(N_CASES_PER_ARM)))
-        axis.set_xticklabels([str(n) for n in N_CASES_PER_ARM], rotation=45, ha="right")
+        axis.set_xticklabels([str(n) for n in N_CASES_PER_ARM], rotation=0, ha="center")
         axis.set_xlabel("Cases per arm")
     axes[0].set_yticks(np.arange(n_variants))
     axes[0].set_yticklabels(labels, fontsize=7)
@@ -1249,7 +1249,6 @@ def render_power_heatmap(grid: pl.DataFrame, panel: pl.DataFrame, path: Path) ->
         "Control frequency: gnomAD v4 non-Finnish European MAF",
         fontsize=11,
     )
-    fig.text(0.01, 0.005, DISCLAIMER, fontsize=8, ha="left", va="bottom", wrap=True)
     path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(path, dpi=200, bbox_inches="tight")
     plt.close(fig)
