@@ -1,0 +1,40 @@
+{
+  "geo_accession": "GSE40279",
+  "model_path": "models/gse40279_hannum450k_elasticnet.joblib",
+  "input_parquet": "data/methylation/GSE40279_processed.parquet",
+  "input_parquet_sha256": "43467f6717294a74c29a707c3a58c21aa544d155d015b17d14cb61b6e6c34df3",
+  "n_cpgs_features": 8000,
+  "n_train_samples": 524,
+  "n_test_samples": 132,
+  "probe_counts": {
+    "input_cg": 470043,
+    "overlap_gse87571": 470043,
+    "after_missingness_le_5pct_on_train": 470043,
+    "after_abs_age_correlation_on_train": 51165,
+    "trained": 8000
+  },
+  "filters": {
+    "missing_fraction_max": 0.05,
+    "age_abs_correlation_min": 0.2,
+    "max_probes": 8000,
+    "correlation_split": "training split only; same test_size and random_state as train_clock"
+  },
+  "n_nonzero_coefficients": 2314,
+  "nonzero_cpg_csv": "models/gse40279_hannum450k_elasticnet_cpgs.csv",
+  "hyperparameters": {
+    "alpha": 0.0034306552100727577,
+    "l1_ratio": 0.5,
+    "cv": 5,
+    "cv_note": "cv lowered from 10 to 5 because 8000 training probes would make ElasticNetCV exceed about 2 hours on a laptop. No other hyperparameter was changed."
+  },
+  "random_state": 42,
+  "sklearn_version": "1.8.0",
+  "git_commit": "d509f0ebe3fd1eb6a41659ec0db276de4870446d",
+  "timestamp_utc": "2026-09-27T08:42:19Z",
+  "holdout_metrics_from_train_clock": {
+    "test_mae": 3.5248637199401855,
+    "test_rmse": 4.727581024169922,
+    "test_pearson_r": 0.9566776752471924
+  },
+  "reproducible_coefficient_csv": "models/gse40279_hannum450k_elasticnet_coefficients.csv"
+}

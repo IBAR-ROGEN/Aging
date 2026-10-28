@@ -175,8 +175,14 @@ def select_training_probes(
     *,
     test_size: float,
     random_state: int,
+    probe_chromosomes: dict[str, str] | None = None,
+    exclude_chromosomes: frozenset[str] | None = None,
 ) -> ProbeFilterReport:
-    """Intersect, drop sparse probes, then keep age-correlated probes on the train split."""
+    """Intersect, drop sparse probes, then keep age-correlated probes on the train split.
+
+    When ``exclude_chromosomes`` is set, those chromosomes are removed after the
+    missingness filter and before the age-correlation filter.
+    """
     cg_columns = [column for column in frame.columns if str(column).startswith("cg")]
     overlap = [column for column in cg_columns if column in gse87571_cpgs]
     if not overlap:
@@ -194,6 +200,8 @@ def select_training_probes(
     kept_after_missing: list[str] = []
     correlations: dict[str, float] = {}
     train_frame = frame.iloc[train_idx]
+    excluded = exclude_chromosomes or frozenset()
+    chrom_map = probe_chromosomes or {}
     for start in range(0, len(overlap), _BATCH):
         batch_cols = overlap[start : start + _BATCH]
         values = (
@@ -206,6 +214,8 @@ def select_training_probes(
             if float(miss) > MISSING_FRACTION_MAX:
                 continue
             kept_after_missing.append(column)
+            if excluded and chrom_map.get(column, "") in excluded:
+                continue
             if np.isfinite(corr) and abs(float(corr)) >= AGE_ABS_CORRELATION_MIN:
                 correlations[column] = abs(float(corr))
     correlated = sorted(correlations, key=correlations.__getitem__, reverse=True)
@@ -257,8 +267,14 @@ def select_probes_from_parquet(
     *,
     test_size: float,
     random_state: int,
+    probe_chromosomes: dict[str, str] | None = None,
+    exclude_chromosomes: frozenset[str] | None = None,
 ) -> ProbeFilterReport:
-    """Filter probes in column batches so the full 450K table is not materialized."""
+    """Filter probes in column batches so the full 450K table is not materialized.
+
+    When ``exclude_chromosomes`` is set, those chromosomes are removed after the
+    missingness filter and before the age-correlation filter.
+    """
     schema_names = pl.scan_parquet(source).collect_schema().names()
     cg_columns = [name for name in schema_names if name.startswith("cg")]
     overlap = [name for name in cg_columns if name in gse87571_cpgs]
@@ -277,7 +293,11 @@ def select_probes_from_parquet(
     train_age = age_np[train_idx]
     kept_after_missing: list[str] = []
     correlations: dict[str, float] = {}
+    excluded = exclude_chromosomes or frozenset()
+    chrom_map = probe_chromosomes or {}
     logger.info("Overlap with GSE87571: %s probes", len(overlap))
+    if excluded:
+        logger.info("Excluding chromosomes before age filter: %s", sorted(excluded))
     for start in range(0, len(overlap), _BATCH):
         batch_cols = overlap[start : start + _BATCH]
         logger.info("Probe filter batch %s / %s", start, len(overlap))
@@ -288,6 +308,8 @@ def select_probes_from_parquet(
             if float(miss) > MISSING_FRACTION_MAX:
                 continue
             kept_after_missing.append(column)
+            if excluded and chrom_map.get(column, "") in excluded:
+                continue
             if np.isfinite(corr) and abs(float(corr)) >= AGE_ABS_CORRELATION_MIN:
                 correlations[column] = abs(float(corr))
     correlated = sorted(correlations, key=correlations.__getitem__, reverse=True)
@@ -341,6 +363,103 @@ def write_coefficient_table(model_path: Path, csv_path: Path) -> int:
     return int(nonzero.size)
 
 
+INTERCEPT_PROBE_ID = "__intercept__"
+
+
+def write_reproducible_coefficient_table(model_path: Path, csv_path: Path) -> int:
+    """Write intercept, every feature coefficient, and imputer means for rebuild.
+
+    Columns: ``probe_id``, ``coefficient``, ``imputer_mean``. The intercept row
+    uses ``probe_id=__intercept__`` and an empty ``imputer_mean``. There is no
+    StandardScaler in the Hannum pipeline; the mean-imputer statistics are the
+    only transform parameters required to reproduce ``Pipeline.predict``.
+
+    Returns:
+        Number of non-zero feature coefficients (excluding the intercept row).
+    """
+    import joblib
+
+    model = joblib.load(model_path)
+    imputer = model.named_steps["imputer"]
+    elastic = model.named_steps["elasticnet"]
+    names = [str(name) for name in model.feature_names_in_]
+    coef = np.ravel(elastic.coef_).astype(np.float64)
+    means = np.ravel(imputer.statistics_).astype(np.float64)
+    if len(names) != len(coef) or len(names) != len(means):
+        raise ValueError(
+            "Model feature names, coefficients, and imputer statistics have different lengths."
+        )
+    rows = [
+        {
+            "probe_id": INTERCEPT_PROBE_ID,
+            "coefficient": float(elastic.intercept_),
+            "imputer_mean": None,
+        }
+    ]
+    for name, weight, mean in zip(names, coef, means, strict=True):
+        rows.append(
+            {
+                "probe_id": name,
+                "coefficient": float(weight),
+                "imputer_mean": float(mean),
+            }
+        )
+    csv_path.parent.mkdir(parents=True, exist_ok=True)
+    pl.DataFrame(rows).write_csv(csv_path)
+    return int(np.count_nonzero(coef))
+
+
+def predict_from_coefficient_table(
+    features: pd.DataFrame,
+    coefficient_csv: Path,
+) -> np.ndarray:
+    """Rebuild pipeline predictions from the reproducible coefficient CSV.
+
+    Args:
+        features: Wide table with the model's ``cg*`` columns (any order).
+        coefficient_csv: Table written by :func:`write_reproducible_coefficient_table`.
+
+    Returns:
+        Predicted ages, one per row of ``features``.
+    """
+    table = pl.read_csv(coefficient_csv)
+    intercept_rows = table.filter(pl.col("probe_id") == INTERCEPT_PROBE_ID)
+    if intercept_rows.height != 1:
+        raise ValueError(f"Expected one {INTERCEPT_PROBE_ID!r} row in {coefficient_csv}")
+    intercept = float(intercept_rows["coefficient"][0])
+    feature_rows = table.filter(pl.col("probe_id") != INTERCEPT_PROBE_ID)
+    probe_ids = feature_rows["probe_id"].to_list()
+    coef = feature_rows["coefficient"].to_numpy().astype(np.float64)
+    means = feature_rows["imputer_mean"].to_numpy().astype(np.float64)
+    missing = [probe for probe in probe_ids if probe not in features.columns]
+    if missing:
+        raise KeyError(f"Missing {len(missing)} model probes in features, e.g. {missing[:3]}")
+    values = features.loc[:, probe_ids].to_numpy(dtype=np.float64, copy=True)
+    invalid = ~np.isfinite(values)
+    if invalid.any():
+        values[invalid] = means[np.where(invalid)[1]]
+    predictions: np.ndarray = np.asarray(intercept + values @ coef, dtype=np.float64)
+    return predictions
+
+
+def load_probe_chromosomes(zhou_manifest: Path) -> dict[str, str]:
+    """Map Illumina ``probeID`` to ``CpG_chrm`` from the Zhou HM450 hg38 manifest."""
+    frame = pl.read_csv(
+        zhou_manifest,
+        separator="\t",
+        columns=["probeID", "CpG_chrm"],
+        null_values=["NA"],
+    )
+    mapping: dict[str, str] = {}
+    for row in frame.iter_rows(named=True):
+        probe_id = row.get("probeID")
+        chrom = row.get("CpG_chrm")
+        if probe_id is None or chrom is None:
+            continue
+        mapping[str(probe_id)] = str(chrom)
+    return mapping
+
+
 def train_published_gse40279(
     input_parquet: Path,
     *,
@@ -352,6 +471,9 @@ def train_published_gse40279(
     provenance_path: Path,
     training_matrix: Path,
     repo_root: Path,
+    reproducible_coefficient_csv: Path | None = None,
+    probe_chromosomes: dict[str, str] | None = None,
+    exclude_chromosomes: frozenset[str] | None = None,
 ) -> dict[str, Any]:
     """Filter on the training split, then fit with :func:`train_clock`."""
     cfg = get_config().clock
@@ -363,6 +485,8 @@ def train_published_gse40279(
         set(cpg_ids),
         test_size=test_size,
         random_state=random_state,
+        probe_chromosomes=probe_chromosomes,
+        exclude_chromosomes=exclude_chromosomes,
     )
     write_training_matrix(input_parquet, training_matrix, report.columns)
     metrics = train_clock(
@@ -374,6 +498,8 @@ def train_published_gse40279(
         cv=report.cv,
     )
     write_coefficient_table(output_model, coefficient_csv)
+    if reproducible_coefficient_csv is not None:
+        write_reproducible_coefficient_table(output_model, reproducible_coefficient_csv)
     write_provenance(
         provenance_path,
         input_parquet=input_parquet,
@@ -382,6 +508,8 @@ def train_published_gse40279(
         coefficient_csv=coefficient_csv,
         model_path=output_model,
         repo_root=repo_root,
+        reproducible_coefficient_csv=reproducible_coefficient_csv,
+        exclude_chromosomes=exclude_chromosomes,
     )
     return {"metrics": metrics, "probe_filter": report}
 
@@ -395,8 +523,18 @@ def write_provenance(
     coefficient_csv: Path,
     model_path: Path,
     repo_root: Path,
+    reproducible_coefficient_csv: Path | None = None,
+    exclude_chromosomes: frozenset[str] | None = None,
 ) -> dict[str, Any]:
     """Write the sidecar JSON. Metrics values are copied from ``train_clock`` output."""
+    filters: dict[str, Any] = {
+        "missing_fraction_max": MISSING_FRACTION_MAX,
+        "age_abs_correlation_min": AGE_ABS_CORRELATION_MIN,
+        "max_probes": MAX_PROBES_FOR_ELASTICNET,
+        "correlation_split": "training split only; same test_size and random_state as train_clock",
+    }
+    if exclude_chromosomes:
+        filters["exclude_chromosomes_before_age_correlation"] = sorted(exclude_chromosomes)
     payload: dict[str, Any] = {
         "geo_accession": "GSE40279",
         "model_path": str(model_path),
@@ -412,12 +550,7 @@ def write_provenance(
             "after_abs_age_correlation_on_train": report.n_probes_after_age_correlation,
             "trained": report.n_probes_trained,
         },
-        "filters": {
-            "missing_fraction_max": MISSING_FRACTION_MAX,
-            "age_abs_correlation_min": AGE_ABS_CORRELATION_MIN,
-            "max_probes": MAX_PROBES_FOR_ELASTICNET,
-            "correlation_split": "training split only; same test_size and random_state as train_clock",
-        },
+        "filters": filters,
         "n_nonzero_coefficients": int(metrics["n_cpgs_selected_nonzero"]),
         "nonzero_cpg_csv": str(coefficient_csv),
         "hyperparameters": {
@@ -436,6 +569,8 @@ def write_provenance(
             "test_pearson_r": metrics["test_pearson_r"],
         },
     }
+    if reproducible_coefficient_csv is not None:
+        payload["reproducible_coefficient_csv"] = str(reproducible_coefficient_csv)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
     return payload

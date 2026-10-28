@@ -134,6 +134,8 @@ docs/_build/
 !analysis/rogen_vs_gnomad_af.csv
 !analysis/panel/allele_audit_47.csv
 !analysis/longevity/longevity_gwas_lookup.csv
+!analysis/clock_sex_check/metrics_table.csv
+!analysis/clock_sex_check/release_check.json
 !analysis/longevity/longevity_gwas_lookup_provenance.json
 !analysis/longevity/longevity_gwas_lookup_forest.png
 !analysis/longevity/release_checks/
@@ -172,6 +174,16 @@ analysis/clocks_benchmark/run.log
 # Trained model binaries (regenerate locally; keep directory placeholder)
 models/*
 !models/.gitkeep
+!models/fixtures/
+!models/fixtures/**
+!models/gse40279_hannum450k_elasticnet.joblib
+!models/gse40279_hannum450k_elasticnet.provenance.json
+!models/gse40279_hannum450k_elasticnet_coefficients.csv
+!models/gse40279_hannum450k_elasticnet_cpgs.csv
+!models/gse40279_hannum450k_elasticnet_noXY.joblib
+!models/gse40279_hannum450k_elasticnet_noXY.provenance.json
+!models/gse40279_hannum450k_elasticnet_noXY_coefficients.csv
+!models/gse40279_hannum450k_elasticnet_noXY_cpgs.csv
 
 # Personal / administrative scripts (defense in depth)
 make_pontaj.py
