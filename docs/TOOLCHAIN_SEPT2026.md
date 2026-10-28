@@ -29,3 +29,16 @@ Versions were read with `micromamba run -n rogen-tools <tool> --version`. `tabix
 micromamba create -y -n rogen-tools -c conda-forge -c bioconda \
   samtools=1.24 bcftools=1.24 htslib=1.24 minimap2=2.31 ont-modkit=0.6.4
 ```
+
+## October 2026
+
+Checked on 2026-10-28 for the HG002 short-read dry run
+(`scripts/dryrun/hg002_shortread_dryrun.py`).
+
+| Tool | Found | Version | Install notes |
+|------|-------|---------|---------------|
+| rtg-tools | yes (repo `.tools/rtg`) | 3.13 (nojre) | Bioconda install was blocked from this host (`conda.anaconda.org` 403). Unpacked `rtg-tools-3.13-nojre.zip` under `.tools/rtg-tools/` with Temurin 17 under `.tools/jdk-17/`. Wrapper: `.tools/rtg`. Prefer `micromamba install -n rogen-tools -c bioconda rtg-tools` when bioconda is reachable. |
+| bwa-mem2 | no | — | Optional; dry run default `ALIGNER=minimap2`. Install with `micromamba install -n rogen-tools -c bioconda bwa-mem2` when needed. |
+| openjdk / Temurin | yes (`.tools/jdk-17`) | 17.0.13 | Required for RTG nojre build. |
+
+`rtg.cfg` in `.tools/rtg-tools/` sets `RTG_TALKBACK=false` and `RTG_USAGE=false`.

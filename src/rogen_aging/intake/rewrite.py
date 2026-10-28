@@ -24,6 +24,7 @@ from rogen_aging.intake.errors import IntakeError
 from rogen_aging.intake.manifest import ManifestRow, delivery_file
 
 _COMPOUND_SUFFIXES: tuple[str, ...] = (".fastq.gz", ".fq.gz", ".vcf.gz", ".vcf.bgz")
+_PAIR_MARKERS: tuple[str, ...] = ("_R1", "_R2", "_1", "_2", ".R1", ".R2")
 _RG_FIELDS = frozenset({"ID", "SM", "LB"})
 
 
@@ -39,17 +40,32 @@ class ProducedFile:
     pod5_metadata_scan: str | None = None
 
 
+def _pair_marker(stem: str) -> str:
+    """Return a trailing read-pair marker from ``stem``, or an empty string."""
+    upper = stem.upper()
+    for marker in _PAIR_MARKERS:
+        if upper.endswith(marker.upper()):
+            return stem[-len(marker) :]
+    return ""
+
+
 def output_filename(pseudonym: str, file_name: str, file_type: str) -> str:
-    """Return ``<pseudonym>.<original extension>``."""
+    """Return ``<pseudonym>[_R1|_R2].<original extension>``.
+
+    Trailing pair markers (``_R1``, ``_R2``, ``_1``, ``_2``, ``.R1``, ``.R2``)
+    are kept so paired FASTQ deliveries do not collide on the same pseudonym.
+    """
     name = Path(file_name).name
     lower = name.lower()
     for suffix in _COMPOUND_SUFFIXES:
         if lower.endswith(suffix):
-            return f"{pseudonym}{name[-len(suffix) :]}"
+            stem = name[: -len(suffix)]
+            return f"{pseudonym}{_pair_marker(stem)}{name[-len(suffix) :]}"
     suffix = Path(name).suffix
+    stem = Path(name).stem
     if not suffix:
         suffix = f".{file_type}"
-    return f"{pseudonym}{suffix}"
+    return f"{pseudonym}{_pair_marker(stem)}{suffix}"
 
 
 def rewrite_delivery(

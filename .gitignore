@@ -64,6 +64,8 @@ secrets/
 data/intake/
 data/custodian/
 data/dryrun/
+analysis/dryrun/*
+!analysis/dryrun/.gitkeep
 
 # Project outputs (placeholders stay in git)
 data/*
