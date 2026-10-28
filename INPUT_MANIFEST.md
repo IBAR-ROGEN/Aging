@@ -97,5 +97,5 @@ Intake (`rogen-intake`) is exercised on synthetic fixtures (`tests/test_intake.p
 
 **HG002 short-read dry run (done, 2026-10-28).** Driver: `scripts/dryrun/hg002_shortread_dryrun.py`. Region `chr20:10000000-20000000`, Illumina BAM downsample `-s 0.1`, minimap2, untuned bcftools, `rtg vcfeval` vs GIAB NISTv4.2.1. Results: [`docs/HG002_DRYRUN.md`](docs/HG002_DRYRUN.md) and `analysis/dryrun/hg002_shortread_metrics.json`. Large intermediates stay under gitignored `data/dryrun/`.
 
-**ONT / methylation HG002 dry run has not run yet.** The ONT CRAM, bisulfite coverage, and HM450 manifest URLs remain listed in `docs/METHYLATION_CLOCK_VALIDATION.md`.
+**ONT vs bisulfite HG002 dry run (done, 2026-10-28).** Region `chr20:10000000-20000000`, ONT CRAM via HTTPS + `.crai` (never `all.bam`), `rogen-intake`, `modkit` 0.6.4 `--cpg --combine-strands`. Results: [`docs/METHYLATION_CLOCK_VALIDATION.md`](docs/METHYLATION_CLOCK_VALIDATION.md) and `analysis/dryrun/hg002_ont_methylation_metrics.json`. Large intermediates stay under gitignored `data/dryrun/`.
 

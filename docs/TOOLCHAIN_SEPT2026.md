@@ -33,7 +33,9 @@ micromamba create -y -n rogen-tools -c conda-forge -c bioconda \
 ## October 2026
 
 Checked on 2026-10-28 for the HG002 short-read dry run
-(`scripts/dryrun/hg002_shortread_dryrun.py`).
+(`scripts/dryrun/hg002_shortread_dryrun.py`) and the ONT versus bisulfite
+comparison (`docs/METHYLATION_CLOCK_VALIDATION.md`; `modkit` 0.6.4 in
+`rogen-tools`).
 
 | Tool | Found | Version | Install notes |
 |------|-------|---------|---------------|

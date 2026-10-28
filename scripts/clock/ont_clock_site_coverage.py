@@ -74,6 +74,7 @@ class CoverageComparison:
     n_compared: int
     pearson_r: float
     mean_absolute_difference: float
+    mean_ont_minus_bisulfite: float
 
 
 @dataclass(frozen=True)
@@ -281,7 +282,7 @@ def compare_clock_cpgs(
     bisulfite: pl.DataFrame,
     clock_cpgs: pl.DataFrame,
 ) -> CoverageComparison:
-    """Pearson r and mean absolute difference at covered chr20 clock CpGs.
+    """Pearson r and ONT−bisulfite difference at covered chr20 clock CpGs.
 
     Both fractions are on a 0–1 scale. Bisulfite percent methylation is
     ``n_meth / (n_meth + n_unmeth)`` after the strand merge, not the raw
@@ -294,7 +295,8 @@ def compare_clock_cpgs(
         clock_cpgs: ``chrom``, ``start`` (0-based), and ``probe_id`` for clock CpGs.
 
     Returns:
-        Correlation and mean absolute difference for sites covered by both.
+        Correlation, mean absolute difference, and mean signed
+        ``ONT - bisulfite`` for sites covered by both.
 
     Raises:
         ValueError: If fewer than two clock CpGs are covered on both sides.
@@ -313,11 +315,13 @@ def compare_clock_cpgs(
     ont_values = compared["ont"].to_list()
     bs_values = compared["bisulfite"].to_list()
     correlation = float(pearsonr(ont_values, bs_values).statistic)
-    absolute = [abs(left - right) for left, right in zip(ont_values, bs_values, strict=True)]
+    deltas = [left - right for left, right in zip(ont_values, bs_values, strict=True)]
+    absolute = [abs(delta) for delta in deltas]
     return CoverageComparison(
         n_compared=compared.height,
         pearson_r=correlation,
         mean_absolute_difference=sum(absolute) / len(absolute),
+        mean_ont_minus_bisulfite=sum(deltas) / len(deltas),
     )
 
 

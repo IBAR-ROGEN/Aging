@@ -92,11 +92,19 @@ uv run python scripts/audit_clock_artifacts.py
 
 ## ONT and bisulfite on HG002 chr20
 
-Method defined. The ONT run itself is still pending. Nothing has been downloaded. Do not use `gm24385_mod_2021.09/extra_analysis/all.bam`.
+Ran on region `chr20:10000000-20000000` (same window as the short-read dry run). ONT reads from `SAMPLE.haplotagged.cram` (+ `.crai`) over HTTPS against `GCA_000001405.15_GRCh38_no_alt_analysis_set`; the CRAM subset went through `rogen-intake` (aliases NA24385, GM24385). Own `modkit` 0.6.4 pileup used `--cpg --combine-strands --modified-bases 5mC 5hmC -r REF --region REGION`. Do not use `gm24385_mod_2021.09/extra_analysis/all.bam`.
 
-The CLI tools are installed in the micromamba environment `rogen-tools`, not on the default `PATH` ([TOOLCHAIN_SEPT2026.md](TOOLCHAIN_SEPT2026.md)): samtools 1.24, bcftools 1.24, minimap2 2.31-r1302, modkit 0.6.4, tabix and bgzip from htslib 1.24. `pysam` and `pod5` are the optional project extra `seq` (`uv sync --extra seq`); they are not required for the ONT comparison script itself.
+Metrics: [analysis/dryrun/hg002_ont_methylation_metrics.json](../analysis/dryrun/hg002_ont_methylation_metrics.json). `MIN_DEPTH=10`. The ONT run is dated 2024-06-19 and the bisulfite file was published in the 2021.09 bucket. The samples were cultured and sequenced years apart, so part of any difference is biological.
 
-`scripts/clock/ont_clock_site_coverage.py` is the comparison.
+| Level | n CpGs (both) | n with ONT depth ≥ 10 | Pearson r | mean (ONT − bisulfite) | Scatter |
+|-------|---------------|------------------------|-----------|-------------------------|---------|
+| All CpGs in region | 80896 | 80333 | 0.976 | 0.014 | [all_cpgs](../analysis/dryrun/hg002_ont_vs_bisulfite_all_cpgs.png) |
+| HM450 probes in region | 653 | 634 | 0.988 | 0.014 | [hm450](../analysis/dryrun/hg002_ont_vs_bisulfite_hm450.png) |
+| Hannum nonzero coefficients in region | 4 | 4 | 0.998 | 0.031 | [hannum_nonzero](../analysis/dryrun/hg002_ont_vs_bisulfite_hannum_nonzero.png) |
+
+The CLI tools are installed in the micromamba environment `rogen-tools`, not on the default `PATH` ([TOOLCHAIN_SEPT2026.md](TOOLCHAIN_SEPT2026.md)): samtools 1.24, bcftools 1.24, minimap2 2.31-r1302, modkit 0.6.4, tabix and bgzip from htslib 1.24. `pysam` and `pod5` are the optional project extra `seq` (`uv sync --extra seq --extra dev`).
+
+`scripts/clock/ont_clock_site_coverage.py` holds the URL decisions, strand merge, and comparison helpers.
 
 Confirmed input URLs, copied from that script:
 

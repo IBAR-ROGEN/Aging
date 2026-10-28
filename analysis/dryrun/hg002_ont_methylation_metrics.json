@@ -1,0 +1,38 @@
+{
+  "region": "chr20:10000000-20000000",
+  "ont_cram_url": "https://ont-open-data.s3.amazonaws.com/giab_2025.01/analysis/wf-human-variation/sup/HG002/PAW70337/output/SAMPLE.haplotagged.cram",
+  "bisulfite_cov_url": "https://ont-open-data.s3.amazonaws.com/gm24385_mod_2021.09/bisulphite/cpg/CpG.gz.bismark.cov.gz",
+  "reference": "GCA_000001405.15_GRCh38_no_alt_analysis_set",
+  "modkit": "0.6.4 --cpg --combine-strands --modified-bases 5mC 5hmC",
+  "forbidden_bam_refused": "gm24385_mod_2021.09/extra_analysis/all.bam",
+  "note": "The ONT run is dated 2024-06-19 and the bisulfite file was published in the 2021.09 bucket. The samples were cultured and sequenced years apart, so part of any difference is biological.",
+  "levels": [
+    {
+      "level": "all_cpgs",
+      "n_cpgs": 80896,
+      "n_ont_depth_ge_min": 80333,
+      "min_depth": 10,
+      "pearson_r": 0.9755608294915357,
+      "mean_ont_minus_bisulfite": 0.013932325591353035,
+      "scatter_png": "analysis/dryrun/hg002_ont_vs_bisulfite_all_cpgs.png"
+    },
+    {
+      "level": "hm450",
+      "n_cpgs": 653,
+      "n_ont_depth_ge_min": 634,
+      "min_depth": 10,
+      "pearson_r": 0.9883002412213961,
+      "mean_ont_minus_bisulfite": 0.013610999427427344,
+      "scatter_png": "analysis/dryrun/hg002_ont_vs_bisulfite_hm450.png"
+    },
+    {
+      "level": "hannum_nonzero",
+      "n_cpgs": 4,
+      "n_ont_depth_ge_min": 4,
+      "min_depth": 10,
+      "pearson_r": 0.9979509346301134,
+      "mean_ont_minus_bisulfite": 0.03086132666268903,
+      "scatter_png": "analysis/dryrun/hg002_ont_vs_bisulfite_hannum_nonzero.png"
+    }
+  ]
+}
