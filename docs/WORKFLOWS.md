@@ -36,6 +36,7 @@ See [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md#data-flow) for the full path ref
 |---------|---------|
 | `rogen-clock prepare-gse40279` / `train` / `evaluate` | GSE40279 matrix, Hannum clock train, and validation ([GSE40279_CLOCK_TRAINING.md](GSE40279_CLOCK_TRAINING.md)) |
 | `rogen-intake make-key` / `rogen-intake run` | Checksum, pseudonym, and leak check ([DATA_FLOW.md](DATA_FLOW.md)) |
+| `python scripts/dryrun/hg002_shortread_dryrun.py …` | Public HG002 short-read path through GIAB vcfeval ([HG002_DRYRUN.md](HG002_DRYRUN.md)) |
 | `rogen-release-check` | Aggregate-table release guard. No `run` subcommand ([DATA_FLOW.md](DATA_FLOW.md)) |
 | `rogen-ukb-manifest build …` / `… extract …` | LA-SNP manifest + 1KG AF ([LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md](LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md)) |
 | `rogen-compare-af-gnomad …` | 1KG vs gnomAD v4 NFE ([LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md](LA_SNP_PUBLIC_FREQUENCY_PIPELINE.md)) |

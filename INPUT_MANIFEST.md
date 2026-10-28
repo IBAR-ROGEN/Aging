@@ -93,7 +93,9 @@ From the provenance files currently in the tree:
 | `analysis/panel/release_checks/ro_longevity_panel.json` | `release_blocked` false for the panel frequency table (summary kind). |
 | `analysis/panel/release_checks/ro_longevity_power_grid.json` | `release_blocked` false for the power grid (summary kind). |
 
-Intake (`rogen-intake`) is exercised on synthetic fixtures only (`tests/test_intake.py`). No Romanian sequencing delivery is in the tree.
+Intake (`rogen-intake`) is exercised on synthetic fixtures (`tests/test_intake.py`) and on the public HG002 short-read dry run below. No Romanian sequencing delivery is in the tree.
 
-**HG002 dry runs have not run yet.** The ONT CRAM, bisulfite coverage, HM450 manifest, and Illumina chr20 BAM URLs are listed in `docs/METHYLATION_CLOCK_VALIDATION.md`; nothing from those URLs has been downloaded.
+**HG002 short-read dry run (done, 2026-10-28).** Driver: `scripts/dryrun/hg002_shortread_dryrun.py`. Region `chr20:10000000-20000000`, Illumina BAM downsample `-s 0.1`, minimap2, untuned bcftools, `rtg vcfeval` vs GIAB NISTv4.2.1. Results: [`docs/HG002_DRYRUN.md`](docs/HG002_DRYRUN.md) and `analysis/dryrun/hg002_shortread_metrics.json`. Large intermediates stay under gitignored `data/dryrun/`.
+
+**ONT / methylation HG002 dry run has not run yet.** The ONT CRAM, bisulfite coverage, and HM450 manifest URLs remain listed in `docs/METHYLATION_CLOCK_VALIDATION.md`.
 

@@ -1,0 +1,47 @@
+{
+  "sample": "HG002",
+  "aliases": [
+    "NA24385",
+    "GM24385"
+  ],
+  "region": "chr20:10000000-20000000",
+  "downsample_spec": "0.1",
+  "downsample_seed": 0,
+  "aligner": "minimap2",
+  "mean_depth": 28.761419123858087,
+  "percent_mapped": 99.39,
+  "percent_duplicates": 0.25508340435894317,
+  "snv": {
+    "TP": 13214,
+    "TP_call": 13214,
+    "FP": 71,
+    "FN": 93,
+    "precision": 0.9947,
+    "recall": 0.993,
+    "f1": 0.9938
+  },
+  "indel": {
+    "TP": 1898,
+    "TP_call": 1981,
+    "FP": 182,
+    "FN": 172,
+    "precision": 0.9159,
+    "recall": 0.9169,
+    "f1": 0.9164
+  },
+  "tool_versions": {
+    "samtools": "samtools 1.24",
+    "bcftools": "bcftools 1.24",
+    "minimap2": "2.31-r1302",
+    "rtg": "Product: RTG Tools 3.13"
+  },
+  "wall_time_seconds": {
+    "fetch": 3474.107,
+    "intake": 3.169,
+    "align": 25.96,
+    "call": 30.933,
+    "benchmark": 5.522
+  },
+  "generated_at_utc": "2026-10-28T10:02:01Z",
+  "notes": "bcftools mpileup/call/norm is an untuned baseline caller. F1 is reported as produced; not optimized."
+}
