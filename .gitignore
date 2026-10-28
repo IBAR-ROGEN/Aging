@@ -139,6 +139,8 @@ docs/_build/
 !analysis/longevity/release_checks/
 !analysis/longevity/release_checks/**
 !analysis/longevity/integrated_evidence.csv
+!analysis/longevity/integrated_evidence_dot_matrix.png
+!analysis/longevity/integrated_evidence_provenance.json
 !analysis/clocks_benchmark/
 !analysis/clocks_benchmark/**
 analysis/clocks_benchmark/per_sample_predictions.csv

@@ -1,14 +1,125 @@
 {
-  "generated_at_utc": "2026-10-28T15:53:24Z",
+  "generated_at_utc": "2026-10-28T19:17:02Z",
   "disclaimer": "Integrated public-evidence labels for the prioritized longevity panel. Labels summarize GWAS, eQTL, and reference-population frequency tests. No label implies causality, Romanian enrichment, or a ROGEN association.",
   "join_keys": [
     "rsid",
     "panel_alt"
   ],
+  "output_column_sources": {
+    "rsid": {
+      "file": "analysis/panel/ro_longevity_panel.csv",
+      "column": "rsid"
+    },
+    "panel_alt": {
+      "file": "analysis/panel/ro_longevity_panel.csv",
+      "column": "alt"
+    },
+    "gene": {
+      "file": "analysis/panel/ro_longevity_panel.csv",
+      "column": "gene_symbol"
+    },
+    "tsi_differs_fdr05": {
+      "file": "analysis/panel/ro_longevity_panel.csv",
+      "column": "tsi_differs_fdr05"
+    },
+    "q_tsi_vs_nfe": {
+      "file": "analysis/panel/ro_longevity_panel.csv",
+      "column": "q_tsi_vs_nfe"
+    },
+    "p_tsi_vs_nfe": {
+      "file": "analysis/panel/ro_longevity_panel.csv",
+      "column": "p_tsi_vs_nfe"
+    },
+    "testability_rank": {
+      "file": "analysis/panel/ro_longevity_panel.csv",
+      "column": "testability_rank"
+    },
+    "af_alt_gnomad_nfe": {
+      "file": "analysis/panel/ro_longevity_panel.csv",
+      "column": "af_alt_gnomad_nfe"
+    },
+    "af_alt_1kg_tsi": {
+      "file": "analysis/panel/ro_longevity_panel.csv",
+      "column": "af_alt_1kg_tsi"
+    },
+    "gwas_n_traits_q_lt_0_05": {
+      "file": "analysis/longevity/longevity_gwas_lookup.csv",
+      "column": "q_bh + status (count of traits with q < 0.05)"
+    },
+    "gwas_traits_q_lt_0_05": {
+      "file": "analysis/longevity/longevity_gwas_lookup.csv",
+      "column": "trait (semicolon list where q_bh < 0.05 and status=present)"
+    },
+    "gwas_direction_<trait>": {
+      "file": "analysis/longevity/longevity_gwas_lookup.csv",
+      "column": "direction (one column per trait)"
+    },
+    "gwas_q_<trait>": {
+      "file": "analysis/longevity/longevity_gwas_lookup.csv",
+      "column": "q_bh (one column per trait)"
+    },
+    "eqtl_n_datasets_sig": {
+      "file": "results/eqtl_associations_full.csv",
+      "column": "dataset_id count with fdr_bh < 0.05 after panel-alt orientation (or not_available if associations/annotation missing)"
+    },
+    "eqtl_alt_effect_direction": {
+      "file": "results/eqtl_associations_full.csv",
+      "column": "sign consistency of mean oriented beta across significant datasets (or not_available)"
+    },
+    "eqtl_datasets_sig": {
+      "file": "results/eqtl_associations_full.csv",
+      "column": "dataset_id (semicolon list of significant datasets, or not_available)"
+    },
+    "eqtl_n_flipped": {
+      "file": "results/eqtl_associations_full.csv + panel ref/alt",
+      "column": "count of association rows whose beta was sign-flipped onto panel alt"
+    },
+    "eqtl_n_ambiguous": {
+      "file": "results/eqtl_associations_full.csv + panel ref/alt",
+      "column": "count of rows marked ambiguous_palindromic (MAF > 0.42)"
+    },
+    "eqtl_input_status": {
+      "file": "results/eqtl_associations_full.csv + results/annotation_layer.csv",
+      "column": "ok | not_available"
+    },
+    "power_rank_cell": {
+      "file": "analysis/panel/ro_longevity_power_grid.csv",
+      "column": "power at n=1000, OR=1.5, bonferroni_0.05_over_47"
+    },
+    "power_tier": {
+      "file": "analysis/panel/ro_longevity_power_grid.csv",
+      "column": "derived from power_rank_cell thresholds"
+    },
+    "evidence_labels": {
+      "file": "derived",
+      "column": "pipe-joined labels from the three rules below"
+    },
+    "n_evidence_labels": {
+      "file": "derived",
+      "column": "count of evidence_labels"
+    },
+    "label_gwas_support": {
+      "file": "derived",
+      "column": "true when gwas_n_traits_q_lt_0_05 > 0"
+    },
+    "label_eqtl_support": {
+      "file": "derived",
+      "column": "true/false when eQTL input ok; not_available when eQTL input missing"
+    },
+    "label_population_difference": {
+      "file": "derived",
+      "column": "true when tsi_differs_fdr05 is true"
+    }
+  },
   "evidence_label_definitions": {
     "GWAS support": "BH q < 0.05 in at least one longevity/lifespan GWAS trait",
-    "eQTL support": "FDR < 0.05 in at least one eQTL Catalogue dataset for the panel alt (datasets from analysis/eqtl/eqtl_datasets_used.tsv)",
+    "eQTL support": "FDR < 0.05 in at least one eQTL Catalogue dataset for the panel alt after allele orientation (datasets from analysis/eqtl/eqtl_datasets_used.tsv); missing associations or annotation_layer \u2192 not_available",
     "population difference": "TSI vs NFE BH q < 0.05 on the panel alt (public reference panels)"
+  },
+  "eqtl_allele_orientation": {
+    "method": "rogen_aging.longevity.allele_harmonize.harmonize_to_panel_alt",
+    "palindrome_maf_max": 0.42,
+    "rule": "Compare eQTL Catalogue effect allele to panel ref/alt; flip beta when swapped; mark A/T or C/G sites with MAF > 0.42 ambiguous"
   },
   "power_tier": {
     "cell": {
@@ -24,12 +135,19 @@
   "inputs": {
     "gwas_lookup": {
       "path": "analysis/longevity/longevity_gwas_lookup.csv",
-      "sha256": "18504619c85d1dfc425feecdffd832a8bcb4f24903fcd69431f0057a76916011"
+      "sha256": "091fb9ccd03bb6689928b3781117a2f63ba548af94ae2bf23700a420f79a469c"
     },
     "eqtl_associations": {
       "path": "results/eqtl_associations_full.csv",
+      "present": true,
       "sha256": "acdb93d21949e146db4c39113a10ae0ab951ceeea8f0f03e40bb27291ed66b90"
     },
+    "eqtl_annotation_layer": {
+      "path": "results/annotation_layer.csv",
+      "present": true,
+      "sha256": "d2aad734cf1d4005bd1db0d545b6a4dfb2f7b3607c0242bf6fd2ca22ad138afd"
+    },
+    "eqtl_input_status": "ok",
     "eqtl_datasets_used": {
       "path": "analysis/eqtl/eqtl_datasets_used.tsv",
       "dataset_ids": [
@@ -68,10 +186,10 @@
   "n_variants": 47,
   "label_counts": {
     "GWAS support": 1,
-    "eQTL support": 16,
+    "eQTL support": 15,
     "population difference": 5
   },
-  "n_with_any_label": 20,
+  "n_with_any_label": 19,
   "release_check": {
     "path": "analysis/longevity/integrated_evidence.csv",
     "kind": "summary",
