@@ -45,6 +45,12 @@ _TITLE_LABEL_RE = re.compile(r'^"?(X)(\d+)\b', re.IGNORECASE)
 _AGE_VALUE_RE = re.compile(
     r"(?i)\bage\s*(?:\([^)]*\))?\s*[:=]\s*([\d.]+)",
 )
+_GENDER_VALUE_RE = re.compile(
+    r"(?i)\b(?:gender|sex)\s*[:=]\s*(male|female|m|f)\b",
+)
+_ETHNICITY_VALUE_RE = re.compile(
+    r"(?i)\bethnicity\s*[:=]\s*(.+)$",
+)
 
 
 def save_as_parquet(df: pd.DataFrame, output_path: str | Path) -> None:
@@ -214,6 +220,28 @@ def _parse_title_to_gsm(sample_rows: dict[str, Any]) -> dict[str, str]:
     return label_to_gsm
 
 
+def _characteristics_rows(sample_rows: dict[str, Any]) -> list[list[str]]:
+    """Return repeated ``!Sample_characteristics_ch1`` value rows."""
+    raw = sample_rows.get("!Sample_characteristics_ch1")
+    if raw is None:
+        return []
+    if isinstance(raw, list) and raw and isinstance(raw[0], list):
+        return raw
+    if isinstance(raw, list):
+        return [raw]
+    return []
+
+
+def normalize_sex_label(raw: str) -> str | None:
+    """Map a GEO gender/sex token to ``M`` or ``F``."""
+    token = raw.strip().upper()
+    if token in {"M", "MALE"}:
+        return "M"
+    if token in {"F", "FEMALE"}:
+        return "F"
+    return None
+
+
 def _parse_chronological_ages(sample_rows: dict[str, Any], n_samples: int) -> list[float | None]:
     """Parse ages from repeated ``!Sample_characteristics_ch1`` GEO lines.
 
@@ -230,15 +258,7 @@ def _parse_chronological_ages(sample_rows: dict[str, Any], n_samples: int) -> li
         parsed.
     """
     ages: list[float | None] = [None] * n_samples
-    raw = sample_rows.get("!Sample_characteristics_ch1")
-    rows: list[list[str]]
-    if raw is None:
-        return ages
-    if isinstance(raw, list) and raw and isinstance(raw[0], list):
-        rows = raw
-    else:
-        rows = [raw]
-    for values in rows:
+    for values in _characteristics_rows(sample_rows):
         if len(values) != n_samples:
             continue
         for i, cell in enumerate(values):
@@ -246,6 +266,68 @@ def _parse_chronological_ages(sample_rows: dict[str, Any], n_samples: int) -> li
             if m:
                 ages[i] = float(m.group(1))
     return ages
+
+
+def _parse_sex_labels(sample_rows: dict[str, Any], n_samples: int) -> list[str | None]:
+    """Parse sex from ``gender:`` / ``sex:`` characteristics cells as ``M``/``F``."""
+    sexes: list[str | None] = [None] * n_samples
+    for values in _characteristics_rows(sample_rows):
+        if len(values) != n_samples:
+            continue
+        for i, cell in enumerate(values):
+            m = _GENDER_VALUE_RE.search(cell)
+            if m:
+                sexes[i] = normalize_sex_label(m.group(1))
+    return sexes
+
+
+def _parse_ethnicity_labels(sample_rows: dict[str, Any], n_samples: int) -> list[str | None]:
+    """Parse ethnicity from ``ethnicity:`` characteristics cells when present."""
+    ethnicities: list[str | None] = [None] * n_samples
+    for values in _characteristics_rows(sample_rows):
+        if len(values) != n_samples:
+            continue
+        for i, cell in enumerate(values):
+            m = _ETHNICITY_VALUE_RE.search(cell.strip().strip('"'))
+            if m:
+                ethnicities[i] = m.group(1).strip().strip('"') or None
+    return ethnicities
+
+
+def parse_sample_phenotypes(
+    sample_rows: dict[str, Any],
+) -> pd.DataFrame:
+    """Build a sample phenotype table from series-matrix ``!Sample_*`` rows.
+
+    Columns: ``sample_id``, ``chronological_age``, ``sex`` (``M``/``F``),
+    ``female`` (0/1), ``ethnicity`` (may be empty).
+
+    Args:
+        sample_rows: Parsed ``!Sample_*`` metadata from a GEO series matrix.
+
+    Returns:
+        One row per ``!Sample_geo_accession`` entry.
+
+    Raises:
+        ValueError: If sample accessions are missing.
+    """
+    gsms = sample_rows.get("!Sample_geo_accession", [])
+    if not isinstance(gsms, list) or not gsms:
+        raise ValueError("No samples (!Sample_geo_accession) found in series matrix.")
+    n = len(gsms)
+    ages = _parse_chronological_ages(sample_rows, n)
+    sexes = _parse_sex_labels(sample_rows, n)
+    ethnicities = _parse_ethnicity_labels(sample_rows, n)
+    female = [None if sex is None else int(sex == "F") for sex in sexes]
+    return pd.DataFrame(
+        {
+            "sample_id": [str(g) for g in gsms],
+            "chronological_age": ages,
+            "sex": sexes,
+            "female": female,
+            "ethnicity": ethnicities,
+        }
+    )
 
 
 def _parse_series_matrix_file_full(
@@ -316,10 +398,12 @@ def _load_supplementary_merged(
     if restrict_to_cpgs is not None:
         head1 = pd.read_csv(p1, sep="\t", compression="gzip", nrows=0)
         head2 = pd.read_csv(p2, sep="\t", compression="gzip", nrows=0)
-        cpg_set = {str(x) for x in restrict_to_cpgs if str(x).startswith("cg")}
+        cpg_set = {
+            str(x) for x in restrict_to_cpgs if str(x).startswith("cg") or str(x).startswith("ch.")
+        }
         if not cpg_set:
             raise ValueError(
-                "restrict_to_cpgs contained no probe IDs starting with 'cg'; nothing to load."
+                "restrict_to_cpgs contained no Illumina probe IDs (cg*/ch.*); nothing to load."
             )
         cols1 = ["ID_REF"] + [c for c in head1.columns if c != "ID_REF" and _is_beta_column_name(c)]
         cols2 = [c for c in head2.columns if c != "ID_REF" and _is_beta_column_name(c)]
@@ -377,8 +461,7 @@ def _probe_table_to_beta_wide(header: list[str], body: list[list[str]]) -> pd.Da
 def _build_output_frame(
     beta_wide_probes_samples: pd.DataFrame,
     label_to_gsm: dict[str, str],
-    ages_by_gsm_order: list[float | None],
-    gsms_ordered: list[str],
+    phenotypes: pd.DataFrame,
     restrict_to_cpgs: Sequence[str] | None,
 ) -> pd.DataFrame:
     rename_map: dict[str, str] = {}
@@ -398,25 +481,40 @@ def _build_output_frame(
             f"(first few: {missing_labels[:8]})."
         )
     mat = beta_wide_probes_samples.rename(columns=rename_map)
+    pheno = phenotypes.set_index("sample_id")
     gsm_to_age: dict[str, float] = {}
-    for gsm, age in zip(gsms_ordered, ages_by_gsm_order, strict=True):
-        if age is not None:
-            gsm_to_age[str(gsm)] = float(age)
+    for gsm_raw, age in pheno["chronological_age"].items():
+        gsm = str(gsm_raw)
+        if age is not None and pd.notna(age):
+            gsm_to_age[gsm] = float(age)
     samples = [s for s in mat.columns if s in gsm_to_age]
     if not samples:
         raise ValueError("No samples with a parsed chronological age; check metadata.")
     out = mat[samples].T
     out.insert(0, "chronological_age", [gsm_to_age[s] for s in samples])
+    out.insert(1, "sex", [pheno.loc[s, "sex"] if s in pheno.index else None for s in samples])
+    out.insert(
+        2,
+        "female",
+        [pheno.loc[s, "female"] if s in pheno.index else None for s in samples],
+    )
+    out.insert(
+        3,
+        "ethnicity",
+        [pheno.loc[s, "ethnicity"] if s in pheno.index else None for s in samples],
+    )
     if restrict_to_cpgs is not None:
-        wanted = [c for c in restrict_to_cpgs if str(c).startswith("cg")]
+        wanted = [
+            c for c in restrict_to_cpgs if str(c).startswith("cg") or str(c).startswith("ch.")
+        ]
         present = [c for c in wanted if c in out.columns]
-        missing = sorted(set(wanted) - set(present))
-        if missing:
+        if not present:
             raise ValueError(
-                f"{len(missing)} CpGs from restrict_to_cpgs are absent in GSE87571 after merge "
-                f"(showing up to 12): {missing[:12]}"
+                "None of the restrict_to_cpgs probes are present after GSE87571 merge."
             )
-        out = out[["chronological_age", *present]]
+        # Absent probes (e.g. EPIC-only sites on a 450K matrix) are left out;
+        # callers such as pyaging record them as missing features.
+        out = out[["chronological_age", "sex", "female", "ethnicity", *present]]
     return out
 
 
@@ -466,18 +564,18 @@ def load_gse87571(
         series_path = _ensure_series_matrix(geo_cache_dir)
 
     sample_rows, table_header, table_body = _parse_series_matrix_file_full(series_path)
-    gsms = sample_rows.get("!Sample_geo_accession", [])
-    n = len(gsms)
-    if n == 0:
-        raise ValueError("No samples (!Sample_geo_accession) found in series matrix.")
-    ages = _parse_chronological_ages(sample_rows, n)
+    phenotypes = parse_sample_phenotypes(sample_rows)
     label_to_gsm = _parse_title_to_gsm(sample_rows)
 
     beta_from_series = _probe_table_to_beta_wide(table_header, table_body)
     if beta_from_series is not None and beta_from_series.shape[0] > 0:
         beta_wide = beta_from_series
         if restrict_to_cpgs is not None:
-            cpg_set = {str(x) for x in restrict_to_cpgs if str(x).startswith("cg")}
+            cpg_set = {
+                str(x)
+                for x in restrict_to_cpgs
+                if str(x).startswith("cg") or str(x).startswith("ch.")
+            }
             beta_wide = beta_wide.loc[beta_wide.index.astype(str).isin(cpg_set)]
             if beta_wide.shape[0] == 0:
                 raise ValueError(
@@ -489,12 +587,27 @@ def load_gse87571(
     out = _build_output_frame(
         beta_wide,
         label_to_gsm,
-        ages,
-        gsms,
+        phenotypes,
         restrict_to_cpgs,
     )
     out.index.name = "sample_id"
     return out
+
+
+def load_series_phenotypes(series_matrix_path: str | Path) -> pd.DataFrame:
+    """Parse age, sex, and ethnicity from a local GEO series matrix file.
+
+    Args:
+        series_matrix_path: Path to a ``.txt`` or ``.txt.gz`` series matrix.
+
+    Returns:
+        Phenotype table from :func:`parse_sample_phenotypes`.
+    """
+    path = Path(series_matrix_path).expanduser().resolve()
+    if not path.is_file():
+        raise FileNotFoundError(f"series matrix not found: {path}")
+    sample_rows, _header, _body = _parse_series_matrix_file_full(path)
+    return parse_sample_phenotypes(sample_rows)
 
 
 def _parse_restrict_cpgs_file(path: Path) -> list[str]:

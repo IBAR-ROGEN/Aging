@@ -79,6 +79,16 @@ Over all successfully harmonized (`status=present`) variant × trait tests:
 
 Status values: `present`, `absent`, `ambiguous`, `not_tested`.
 
+## Downstream
+
+Per-variant public-evidence labels (GWAS × eQTL × TSI–NFE × power tier):
+
+```bash
+uv run python scripts/longevity/integrated_evidence.py
+```
+
+See [INTEGRATIVE_PIPELINE.md](INTEGRATIVE_PIPELINE.md#integrated-public-evidence-per-variant-labels).
+
 ## What this does not say
 
 No variant is declared a longevity gene for Romanians or for ROGEN. A

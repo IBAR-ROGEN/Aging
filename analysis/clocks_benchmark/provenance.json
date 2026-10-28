@@ -1,0 +1,920 @@
+{
+  "generated_at_utc": "2026-10-28T13:46:45Z",
+  "finished_at_utc": "2026-10-28T13:51:09Z",
+  "pyaging_version": "0.5.7",
+  "pyaging_clocks_available": [
+    "metadata",
+    "abec",
+    "adbahadosingh",
+    "altumage",
+    "bitage",
+    "bocklandt",
+    "bohlin",
+    "cabec",
+    "camilloh3k27ac",
+    "camilloh3k27me3",
+    "camilloh3k36me3",
+    "camilloh3k4me1",
+    "camilloh3k4me3",
+    "camilloh3k9ac",
+    "camilloh3k9me3",
+    "camillopanhistone",
+    "celldrift",
+    "cellpopage",
+    "compil6",
+    "cpgptgrimage3",
+    "cpgptpcgrimage3",
+    "ctsliver",
+    "cvdwesterman",
+    "deconvolutebloodepicbcell",
+    "deconvolutebloodepiccd4tcell",
+    "deconvolutebloodepiccd8tcell",
+    "deconvolutebloodepicmonocyte",
+    "deconvolutebloodepicneutrophil",
+    "deconvolutebloodepicnkcell",
+    "depressionbarbu",
+    "dnamfili",
+    "dnamfitage",
+    "dnamfitagegait",
+    "dnamfitagegrip",
+    "dnamfitagevo2max",
+    "dnamic",
+    "dnamphenoage",
+    "dnamphenoagenonprc",
+    "dnamphenoageprc",
+    "dnamstress",
+    "dnamtl",
+    "downsyndrome",
+    "dunedinpace",
+    "dunedinpoam38",
+    "eabec",
+    "encen100",
+    "encen40",
+    "ensembleagehumanmouse",
+    "ensembleagestatic",
+    "ensembleagestatictop",
+    "epicga",
+    "epicmithyper",
+    "epicmithypo",
+    "epitoc1",
+    "epitoc2",
+    "epitoc3",
+    "garagnani",
+    "gliasin",
+    "grimage",
+    "grimage2",
+    "grimage2adm",
+    "grimage2b2m",
+    "grimage2cystatinc",
+    "grimage2gdf15",
+    "grimage2leptin",
+    "grimage2loga1c",
+    "grimage2logcrp",
+    "grimage2packyrs",
+    "grimage2pai1",
+    "grimage2timp1",
+    "han",
+    "hannum",
+    "hep",
+    "hepatoxu",
+    "homeostaticdysregulation",
+    "horvath2013",
+    "hps",
+    "hrsinchphenoage",
+    "kdmage",
+    "knight",
+    "leecontrol",
+    "leerefinedrobust",
+    "leerobust",
+    "lin",
+    "linage2",
+    "mammalian1",
+    "mammalian2",
+    "mammalian3",
+    "mammalianblood2",
+    "mammalianblood3",
+    "mammalianfemale",
+    "mammalianlifespan",
+    "mammalianskin2",
+    "mammalianskin3",
+    "mayne",
+    "mccartneyalcohol",
+    "mccartneybmi",
+    "mccartneybodyfat",
+    "mccartneyeducation",
+    "mccartneyhdlcholesterol",
+    "mccartneyldlcholesterol",
+    "mccartneysmoking",
+    "mccartneytotalcholesterol",
+    "mccartneytotalhdlratio",
+    "mccartneywhr",
+    "meer",
+    "miage",
+    "neusin",
+    "ocampoatac1",
+    "ocampoatac2",
+    "organagechronologicaladipose",
+    "organagechronologicaladrenal",
+    "organagechronologicalartery",
+    "organagechronologicalbrain",
+    "organagechronologicalconventional",
+    "organagechronologicalesophagus",
+    "organagechronologicalfemale",
+    "organagechronologicalheart",
+    "organagechronologicalimmune",
+    "organagechronologicalintestine",
+    "organagechronologicalkidney",
+    "organagechronologicalliver",
+    "organagechronologicallung",
+    "organagechronologicalmale",
+    "organagechronologicalmultiorgan",
+    "organagechronologicalmuscle",
+    "organagechronologicalorganismal",
+    "organagechronologicalpancreas",
+    "organagechronologicalpituitary",
+    "organagechronologicalsalivary",
+    "organagechronologicalskin",
+    "organagechronologicalstomach",
+    "organagechronologicalthyroid",
+    "organagemortalityadipose",
+    "organagemortalityadrenal",
+    "organagemortalityartery",
+    "organagemortalitybrain",
+    "organagemortalityconventional",
+    "organagemortalityesophagus",
+    "organagemortalityfemale",
+    "organagemortalityheart",
+    "organagemortalityimmune",
+    "organagemortalityintestine",
+    "organagemortalitykidney",
+    "organagemortalityliver",
+    "organagemortalitylung",
+    "organagemortalitymale",
+    "organagemortalitymultiorgan",
+    "organagemortalitymuscle",
+    "organagemortalityorganismal",
+    "organagemortalitypancreas",
+    "organagemortalitypituitary",
+    "organagemortalitysalivary",
+    "organagemortalityskin",
+    "organagemortalitystomach",
+    "organagemortalitythyroid",
+    "pac",
+    "paopac",
+    "pasta",
+    "pastamouse",
+    "pcbrainage",
+    "pcdnamtl",
+    "pcgrimage",
+    "pcgrimageadm",
+    "pcgrimageb2m",
+    "pcgrimagecystatinc",
+    "pcgrimagegdf15",
+    "pcgrimageleptin",
+    "pcgrimagepackyrs",
+    "pcgrimagepai1",
+    "pcgrimagetimp1",
+    "pchannum",
+    "pchorvath2013",
+    "pcphenoage",
+    "pcskinandblood",
+    "pedbe",
+    "petkovich",
+    "phenoage",
+    "phenoagesaopaulo",
+    "pipekelasticnet",
+    "pipekfilteredh",
+    "pipekretrainedh",
+    "prostatecancerkirby",
+    "reedbmi",
+    "reg",
+    "replitali",
+    "replitalinorm",
+    "retroelementagev1",
+    "retroelementagev2",
+    "senchronoage",
+    "sencultureage",
+    "senmortalityage",
+    "skinandblood",
+    "stemtoc",
+    "stemtocvitro",
+    "stoch",
+    "stocp",
+    "stocz",
+    "stubbs",
+    "systemsage",
+    "systemsageblood",
+    "systemsagebrain",
+    "systemsageheart",
+    "systemsagehormone",
+    "systemsageimmune",
+    "systemsageinflammation",
+    "systemsagekidney",
+    "systemsageliver",
+    "systemsagelung",
+    "systemsagemetabolic",
+    "systemsagemusculoskeletal",
+    "tage",
+    "tagemortality",
+    "thompson",
+    "twelvecelldeconvolutebloodepicbas",
+    "twelvecelldeconvolutebloodepicbmem",
+    "twelvecelldeconvolutebloodepicbnv",
+    "twelvecelldeconvolutebloodepiccd4mem",
+    "twelvecelldeconvolutebloodepiccd4nv",
+    "twelvecelldeconvolutebloodepiccd8mem",
+    "twelvecelldeconvolutebloodepiccd8nv",
+    "twelvecelldeconvolutebloodepiceos",
+    "twelvecelldeconvolutebloodepicmono",
+    "twelvecelldeconvolutebloodepicneu",
+    "twelvecelldeconvolutebloodepicnk",
+    "twelvecelldeconvolutebloodepictreg",
+    "vidalbralo",
+    "weidner",
+    "wu",
+    "xchrom",
+    "ychrom",
+    "yingadaptage",
+    "yingcausage",
+    "yingdamage",
+    "zhangblup",
+    "zhangen",
+    "zhangmortality"
+  ],
+  "pyaging_clocks_available_count": 237,
+  "target_clocks_requested": [
+    "horvath2013",
+    "hannum",
+    "dnamphenoage",
+    "dunedinpace"
+  ],
+  "phenoage_note": "pyaging clock name 'phenoage' is clinical Phenotypic Age (blood biomarkers). This methylation benchmark uses 'dnamphenoage' (Levine DNAm PhenoAge).",
+  "clocks_run": [
+    "horvath2013",
+    "hannum",
+    "dnamphenoage",
+    "dunedinpace",
+    "grimage2"
+  ],
+  "grimage2": {
+    "included": true,
+    "skip_reason": null
+  },
+  "our_clock": {
+    "label": "rogen_hannum_retrain",
+    "model_path": "/Users/mityatoren/code/rogen_aging/models/gse40279_hannum450k_elasticnet.joblib"
+  },
+  "split": {
+    "gse40279_test_size": 0.2,
+    "gse40279_random_state": 42,
+    "n_train_expected": 524,
+    "n_test_expected": 132,
+    "never_score_train_with_our_model": true
+  },
+  "cpg_restriction": {
+    "n_probes": 28724,
+    "note": "Columns restricted to the union of Illumina features required by selected clocks."
+  },
+  "cohort_notes": {
+    "GSE87571": [
+      "GSE87571: all samples with chronological age and sex.",
+      "Main external comparison cohort for published clocks and the retrained Hannum."
+    ],
+    "GSE40279_heldout": [
+      "GSE40279: held-out test split only (test_size=0.2, random_state=42).",
+      "Published Hannum was trained on GSE40279; its predictions here are in-sample.",
+      "Retrained Hannum is scored only on these test rows, never on training rows."
+    ]
+  },
+  "pyaging_uns": {
+    "GSE87571": {
+      "horvath2013": {
+        "percent_na": 0.0,
+        "missing_features": [],
+        "metadata": {
+          "clock_name": "horvath2013",
+          "data_type": "DNA methylation",
+          "species": "Homo sapiens",
+          "year": 2013,
+          "approved_by_author": "\u231b",
+          "citation": "Horvath, S. DNA methylation age of human tissues and cell types. Genome Biology 14, R115 (2013).",
+          "doi": "https://doi.org/10.1186/gb-2013-14-10-r115",
+          "notes": "Pan-tissue DNAm-age predictor fitted by elastic net to a transformed chronological-age outcome and returned to the year scale; it uses 353 CpGs shared between the 27K and 450K arrays.",
+          "research_only": null,
+          "tissue": [
+            "multi-tissue"
+          ],
+          "predicts": [
+            "chronological age"
+          ],
+          "training_target": [
+            "chronological age"
+          ],
+          "unit": [
+            "years"
+          ],
+          "model_type": "elastic net regression",
+          "platform": [
+            "Illumina 27K",
+            "Illumina 450K"
+          ],
+          "population": "all ages",
+          "journal": "Genome Biology",
+          "last_author": "Steve Horvath",
+          "n_features": 353,
+          "citations": 7625,
+          "citations_date": "2026-10-02",
+          "version": "0.5.7",
+          "postprocess": "anti_log_linear",
+          "reference_values": true
+        }
+      },
+      "hannum": {
+        "percent_na": 0.0,
+        "missing_features": [],
+        "metadata": {
+          "clock_name": "hannum",
+          "data_type": "DNA methylation",
+          "species": "Homo sapiens",
+          "year": 2013,
+          "approved_by_author": "\u231b",
+          "citation": "Hannum, G., et al. \u201cGenome-wide methylation profiles reveal quantitative views of human aging rates.\u201d Molecular Cell 49(2), 359\u2013367 (2013).",
+          "doi": "https://doi.org/10.1016/j.molcel.2012.10.016",
+          "notes": "Whole-blood elastic-net predictor of chronological age from 71 CpG methylation fractions, derived in a 482-person primary cohort and validated in 174 independent participants.",
+          "research_only": null,
+          "tissue": [
+            "whole blood"
+          ],
+          "predicts": [
+            "chronological age"
+          ],
+          "training_target": [
+            "chronological age"
+          ],
+          "unit": [
+            "years"
+          ],
+          "model_type": "elastic net regression",
+          "platform": [
+            "Illumina 450K"
+          ],
+          "population": "adults",
+          "journal": "Molecular Cell",
+          "last_author": "Kang Zhang",
+          "n_features": 71,
+          "citations": 4678,
+          "citations_date": "2026-10-02",
+          "version": "0.5.7"
+        }
+      },
+      "dnamphenoage": {
+        "percent_na": 0.0,
+        "missing_features": [],
+        "metadata": {
+          "clock_name": "dnamphenoage",
+          "data_type": "DNA methylation",
+          "species": "Homo sapiens",
+          "year": 2018,
+          "approved_by_author": "\u231b",
+          "citation": "Levine, M. E., et al. \"An epigenetic biomarker of aging for lifespan and healthspan.\" Aging 10.4 (2018): 573-591.",
+          "doi": "https://doi.org/10.18632/aging.101414",
+          "notes": "Blood DNA-methylation estimator trained by elastic net on 513 CpGs common to the 27K, 450K and EPIC arrays to reproduce a mortality-derived clinical Phenotypic Age. The parent DNAmPhenoAge coefficients were fitted on InCHIANTI 450K whole-blood data; the selected sites also occur on 27K and EPIC arrays.",
+          "research_only": null,
+          "tissue": [
+            "whole blood"
+          ],
+          "predicts": [
+            "phenotypic age"
+          ],
+          "training_target": [
+            "phenotypic age"
+          ],
+          "unit": [
+            "years"
+          ],
+          "model_type": "elastic net regression",
+          "platform": [
+            "Illumina 450K"
+          ],
+          "population": "adults",
+          "journal": "Aging",
+          "last_author": "Steve Horvath",
+          "n_features": 513,
+          "citations": 3848,
+          "citations_date": "2026-10-02",
+          "version": "0.5.7"
+        }
+      },
+      "dunedinpace": {
+        "percent_na": 0.0,
+        "missing_features": [],
+        "metadata": {
+          "clock_name": "dunedinpace",
+          "data_type": "DNA methylation",
+          "species": "Homo sapiens",
+          "year": 2022,
+          "approved_by_author": "\u2705",
+          "citation": "Belsky, D. W., Caspi, A., Corcoran, D. L., et al. (2022). DunedinPACE, a DNA methylation biomarker of the pace of aging. eLife, 11, e73420.",
+          "doi": "https://doi.org/10.7554/elife.73420",
+          "notes": "Whole-blood elastic-net pace-of-aging biomarker trained at age 45 against a 20-year longitudinal slope composite of 19 organ-system biomarkers. PyAging follows the official 20,000-probe quantile-normalization panel: 173 scoring CpGs plus 19,827 background probes.",
+          "research_only": true,
+          "tissue": [
+            "whole blood"
+          ],
+          "predicts": [
+            "pace of aging"
+          ],
+          "training_target": [
+            "pace of aging"
+          ],
+          "unit": [
+            "biological years per chronological year"
+          ],
+          "model_type": "elastic net regression",
+          "platform": [
+            "Illumina EPIC"
+          ],
+          "population": "adults",
+          "journal": "eLife",
+          "last_author": "Terrie E. Moffitt",
+          "n_features": 20000,
+          "citations": 1106,
+          "citations_date": "2026-10-02",
+          "version": "0.5.7",
+          "preprocess": "quantile_normalization_with_gold_standard",
+          "reference_values": true
+        }
+      },
+      "grimage2": {
+        "percent_na": 0.1937984496124031,
+        "missing_features": [
+          "female",
+          "age"
+        ],
+        "metadata": {
+          "clock_name": "grimage2",
+          "data_type": "DNA methylation",
+          "species": "Homo sapiens",
+          "year": 2022,
+          "approved_by_author": "\u231b",
+          "citation": "Lu, A. T., et al. \u201cDNA methylation GrimAge version 2.\u201d Aging 14(23): 9484\u20139549 (2022).",
+          "doi": "https://doi.org/10.18632/aging.204434",
+          "notes": "Mortality-risk epigenetic clock combining ten blood DNAm surrogate biomarkers with chronological age and sex; the Cox linear predictor is calibrated to an age-like value in years.",
+          "research_only": true,
+          "tissue": [
+            "whole blood"
+          ],
+          "predicts": [
+            "mortality risk"
+          ],
+          "training_target": [
+            "mortality"
+          ],
+          "unit": [
+            "years"
+          ],
+          "model_type": "elastic net Cox regression",
+          "platform": [
+            "Illumina 450K"
+          ],
+          "population": "older adults",
+          "journal": "Aging",
+          "last_author": "Steve Horvath",
+          "n_features": 1032,
+          "citations": 319,
+          "citations_date": "2026-10-02",
+          "version": "0.5.7",
+          "postprocess": "cox_to_years",
+          "reference_values": true
+        }
+      }
+    },
+    "GSE40279_heldout": {
+      "horvath2013": {
+        "percent_na": 0.0,
+        "missing_features": [],
+        "metadata": {
+          "clock_name": "horvath2013",
+          "data_type": "DNA methylation",
+          "species": "Homo sapiens",
+          "year": 2013,
+          "approved_by_author": "\u231b",
+          "citation": "Horvath, S. DNA methylation age of human tissues and cell types. Genome Biology 14, R115 (2013).",
+          "doi": "https://doi.org/10.1186/gb-2013-14-10-r115",
+          "notes": "Pan-tissue DNAm-age predictor fitted by elastic net to a transformed chronological-age outcome and returned to the year scale; it uses 353 CpGs shared between the 27K and 450K arrays.",
+          "research_only": null,
+          "tissue": [
+            "multi-tissue"
+          ],
+          "predicts": [
+            "chronological age"
+          ],
+          "training_target": [
+            "chronological age"
+          ],
+          "unit": [
+            "years"
+          ],
+          "model_type": "elastic net regression",
+          "platform": [
+            "Illumina 27K",
+            "Illumina 450K"
+          ],
+          "population": "all ages",
+          "journal": "Genome Biology",
+          "last_author": "Steve Horvath",
+          "n_features": 353,
+          "citations": 7625,
+          "citations_date": "2026-10-02",
+          "version": "0.5.7",
+          "postprocess": "anti_log_linear",
+          "reference_values": true
+        }
+      },
+      "hannum": {
+        "percent_na": 2.816901408450704,
+        "missing_features": [
+          "ch.2.30415474F",
+          "ch.13.39564907R"
+        ],
+        "metadata": {
+          "clock_name": "hannum",
+          "data_type": "DNA methylation",
+          "species": "Homo sapiens",
+          "year": 2013,
+          "approved_by_author": "\u231b",
+          "citation": "Hannum, G., et al. \u201cGenome-wide methylation profiles reveal quantitative views of human aging rates.\u201d Molecular Cell 49(2), 359\u2013367 (2013).",
+          "doi": "https://doi.org/10.1016/j.molcel.2012.10.016",
+          "notes": "Whole-blood elastic-net predictor of chronological age from 71 CpG methylation fractions, derived in a 482-person primary cohort and validated in 174 independent participants.",
+          "research_only": null,
+          "tissue": [
+            "whole blood"
+          ],
+          "predicts": [
+            "chronological age"
+          ],
+          "training_target": [
+            "chronological age"
+          ],
+          "unit": [
+            "years"
+          ],
+          "model_type": "elastic net regression",
+          "platform": [
+            "Illumina 450K"
+          ],
+          "population": "adults",
+          "journal": "Molecular Cell",
+          "last_author": "Kang Zhang",
+          "n_features": 71,
+          "citations": 4678,
+          "citations_date": "2026-10-02",
+          "version": "0.5.7"
+        }
+      },
+      "dnamphenoage": {
+        "percent_na": 0.0,
+        "missing_features": [],
+        "metadata": {
+          "clock_name": "dnamphenoage",
+          "data_type": "DNA methylation",
+          "species": "Homo sapiens",
+          "year": 2018,
+          "approved_by_author": "\u231b",
+          "citation": "Levine, M. E., et al. \"An epigenetic biomarker of aging for lifespan and healthspan.\" Aging 10.4 (2018): 573-591.",
+          "doi": "https://doi.org/10.18632/aging.101414",
+          "notes": "Blood DNA-methylation estimator trained by elastic net on 513 CpGs common to the 27K, 450K and EPIC arrays to reproduce a mortality-derived clinical Phenotypic Age. The parent DNAmPhenoAge coefficients were fitted on InCHIANTI 450K whole-blood data; the selected sites also occur on 27K and EPIC arrays.",
+          "research_only": null,
+          "tissue": [
+            "whole blood"
+          ],
+          "predicts": [
+            "phenotypic age"
+          ],
+          "training_target": [
+            "phenotypic age"
+          ],
+          "unit": [
+            "years"
+          ],
+          "model_type": "elastic net regression",
+          "platform": [
+            "Illumina 450K"
+          ],
+          "population": "adults",
+          "journal": "Aging",
+          "last_author": "Steve Horvath",
+          "n_features": 513,
+          "citations": 3848,
+          "citations_date": "2026-10-02",
+          "version": "0.5.7"
+        }
+      },
+      "dunedinpace": {
+        "percent_na": 0.08,
+        "missing_features": [
+          "cg16816400",
+          "cg09365094",
+          "cg22872906",
+          "cg14654637",
+          "cg14998086",
+          "cg26479667",
+          "cg22681495",
+          "cg13943068",
+          "cg02249577",
+          "cg18938907",
+          "cg21270243",
+          "cg05136650",
+          "cg14391622",
+          "cg07062130",
+          "cg19977566",
+          "cg14069111"
+        ],
+        "metadata": {
+          "clock_name": "dunedinpace",
+          "data_type": "DNA methylation",
+          "species": "Homo sapiens",
+          "year": 2022,
+          "approved_by_author": "\u2705",
+          "citation": "Belsky, D. W., Caspi, A., Corcoran, D. L., et al. (2022). DunedinPACE, a DNA methylation biomarker of the pace of aging. eLife, 11, e73420.",
+          "doi": "https://doi.org/10.7554/elife.73420",
+          "notes": "Whole-blood elastic-net pace-of-aging biomarker trained at age 45 against a 20-year longitudinal slope composite of 19 organ-system biomarkers. PyAging follows the official 20,000-probe quantile-normalization panel: 173 scoring CpGs plus 19,827 background probes.",
+          "research_only": true,
+          "tissue": [
+            "whole blood"
+          ],
+          "predicts": [
+            "pace of aging"
+          ],
+          "training_target": [
+            "pace of aging"
+          ],
+          "unit": [
+            "biological years per chronological year"
+          ],
+          "model_type": "elastic net regression",
+          "platform": [
+            "Illumina EPIC"
+          ],
+          "population": "adults",
+          "journal": "eLife",
+          "last_author": "Terrie E. Moffitt",
+          "n_features": 20000,
+          "citations": 1106,
+          "citations_date": "2026-10-02",
+          "version": "0.5.7",
+          "preprocess": "quantile_normalization_with_gold_standard",
+          "reference_values": true
+        }
+      },
+      "grimage2": {
+        "percent_na": 7.170542635658915,
+        "missing_features": [
+          "cg01564693",
+          "cg01997410",
+          "cg02311013",
+          "cg02495445",
+          "cg02587153",
+          "cg02758183",
+          "cg03102848",
+          "cg03204600",
+          "cg03788610",
+          "cg03960747",
+          "cg03990195",
+          "cg05127178",
+          "cg05295197",
+          "cg05373692",
+          "cg05470074",
+          "cg05530348",
+          "cg05548952",
+          "cg06298190",
+          "cg06780601",
+          "cg07274490",
+          "cg07929447",
+          "cg07989867",
+          "cg08072101",
+          "cg08147391",
+          "cg08262933",
+          "cg08352336",
+          "cg08871010",
+          "cg09625066",
+          "cg10142252",
+          "cg10509982",
+          "cg11049305",
+          "cg11235848",
+          "cg11595135",
+          "cg11924796",
+          "cg12889449",
+          "cg13501581",
+          "cg13573587",
+          "cg14073590",
+          "cg14680768",
+          "cg14686949",
+          "cg15062055",
+          "cg15192905",
+          "cg15480287",
+          "cg16088894",
+          "cg16730484",
+          "cg16832801",
+          "cg17044529",
+          "cg17511128",
+          "cg18003791",
+          "cg18154457",
+          "cg18476633",
+          "cg18717447",
+          "cg19110434",
+          "cg20308511",
+          "cg20448001",
+          "cg20557017",
+          "cg20686207",
+          "cg21080294",
+          "cg21412053",
+          "cg21664443",
+          "cg22249566",
+          "cg22686892",
+          "cg23083672",
+          "cg23106779",
+          "cg23549061",
+          "cg23955970",
+          "cg25034591",
+          "cg25697726",
+          "cg26071410",
+          "cg26341773",
+          "cg27087885",
+          "cg27395754",
+          "female",
+          "age"
+        ],
+        "metadata": {
+          "clock_name": "grimage2",
+          "data_type": "DNA methylation",
+          "species": "Homo sapiens",
+          "year": 2022,
+          "approved_by_author": "\u231b",
+          "citation": "Lu, A. T., et al. \u201cDNA methylation GrimAge version 2.\u201d Aging 14(23): 9484\u20139549 (2022).",
+          "doi": "https://doi.org/10.18632/aging.204434",
+          "notes": "Mortality-risk epigenetic clock combining ten blood DNAm surrogate biomarkers with chronological age and sex; the Cox linear predictor is calibrated to an age-like value in years.",
+          "research_only": true,
+          "tissue": [
+            "whole blood"
+          ],
+          "predicts": [
+            "mortality risk"
+          ],
+          "training_target": [
+            "mortality"
+          ],
+          "unit": [
+            "years"
+          ],
+          "model_type": "elastic net Cox regression",
+          "platform": [
+            "Illumina 450K"
+          ],
+          "population": "older adults",
+          "journal": "Aging",
+          "last_author": "Steve Horvath",
+          "n_features": 1032,
+          "citations": 319,
+          "citations_date": "2026-10-02",
+          "version": "0.5.7",
+          "postprocess": "cox_to_years",
+          "reference_values": true
+        }
+      }
+    }
+  },
+  "training_overlap": [
+    {
+      "clock": "hannum",
+      "overlap_status": "overlap",
+      "note": "Hannum et al. 2013 trained on GSE40279 whole blood. GSE40279_heldout metrics for the published hannum clock are in-sample. GSE87571 is the fair external comparison.",
+      "pyaging_notes": "Whole-blood elastic-net predictor of chronological age from 71 CpG methylation fractions, derived in a 482-person primary cohort and validated in 174 independent participants.",
+      "pyaging_platform": "['Illumina 450K']"
+    },
+    {
+      "clock": "horvath2013",
+      "overlap_status": "no_documented_overlap",
+      "note": "Horvath 2013 pan-tissue training set is a multi-dataset compilation; pyaging metadata does not list GSE40279 or GSE87571 as the training accession. No overlap flagged.",
+      "pyaging_notes": "Pan-tissue DNAm-age predictor fitted by elastic net to a transformed chronological-age outcome and returned to the year scale; it uses 353 CpGs shared between the 27K and 450K arrays.",
+      "pyaging_platform": "['Illumina 27K', 'Illumina 450K']"
+    },
+    {
+      "clock": "dnamphenoage",
+      "overlap_status": "no_documented_overlap",
+      "note": "DNAm PhenoAge coefficients were fitted on InCHIANTI 450K whole blood (Levine et al. 2018 / pyaging notes). No GSE40279 or GSE87571 overlap flagged.",
+      "pyaging_notes": "Blood DNA-methylation estimator trained by elastic net on 513 CpGs common to the 27K, 450K and EPIC arrays to reproduce a mortality-derived clinical Phenotypic Age. The parent DNAmPhenoAge coefficients were fitted on InCHIANTI 450K whole-blood data; the selected sites also occur on 27K and EPIC arrays.",
+      "pyaging_platform": "['Illumina 450K']"
+    },
+    {
+      "clock": "dunedinpace",
+      "overlap_status": "no_documented_overlap",
+      "note": "DunedinPACE was trained in the Dunedin Study (EPIC, age 45). No GSE40279 or GSE87571 overlap flagged.",
+      "pyaging_notes": "Whole-blood elastic-net pace-of-aging biomarker trained at age 45 against a 20-year longitudinal slope composite of 19 organ-system biomarkers. PyAging follows the official 20,000-probe quantile-normalization panel: 173 scoring CpGs plus 19,827 background probes.",
+      "pyaging_platform": "['Illumina EPIC']"
+    },
+    {
+      "clock": "grimage2",
+      "overlap_status": "no_documented_overlap",
+      "note": "GrimAge2 was trained for mortality risk on older-adult whole-blood 450K data (Lu et al. 2022). No GSE40279 or GSE87571 overlap flagged from pyaging metadata.",
+      "pyaging_notes": "Mortality-risk epigenetic clock combining ten blood DNAm surrogate biomarkers with chronological age and sex; the Cox linear predictor is calibrated to an age-like value in years.",
+      "pyaging_platform": "['Illumina 450K']"
+    },
+    {
+      "clock": "rogen_hannum_retrain",
+      "overlap_status": "trained_on_gse40279_train_split",
+      "note": "Retrained Hannum ElasticNet was fit on the GSE40279 training split only (test_size=0.2, random_state=42). Held-out GSE40279 and all GSE87571 scores are out-of-sample for this model.",
+      "pyaging_notes": "",
+      "pyaging_platform": ""
+    }
+  ],
+  "outputs": {
+    "metrics": "analysis/clocks_benchmark/metrics_by_clock_cohort.csv",
+    "sex_models": "analysis/clocks_benchmark/sex_acceleration_models.csv",
+    "acceleration_correlation": "analysis/clocks_benchmark/acceleration_correlation.csv",
+    "per_sample": "analysis/clocks_benchmark/per_sample_predictions.csv",
+    "acceleration": "analysis/clocks_benchmark/acceleration_by_clock_cohort.csv"
+  },
+  "release_check": [
+    {
+      "path": "analysis/clocks_benchmark/metrics_by_clock_cohort.csv",
+      "kind": "summary",
+      "report": "analysis/clocks_benchmark/release_checks/metrics_by_clock_cohort.json",
+      "argv": [
+        "uv",
+        "run",
+        "rogen-release-check",
+        "--table",
+        "analysis/clocks_benchmark/metrics_by_clock_cohort.csv",
+        "--table-kind",
+        "summary",
+        "--report",
+        "analysis/clocks_benchmark/release_checks/metrics_by_clock_cohort.json"
+      ],
+      "returncode": 0,
+      "stdout": "PASS individual_level: no individual-level column and no RO- pseudonym; --n-samples was not supplied\nPASS direct_identifiers: no date-of-birth, full-date, postcode, or name column\nPASS allele_count_cells: not applied: table kind is summary\nPASS strata_cells: not applied: table kind is summary\nWrote release report: analysis/clocks_benchmark/release_checks/metrics_by_clock_cohort.json\n",
+      "stderr": "",
+      "status": "passed"
+    },
+    {
+      "path": "analysis/clocks_benchmark/sex_acceleration_models.csv",
+      "kind": "summary",
+      "report": "analysis/clocks_benchmark/release_checks/sex_acceleration_models.json",
+      "argv": [
+        "uv",
+        "run",
+        "rogen-release-check",
+        "--table",
+        "analysis/clocks_benchmark/sex_acceleration_models.csv",
+        "--table-kind",
+        "summary",
+        "--report",
+        "analysis/clocks_benchmark/release_checks/sex_acceleration_models.json"
+      ],
+      "returncode": 0,
+      "stdout": "PASS individual_level: no individual-level column and no RO- pseudonym; --n-samples was not supplied\nPASS direct_identifiers: no date-of-birth, full-date, postcode, or name column\nPASS allele_count_cells: not applied: table kind is summary\nPASS strata_cells: not applied: table kind is summary\nWrote release report: analysis/clocks_benchmark/release_checks/sex_acceleration_models.json\n",
+      "stderr": "",
+      "status": "passed"
+    },
+    {
+      "path": "analysis/clocks_benchmark/acceleration_correlation.csv",
+      "kind": "summary",
+      "report": "analysis/clocks_benchmark/release_checks/acceleration_correlation.json",
+      "argv": [
+        "uv",
+        "run",
+        "rogen-release-check",
+        "--table",
+        "analysis/clocks_benchmark/acceleration_correlation.csv",
+        "--table-kind",
+        "summary",
+        "--report",
+        "analysis/clocks_benchmark/release_checks/acceleration_correlation.json"
+      ],
+      "returncode": 0,
+      "stdout": "PASS individual_level: no individual-level column and no RO- pseudonym; --n-samples was not supplied\nPASS direct_identifiers: no date-of-birth, full-date, postcode, or name column\nPASS allele_count_cells: not applied: table kind is summary\nPASS strata_cells: not applied: table kind is summary\nWrote release report: analysis/clocks_benchmark/release_checks/acceleration_correlation.json\n",
+      "stderr": "",
+      "status": "passed"
+    },
+    {
+      "path": "analysis/clocks_benchmark/acceleration_by_clock_cohort.csv",
+      "kind": "summary",
+      "report": "analysis/clocks_benchmark/release_checks/acceleration_by_clock_cohort.json",
+      "argv": [
+        "uv",
+        "run",
+        "rogen-release-check",
+        "--table",
+        "analysis/clocks_benchmark/acceleration_by_clock_cohort.csv",
+        "--table-kind",
+        "summary",
+        "--report",
+        "analysis/clocks_benchmark/release_checks/acceleration_by_clock_cohort.json"
+      ],
+      "returncode": 0,
+      "stdout": "PASS individual_level: no individual-level column and no RO- pseudonym; --n-samples was not supplied\nPASS direct_identifiers: no date-of-birth, full-date, postcode, or name column\nPASS allele_count_cells: not applied: table kind is summary\nPASS strata_cells: not applied: table kind is summary\nWrote release report: analysis/clocks_benchmark/release_checks/acceleration_by_clock_cohort.json\n",
+      "stderr": "",
+      "status": "passed"
+    }
+  ]
+}

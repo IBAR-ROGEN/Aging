@@ -1,0 +1,95 @@
+{
+  "generated_at_utc": "2026-10-28T15:53:24Z",
+  "disclaimer": "Integrated public-evidence labels for the prioritized longevity panel. Labels summarize GWAS, eQTL, and reference-population frequency tests. No label implies causality, Romanian enrichment, or a ROGEN association.",
+  "join_keys": [
+    "rsid",
+    "panel_alt"
+  ],
+  "evidence_label_definitions": {
+    "GWAS support": "BH q < 0.05 in at least one longevity/lifespan GWAS trait",
+    "eQTL support": "FDR < 0.05 in at least one eQTL Catalogue dataset for the panel alt (datasets from analysis/eqtl/eqtl_datasets_used.tsv)",
+    "population difference": "TSI vs NFE BH q < 0.05 on the panel alt (public reference panels)"
+  },
+  "power_tier": {
+    "cell": {
+      "n_cases_per_arm": 1000,
+      "allelic_or": 1.5,
+      "alpha_name": "bonferroni_0.05_over_47"
+    },
+    "high": ">= 0.8",
+    "moderate": ">= 0.5 and < 0.8",
+    "low": "< 0.5",
+    "unavailable": "missing power"
+  },
+  "inputs": {
+    "gwas_lookup": {
+      "path": "analysis/longevity/longevity_gwas_lookup.csv",
+      "sha256": "18504619c85d1dfc425feecdffd832a8bcb4f24903fcd69431f0057a76916011"
+    },
+    "eqtl_associations": {
+      "path": "results/eqtl_associations_full.csv",
+      "sha256": "acdb93d21949e146db4c39113a10ae0ab951ceeea8f0f03e40bb27291ed66b90"
+    },
+    "eqtl_datasets_used": {
+      "path": "analysis/eqtl/eqtl_datasets_used.tsv",
+      "dataset_ids": [
+        "QTD000146",
+        "QTD000151",
+        "QTD000156",
+        "QTD000161",
+        "QTD000166",
+        "QTD000171",
+        "QTD000176",
+        "QTD000181",
+        "QTD000186",
+        "QTD000191",
+        "QTD000196",
+        "QTD000201",
+        "QTD000206",
+        "QTD000356"
+      ],
+      "n_datasets": 14
+    },
+    "panel": {
+      "path": "analysis/panel/ro_longevity_panel.csv",
+      "sha256": "5956f43657f7c154932272134fd1dd831f2bbbdb742bdcfbe4e395d3fa23631d",
+      "n_rows": 47
+    },
+    "power_grid": {
+      "path": "analysis/panel/ro_longevity_power_grid.csv",
+      "sha256": "30cfbf6de8138e2893df287d7e68642a7fa54225b0ad677775afe8cab7bb0458"
+    }
+  },
+  "outputs": {
+    "table": "analysis/longevity/integrated_evidence.csv",
+    "figure": "analysis/longevity/integrated_evidence_dot_matrix.png",
+    "provenance": "analysis/longevity/integrated_evidence_provenance.json"
+  },
+  "n_variants": 47,
+  "label_counts": {
+    "GWAS support": 1,
+    "eQTL support": 16,
+    "population difference": 5
+  },
+  "n_with_any_label": 20,
+  "release_check": {
+    "path": "analysis/longevity/integrated_evidence.csv",
+    "kind": "summary",
+    "report": "analysis/longevity/release_checks/integrated_evidence.json",
+    "argv": [
+      "uv",
+      "run",
+      "rogen-release-check",
+      "--table",
+      "analysis/longevity/integrated_evidence.csv",
+      "--table-kind",
+      "summary",
+      "--report",
+      "analysis/longevity/release_checks/integrated_evidence.json"
+    ],
+    "returncode": 0,
+    "stdout": "PASS individual_level: no individual-level column and no RO- pseudonym; --n-samples was not supplied\nPASS direct_identifiers: no date-of-birth, full-date, postcode, or name column\nPASS allele_count_cells: not applied: table kind is summary\nPASS strata_cells: not applied: table kind is summary\nWrote release report: analysis/longevity/release_checks/integrated_evidence.json\n",
+    "stderr": "",
+    "status": "passed"
+  }
+}

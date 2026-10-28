@@ -78,6 +78,9 @@ data/*
 !data/external/
 !data/external/gwas/
 !data/external/gwas/.gitkeep
+data/external/gwas/*
+!data/external/gwas/.gitkeep
+!data/external/gwas/README*
 !data/processed/
 data/processed/*
 !data/processed/manual_resolution_alleles.csv
@@ -127,6 +130,11 @@ docs/_build/
 !analysis/rogen_vs_gnomad_af.csv
 !analysis/panel/allele_audit_47.csv
 !analysis/longevity/longevity_gwas_lookup.csv
+!analysis/longevity/integrated_evidence.csv
+!analysis/clocks_benchmark/
+!analysis/clocks_benchmark/**
+analysis/clocks_benchmark/per_sample_predictions.csv
+analysis/clocks_benchmark/run.log
 !data/processed/manual_resolution_alleles.csv
 !data/processed/manual_resolution_worksheet.csv
 !data/processed/allele_evidence_47.csv
@@ -161,3 +169,6 @@ make_pontaj.py
 analysis/integrative/demo/
 analysis/integrative/fixtures/
 analysis/integrative/results/
+
+# pyaging downloaded clock weights
+pyaging_data/

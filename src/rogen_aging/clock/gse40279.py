@@ -11,6 +11,7 @@ import logging
 from pathlib import Path
 
 import numpy as np
+import pandas as pd
 import pyarrow as pa  # type: ignore[import-untyped]
 import pyarrow.parquet as pq  # type: ignore[import-untyped]
 
@@ -22,6 +23,7 @@ from rogen_aging.clock.external_data import (
     _parse_chronological_ages,
     _split_soft_line,
     _strip_geo_field,
+    parse_sample_phenotypes,
 )
 
 logger = logging.getLogger(__name__)
@@ -233,6 +235,27 @@ def ensure_gse40279_series_matrix(geo_cache_dir: Path) -> Path:
     logger.info("Downloading %s", SERIES_MATRIX_URL)
     _download_url(SERIES_MATRIX_URL, dest, timeout_s=3600)
     return dest
+
+
+def load_gse40279_phenotypes(series_matrix_path: Path) -> pd.DataFrame:
+    """Parse age, sex, and ethnicity from the GSE40279 series matrix.
+
+    Uses the same ``!Sample_characteristics_ch1`` parsers as GSE87571
+    (:func:`rogen_aging.clock.external_data.parse_sample_phenotypes`).
+    Ethnicity is present for this accession; sex is ``F``/``M``.
+
+    Args:
+        series_matrix_path: Local ``GSE40279_series_matrix.txt.gz`` (or ``.txt``).
+
+    Returns:
+        Columns ``sample_id``, ``chronological_age``, ``sex``, ``female``,
+        ``ethnicity``.
+    """
+    path = Path(series_matrix_path)
+    if not path.is_file():
+        raise FileNotFoundError(path)
+    sample_rows, _header = _read_series_metadata(path)
+    return parse_sample_phenotypes(sample_rows)
 
 
 def prepare_gse40279(

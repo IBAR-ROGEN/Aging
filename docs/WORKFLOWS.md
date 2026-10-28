@@ -61,7 +61,8 @@ Legacy script paths under `scripts/*.py` and at the repo root remain as **deprec
 - **Artifact provenance (read-only):** `uv run python scripts/audit_clock_artifacts.py` → [CLOCK_ARTIFACT_AUDIT.md](CLOCK_ARTIFACT_AUDIT.md). A serialization is a fixture when its probe names are `cg_test_*` (`models/fixtures/fixture_clock_cg_test.pkl`). `rogen-clock evaluate` refuses that model unless `--demo` is passed. The production clock is `models/gse40279_hannum450k_elasticnet.joblib`.
 - **ONT vs bisulfite at chr20 clock CpGs:** helpers in `scripts/clock/ont_clock_site_coverage.py` → [METHYLATION_CLOCK_VALIDATION.md](METHYLATION_CLOCK_VALIDATION.md). Ran 2026-10-28 on `chr20:10000000-20000000`; metrics `analysis/dryrun/hg002_ont_methylation_metrics.json`.
 - **Romanian mock demo** (separate StandardScaler path): `scripts/clock/train_romanian_epigenetic_clock.py`
-- **Docs:** [CLOCK_LIBRARY.md](CLOCK_LIBRARY.md), [GSE40279_CLOCK_TRAINING.md](GSE40279_CLOCK_TRAINING.md), [CLOCK_ARTIFACT_AUDIT.md](CLOCK_ARTIFACT_AUDIT.md), [CLOCK_EVAL_FIGURES.md](CLOCK_EVAL_FIGURES.md), [METHYLATION_CLOCK_VALIDATION.md](METHYLATION_CLOCK_VALIDATION.md), [ROMANIAN_EPIGENETIC_CLOCK.md](ROMANIAN_EPIGENETIC_CLOCK.md), [ACTIVITIES.md](ACTIVITIES.md#21101--methylation-aging-clock)
+- **Published clocks vs retrained Hannum:** `uv run python scripts/clock/benchmark_published_clocks.py` → `analysis/clocks_benchmark/` · [CLOCK_BENCHMARK.md](CLOCK_BENCHMARK.md)
+- **Docs:** [CLOCK_LIBRARY.md](CLOCK_LIBRARY.md), [GSE40279_CLOCK_TRAINING.md](GSE40279_CLOCK_TRAINING.md), [CLOCK_ARTIFACT_AUDIT.md](CLOCK_ARTIFACT_AUDIT.md), [CLOCK_EVAL_FIGURES.md](CLOCK_EVAL_FIGURES.md), [METHYLATION_CLOCK_VALIDATION.md](METHYLATION_CLOCK_VALIDATION.md), [CLOCK_BENCHMARK.md](CLOCK_BENCHMARK.md), [ROMANIAN_EPIGENETIC_CLOCK.md](ROMANIAN_EPIGENETIC_CLOCK.md), [ACTIVITIES.md](ACTIVITIES.md#21101--methylation-aging-clock)
 
 ### UK Biobank (synthetic + LA-SNP)
 
@@ -138,13 +139,14 @@ uv run python scripts/panel/ro_longevity_panel_sanity.py
 
 Pending allele evidence (no choice recorded): [PENDING_ALLELES.md](PENDING_ALLELES.md).
 
-Candidate-gene replication in public lifespan/longevity GWAS (download summary stats into `data/external/gwas/` first):
+Candidate-gene replication in public lifespan/longevity GWAS (download summary stats into `data/external/gwas/` first), then the integrated evidence table:
 
 ```bash
 uv run python scripts/longevity/longevity_gwas_lookup.py
+uv run python scripts/longevity/integrated_evidence.py
 ```
 
-See [LONGEVITY_GWAS_LOOKUP.md](LONGEVITY_GWAS_LOOKUP.md) · [GENOMICS_ANALYSIS.md](GENOMICS_ANALYSIS.md) · [RO_LONGEVITY_PANEL.md](RO_LONGEVITY_PANEL.md) · module index: [analysis/genomics/README.md](../analysis/genomics/README.md).
+See [LONGEVITY_GWAS_LOOKUP.md](LONGEVITY_GWAS_LOOKUP.md) · [INTEGRATIVE_PIPELINE.md](INTEGRATIVE_PIPELINE.md#integrated-public-evidence-per-variant-labels) · [GENOMICS_ANALYSIS.md](GENOMICS_ANALYSIS.md) · [RO_LONGEVITY_PANEL.md](RO_LONGEVITY_PANEL.md) · module index: [analysis/genomics/README.md](../analysis/genomics/README.md).
 
 Sequencing intake and the release guard: [DATA_FLOW.md](DATA_FLOW.md). Optional POD5/BAM Python deps: `uv sync --extra seq`. `uv run rogen-intake make-key` and `uv run rogen-intake run`. `uv run rogen-release-check` takes `--table`, `--table-kind`, and `--report` directly. It has no `run` subcommand.
 

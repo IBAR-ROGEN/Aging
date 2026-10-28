@@ -89,12 +89,58 @@ result = run_integrative_pipeline(
 risks = result["variant_risks"].sort("composite_risk", descending=True)
 ```
 
+## Integrated public evidence (per-variant labels)
+
+After the longevity GWAS lookup (Prompt 4) has written
+`analysis/longevity/longevity_gwas_lookup.csv`, join that table with the
+September eQTL Catalogue layer, the panel frequency/TSI–NFE test, and the
+illustrative power grid. Join keys are **rsid + panel alt**.
+
+```bash
+uv run python scripts/longevity/integrated_evidence.py
+```
+
+| Input | Role |
+|-------|------|
+| `analysis/longevity/longevity_gwas_lookup.csv` | GWAS direction and BH q per trait on the panel alt |
+| `results/eqtl_associations_full.csv` | September eQTL Catalogue associations (alt allele, `dataset_id`, `beta`, `fdr_bh`) |
+| `analysis/eqtl/eqtl_datasets_used.tsv` | Locked list of 14 `dataset_id` values |
+| `analysis/panel/ro_longevity_panel.csv` | Gene, frequencies, TSI vs NFE q / `tsi_differs_fdr05` |
+| `analysis/panel/ro_longevity_power_grid.csv` | Illustrative power grid for the power tier |
+
+| Output | Contents |
+|--------|----------|
+| `analysis/longevity/integrated_evidence.csv` | One row per panel variant |
+| `analysis/longevity/integrated_evidence_dot_matrix.png` | Dot matrix: variants × evidence labels, sorted by number of labels |
+| `analysis/longevity/integrated_evidence_provenance.json` | Input checksums, label definitions, release-check record |
+| `analysis/longevity/release_checks/integrated_evidence.json` | `rogen-release-check` summary report |
+
+### Evidence labels (definitions)
+
+A variant can carry several labels. **No label implies causality**, Romanian
+enrichment, or a ROGEN association.
+
+| Label | Definition |
+|-------|------------|
+| `GWAS support` | BH q < 0.05 in at least one longevity/lifespan trait in the GWAS lookup |
+| `eQTL support` | FDR < 0.05 in at least one eQTL Catalogue dataset for the panel alt |
+| `population difference` | TSI vs NFE BH q < 0.05 on the panel alt (public reference panels) |
+
+`eqtl_alt_effect_direction` is `consistent` when significant datasets agree on
+the sign of the mean alt-allele beta, `mixed` when signs disagree, and `none`
+when there are no significant datasets.
+
+`power_tier` uses the illustrative rank cell (1000 cases per arm, allelic OR
+1.5, Bonferroni \(0.05/47\)): **high** ≥ 0.8, **moderate** ≥ 0.5, **low** <
+0.5, **unavailable** when power is missing.
+
 ## Tests
 
 ```bash
-uv run pytest tests/test_integrative.py -q
+uv run pytest tests/test_integrative.py tests/test_integrated_evidence.py -q
 ```
 
 Covers chromosome/rsID normalisation, multi-allelic `variant_key`, eQTL
 filtering/summaries, AlphaGenome joins, methylation links, channel scores,
-composite-risk bounds, sample aggregation, and CLI-facing pipeline wiring.
+composite-risk bounds, sample aggregation, CLI-facing pipeline wiring, and the
+integrated evidence label rules.
