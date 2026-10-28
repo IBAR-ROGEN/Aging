@@ -1,0 +1,94 @@
+# Longevity / lifespan GWAS summary-statistic sources.
+# Column names and units were filled by inspecting each deposit's README and
+# the first header line of the gzipped table (2026-10-28). Paths are local
+# copies under data/external/gwas/ (git-ignored); download by hand before run.
+
+sources:
+  - id: timmers2019_parental_lifespan
+    trait: parental_lifespan
+    path: data/external/gwas/lifegen_phase2_bothpl_alldr_2017_09_18.tsv.gz
+    separator: "\t"
+    has_header: true
+    rsid: rsid
+    effect_allele: a1
+    other_allele: a0
+    beta: beta1
+    odds_ratio: null
+    se: se
+    p: p
+    effect_allele_frequency: freq1
+    chrom: chr
+    pos: pos
+    genome_build: GRCh37
+    effect_units: log_hazard_protection_ratio
+    effect_sign_positive_means: longer_parental_lifespan
+    citation: >-
+      Timmers et al. (2019) Genomics of 1 million parent lifespans.
+      eLife 8:e39856. doi:10.7554/eLife.39856.
+      Summary statistics: Edinburgh DataShare doi:10.7488/ds/2463
+      (lifegen_phase2_bothpl_alldr_2017_09_18.tsv.gz).
+    readme: docs/gwas/README_timmers2019_datashare.txt
+    notes: >-
+      README: beta1 is the log hazard protection ratio (negation of the log
+      hazard ratio) for one copy of a1. Positive beta1 means longer parental
+      lifespan for a1.
+
+  - id: deelen2019_longevity_90th
+    trait: longevity_90th_percentile
+    path: data/external/gwas/Results_90th_percentile.txt.gz
+    separator: "\t"
+    has_header: true
+    rsid: null
+    match: chrom_pos
+    effect_allele: EA
+    other_allele: NEA
+    beta: Beta
+    odds_ratio: null
+    se: SE
+    p: P-value
+    effect_allele_frequency: EAF
+    chrom: Chr
+    pos: Position
+    genome_build: GRCh37
+    effect_units: log_odds_ratio
+    effect_sign_positive_means: higher_odds_of_longevity
+    citation: >-
+      Deelen et al. (2019) A meta-analysis of genome-wide association studies
+      identifies multiple longevity genes. Nat Commun 10:3669.
+      doi:10.1038/s41467-019-11558-2. GWAS Catalog GCST008598
+      (Results_90th_percentile.txt.gz).
+    readme: docs/gwas/README_deelen2019_GCST008598.txt
+    notes: >-
+      README documents an rsID field from the IMPUTE legend, but the deposited
+      table header has no rsID column. Rows are matched on Chr + Position
+      (GRCh37). Beta is LN(odds ratio) for the effect allele.
+
+  - id: deelen2019_longevity_99th
+    trait: longevity_99th_percentile
+    path: data/external/gwas/Results_99th_percentile.txt.gz
+    separator: "\t"
+    has_header: true
+    rsid: null
+    match: chrom_pos
+    effect_allele: EA
+    other_allele: NEA
+    beta: Beta
+    odds_ratio: null
+    se: SE
+    p: P-value
+    effect_allele_frequency: EAF
+    chrom: Chr
+    pos: Position
+    genome_build: GRCh37
+    effect_units: log_odds_ratio
+    effect_sign_positive_means: higher_odds_of_longevity
+    citation: >-
+      Deelen et al. (2019) A meta-analysis of genome-wide association studies
+      identifies multiple longevity genes. Nat Commun 10:3669.
+      doi:10.1038/s41467-019-11558-2. GWAS Catalog GCST008599
+      (Results_99th_percentile.txt.gz).
+    readme: docs/gwas/README_deelen2019_GCST008599.txt
+    notes: >-
+      Same layout as the 90th-percentile file. No rsID column in the deposit;
+      match on Chr + Position (GRCh37). Beta is LN(odds ratio) for the effect
+      allele.

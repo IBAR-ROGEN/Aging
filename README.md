@@ -180,6 +180,7 @@ Default risk-channel weights are VEP 0.25, AlphaGenome 0.25, AlphaMissense 0.25,
 | Methylation clock validation (GSE87571) | [docs/METHYLATION_CLOCK_VALIDATION.md](docs/METHYLATION_CLOCK_VALIDATION.md) |
 | Sequencing intake and release guard | [docs/DATA_FLOW.md](docs/DATA_FLOW.md) · [toolchain](docs/TOOLCHAIN_SEPT2026.md) · [HG002 short-read dry run](docs/HG002_DRYRUN.md) |
 | Illustrative longevity-panel power | [docs/RO_LONGEVITY_PANEL.md](docs/RO_LONGEVITY_PANEL.md) · [pending alleles](docs/PENDING_ALLELES.md) |
+| Longevity / lifespan GWAS lookup | [docs/LONGEVITY_GWAS_LOOKUP.md](docs/LONGEVITY_GWAS_LOOKUP.md) |
 | Nomenclature reconciliation & manuscript figures | [docs/NOMENCLATURE_RECONCILE_FIGURES.md](docs/NOMENCLATURE_RECONCILE_FIGURES.md) |
 
 ### Navigation and reference

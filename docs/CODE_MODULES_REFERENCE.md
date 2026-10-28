@@ -49,6 +49,7 @@ See [ACTIVITIES.md](ACTIVITIES.md) for the full tree. Highlights:
 - **`scripts/audit_clock_artifacts.py`** — read-only provenance audit of `.pkl` / `.joblib` / `.sav` clocks; writes [CLOCK_ARTIFACT_AUDIT.md](CLOCK_ARTIFACT_AUDIT.md). Canonical flat script, not a deprecation shim.
 - **`scripts/build_eqtl_coverage.py`** — allele × eQTL Catalogue `dataset_id` coverage matrix and categorical heatmap under `results/`, plus `analysis/eqtl/eqtl_datasets_used.tsv` ([GENOMICS_ANALYSIS.md](GENOMICS_ANALYSIS.md)). Canonical flat script, not a deprecation shim.
 - **`scripts/panel/`** — illustrative longevity-panel power, heatmap, and NFE/CEU sanity TSV ([RO_LONGEVITY_PANEL.md](RO_LONGEVITY_PANEL.md); pending alleles [PENDING_ALLELES.md](PENDING_ALLELES.md))
+- **`scripts/longevity/longevity_gwas_lookup.py`** — candidate-gene lookup in Timmers/Deelen lifespan–longevity GWAS ([LONGEVITY_GWAS_LOOKUP.md](LONGEVITY_GWAS_LOOKUP.md)); helpers in `src/rogen_aging/longevity/`
 - **`scripts/integrative/`** — variant×tissue map, phenotype risk, end-to-end pipeline ([INTEGRATIVE_PIPELINE.md](INTEGRATIVE_PIPELINE.md))
 - **`scripts/dev/`** — `security_check.sh`, CI audit, ONT pipeline validation, R bootstrap, `find_r.sh`
 

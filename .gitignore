@@ -75,6 +75,9 @@ data/*
 !data/.gitkeep
 !data/network/
 !data/network/**
+!data/external/
+!data/external/gwas/
+!data/external/gwas/.gitkeep
 !data/processed/
 data/processed/*
 !data/processed/manual_resolution_alleles.csv
@@ -123,6 +126,7 @@ docs/_build/
 !test_data/genomics_overlap_minimal.csv
 !analysis/rogen_vs_gnomad_af.csv
 !analysis/panel/allele_audit_47.csv
+!analysis/longevity/longevity_gwas_lookup.csv
 !data/processed/manual_resolution_alleles.csv
 !data/processed/manual_resolution_worksheet.csv
 !data/processed/allele_evidence_47.csv

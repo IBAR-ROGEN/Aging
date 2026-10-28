@@ -138,7 +138,13 @@ uv run python scripts/panel/ro_longevity_panel_sanity.py
 
 Pending allele evidence (no choice recorded): [PENDING_ALLELES.md](PENDING_ALLELES.md).
 
-See [GENOMICS_ANALYSIS.md](GENOMICS_ANALYSIS.md) · [RO_LONGEVITY_PANEL.md](RO_LONGEVITY_PANEL.md) · module index: [analysis/genomics/README.md](../analysis/genomics/README.md).
+Candidate-gene replication in public lifespan/longevity GWAS (download summary stats into `data/external/gwas/` first):
+
+```bash
+uv run python scripts/longevity/longevity_gwas_lookup.py
+```
+
+See [LONGEVITY_GWAS_LOOKUP.md](LONGEVITY_GWAS_LOOKUP.md) · [GENOMICS_ANALYSIS.md](GENOMICS_ANALYSIS.md) · [RO_LONGEVITY_PANEL.md](RO_LONGEVITY_PANEL.md) · module index: [analysis/genomics/README.md](../analysis/genomics/README.md).
 
 Sequencing intake and the release guard: [DATA_FLOW.md](DATA_FLOW.md). Optional POD5/BAM Python deps: `uv sync --extra seq`. `uv run rogen-intake make-key` and `uv run rogen-intake run`. `uv run rogen-release-check` takes `--table`, `--table-kind`, and `--report` directly. It has no `run` subcommand.
 
