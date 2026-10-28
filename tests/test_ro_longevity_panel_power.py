@@ -212,6 +212,39 @@ def test_tsi_allele_number_uses_ensembl_counts_or_records_the_sample_size_assump
     assert assumed == round(0.25 * assumed_n)
 
 
+def test_tsi_complement_only_at_biallelic_sites() -> None:
+    biallelic = [
+        {
+            "population": "1000GENOMES:phase_3:TSI",
+            "allele": "C",
+            "allele_count": 100,
+            "frequency": 100 / 214,
+        },
+        {
+            "population": "1000GENOMES:phase_3:TSI",
+            "allele": "T",
+            "allele_count": 114,
+            "frequency": 114 / 214,
+        },
+    ]
+    complement, total, source = panel.tsi_alt_allele_counts(biallelic, "C", "A")
+    assert source == "ensembl_allele_count_complement"
+    assert (complement, total) == (114, 214)
+
+    multiallelic = [
+        *biallelic,
+        {
+            "population": "1000GENOMES:phase_3:TSI",
+            "allele": "G",
+            "allele_count": 0,
+            "frequency": 0.0,
+        },
+    ]
+    missing, missing_n, missing_source = panel.tsi_alt_allele_counts(multiallelic, "C", "A")
+    assert missing_source == "missing_alt_multiallelic"
+    assert missing is None and missing_n is None
+
+
 def test_nfe_counts_come_from_cache_fields_and_do_not_require_a_new_frequency() -> None:
     assert panel.nfe_counts_from_cache({"af_gnomad_nfe": 0.2, "ac_nfe": 20, "an_nfe": 100}) == (
         20,

@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-10-28T07:56:18Z",
+  "generated_at_utc": "2026-10-28T18:10:11Z",
   "disclaimer": "Cohort sizes and odds ratios are illustrative. ROGEN sample size and design are not fixed. Frequencies are from public reference populations, not from Romanian data.",
   "input_variants": {
     "path": "data/processed/variants_47_input_v2.csv",
@@ -27,7 +27,10 @@
       "source": "cache fields ac_nfe and an_nfe for the cached gnomAD variant_id",
       "entries_with_counts": 47,
       "fetched_this_run": 0,
-      "af_gnomad_nfe_modified": false
+      "af_gnomad_nfe_modified": false,
+      "corrected_alt_mismatches": 0,
+      "panel_alt_fetched": 0,
+      "panel_alt_query_failures": []
     }
   },
   "tsi_vs_nfe": {
@@ -39,10 +42,44 @@
     "n_tests": 47,
     "n_chi_square": 46,
     "n_fisher": 1,
+    "excluded_rsids": {},
+    "q_below_fdr05": [
+      {
+        "rsid": "rs9530108",
+        "q_tsi_vs_nfe": 4.1377007375744585e-07,
+        "p_tsi_vs_nfe": 8.803618590583955e-09,
+        "alt": "G"
+      },
+      {
+        "rsid": "rs9916344",
+        "q_tsi_vs_nfe": 0.0017634120344686521,
+        "p_tsi_vs_nfe": 7.503880997738945e-05,
+        "alt": "T"
+      },
+      {
+        "rsid": "rs2116538",
+        "q_tsi_vs_nfe": 0.007597721188362095,
+        "p_tsi_vs_nfe": 0.00048496092691672945,
+        "alt": "A"
+      },
+      {
+        "rsid": "rs1801318",
+        "q_tsi_vs_nfe": 0.033109935717105056,
+        "p_tsi_vs_nfe": 0.0032839541016338085,
+        "alt": "C"
+      },
+      {
+        "rsid": "rs3804474",
+        "q_tsi_vs_nfe": 0.033109935717105056,
+        "p_tsi_vs_nfe": 0.0035223335869260697,
+        "alt": "T"
+      }
+    ],
     "descriptive_column": "tsi_nfe_maf_abs_diff_gt_0_05_descriptive is the absolute MAF gap > 0.05. It is not a test.",
     "tsi_allele_number": "sum of Ensembl allele_count for 1000GENOMES:phase_3:TSI when returned",
     "tsi_allele_number_assumption": "2 x 107 (1000 Genomes phase 3 TSI sample size) when Ensembl does not return TSI allele counts",
-    "assumption_used_for": []
+    "assumption_used_for": [],
+    "tsi_complement_policy": "ref complement used only at biallelic TSI sites; multi-allelic sites without the panel alt are excluded from the count test"
   },
   "unresolved_alleles_excluded_from_nfe_test": {
     "file": "data/processed/manual_resolution_alleles.csv",
@@ -133,14 +170,5 @@
       "stderr": "",
       "status": "passed"
     }
-  ],
-  "sanity_check": {
-    "panel_path": "analysis/panel/ro_longevity_panel.csv",
-    "output_path": "analysis/panel/ro_longevity_panel_sanity.tsv",
-    "flag_count": 0,
-    "af_gap": 0.15,
-    "complement_skip_lo": 0.4,
-    "complement_skip_hi": 0.6,
-    "note": "Complement test skipped when NFE AF is between 0.4 and 0.6: the allele frequency and its complement are both near 0.5, so a smaller distance to 1 - CEU does not show that the alleles were swapped."
-  }
+  ]
 }

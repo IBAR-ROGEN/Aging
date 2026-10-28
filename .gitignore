@@ -152,6 +152,7 @@ analysis/clocks_benchmark/run.log
 !manuscript/tables/*.csv
 *.tsv
 !analysis/panel/ro_longevity_panel_sanity.tsv
+!analysis/panel/tsi_nfe_allele_audit.tsv
 !analysis/eqtl/eqtl_datasets_used.tsv
 !tests/fixtures/hm450_hg38_five_chr20.tsv
 *.bed
