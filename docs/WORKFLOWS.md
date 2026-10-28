@@ -128,15 +128,18 @@ eQTL Catalogue coverage (73 alleles × 14 `dataset_id` columns; cerebellum stays
 uv run python scripts/build_eqtl_coverage.py
 ```
 
-Illustrative power for the 47 prioritized variants (public frequencies only):
+Illustrative power for the 47 prioritized variants (public frequencies only), then the NFE/CEU orientation sanity check:
 
 ```bash
 uv run python scripts/panel/ro_longevity_panel_power.py
+uv run python scripts/panel/ro_longevity_panel_sanity.py
 ```
+
+Pending allele evidence (no choice recorded): [PENDING_ALLELES.md](PENDING_ALLELES.md).
 
 See [GENOMICS_ANALYSIS.md](GENOMICS_ANALYSIS.md) · [RO_LONGEVITY_PANEL.md](RO_LONGEVITY_PANEL.md) · module index: [analysis/genomics/README.md](../analysis/genomics/README.md).
 
-Sequencing intake and the release guard: [DATA_FLOW.md](DATA_FLOW.md). `uv run rogen-intake make-key` and `uv run rogen-intake run`. `uv run rogen-release-check` takes `--table`, `--table-kind`, and `--report` directly. It has no `run` subcommand.
+Sequencing intake and the release guard: [DATA_FLOW.md](DATA_FLOW.md). Optional POD5/BAM Python deps: `uv sync --extra seq`. `uv run rogen-intake make-key` and `uv run rogen-intake run`. `uv run rogen-release-check` takes `--table`, `--table-kind`, and `--report` directly. It has no `run` subcommand.
 
 ### July prioritized-variant annotation
 

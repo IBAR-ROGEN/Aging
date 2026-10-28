@@ -60,6 +60,7 @@ The heatmap shows power at \(0.05/47\) only, with one panel per odds ratio. Rows
 
 ```bash
 uv run python scripts/panel/ro_longevity_panel_power.py
+uv run python scripts/panel/ro_longevity_panel_sanity.py
 ```
 
 Outputs, written under `analysis/panel/`:
@@ -69,11 +70,14 @@ Outputs, written under `analysis/panel/`:
 | `ro_longevity_panel.csv` | One row per variant: frequencies, flags, rank, notes |
 | `ro_longevity_power_grid.csv` | One row per variant, cohort size, odds ratio, and alpha |
 | `ro_longevity_power_heatmap.png` | Power heatmap at alpha \(0.05/47\) |
-| `ro_longevity_panel_provenance.json` | gnomAD dataset, the Ensembl release and host reported by `/info/data`, query dates, cache hits versus new queries, and the release-check record |
+| `ro_longevity_panel_provenance.json` | gnomAD dataset, the Ensembl release and host reported by `/info/data`, query dates, cache hits versus new queries, the release-check record, and `sanity_check.flag_count` |
+| `ro_longevity_panel_sanity.tsv` | Per-variant NFE/CEU/GBR alt AFs and orientation flags from the sanity script |
 
 After the two CSV tables are written, each is passed to `rogen-release-check --table PATH --table-kind summary --report PATH`. That kind runs the individual-level and direct-identifier checks and does not treat frequencies or power as cell counts. The return code, captured output, and JSON report path are stored in the provenance JSON. The scientific tables are not replaced by a sanitized copy.
 
 **Figure caption for `ro_longevity_power_heatmap.png`.** Cohort sizes and odds ratios are illustrative. ROGEN sample size and design are not fixed. Frequencies are from public reference populations, not from Romanian data.
+
+Variants that still need a human allele choice are listed with repo evidence in [PENDING_ALLELES.md](PENDING_ALLELES.md). That note does not choose an allele.
 
 ## What this does not say
 

@@ -10,7 +10,7 @@ micromamba run -n rogen-tools samtools --version
 
 Do not hardcode the environment's install prefix. Homebrew is still absent.
 
-Python packages were checked with `importlib.metadata` in the project environment (`uv run python`, `.venv`, Python 3.12.8) and in system `python3`. Both environments lack `pysam` and `pod5`.
+CLI tools were checked on 2026-09-27. `pysam` and `pod5` were absent then; they are now an optional project extra `seq` in `pyproject.toml` (`uv sync --extra seq`). Intake still reports `pod5 metadata not scanned` when the `pod5` package is not installed.
 
 | Tool | Found | Version | Install command (this OS) |
 |------|-------|---------|---------------------------|
@@ -20,8 +20,8 @@ Python packages were checked with `importlib.metadata` in the project environmen
 | modkit | yes | 0.6.4 | `micromamba create -y -n rogen-tools -c conda-forge -c bioconda ont-modkit=0.6.4` |
 | tabix | yes | htslib 1.24 | `micromamba create -y -n rogen-tools -c conda-forge -c bioconda htslib=1.24` |
 | bgzip | yes | htslib 1.24 | `micromamba create -y -n rogen-tools -c conda-forge -c bioconda htslib=1.24` |
-| pysam | no | — | `uv add pysam` |
-| pod5 | no | — | `uv add pod5` |
+| pysam | optional (`seq`) | `>=0.22` | `uv sync --extra seq` |
+| pod5 | optional (`seq`) | `>=0.3` | `uv sync --extra seq` |
 
 Versions were read with `micromamba run -n rogen-tools <tool> --version`. `tabix` and `bgzip` come from the `htslib=1.24` package. `modkit` is the Bioconda package `ont-modkit=0.6.4`. One create command installed the set together:
 

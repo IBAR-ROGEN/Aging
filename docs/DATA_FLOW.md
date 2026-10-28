@@ -30,7 +30,7 @@ Files that live here:
 
 The report is checked before it is published. If an original sample id appears in it, intake stops and the processing directory is not kept.
 
-What may leave: those pseudonymized files and the intake report, and only after the leak check has passed. The check looks at output file names, BAM/CRAM/VCF headers, and the first 10,000 FASTQ read headers. It searches the manifest `original_sample_id` and every comma-separated alias on that row (for example `HG002` with aliases `NA24385` and `GM24385`). Header rewrite replaces those strings, including an `@RG SM` value that is an alias rather than the primary id. A hit deletes the temporary output and writes nothing. POD5 files are renamed after the checksum check. If the `pod5` package is not installed, the report says `pod5 metadata not scanned` and does not describe that metadata as clean.
+What may leave: those pseudonymized files and the intake report, and only after the leak check has passed. The check looks at output file names, BAM/CRAM/VCF headers, and the first 10,000 FASTQ read headers. It searches the manifest `original_sample_id` and every comma-separated alias on that row (for example `HG002` with aliases `NA24385` and `GM24385`). Header rewrite replaces those strings, including an `@RG SM` value that is an alias rather than the primary id. A hit deletes the temporary output and writes nothing. POD5 files are renamed after the checksum check. Install `pod5` with `uv sync --extra seq` when POD5 run metadata must be scanned. If the `pod5` package is not installed, the report says `pod5 metadata not scanned` and does not describe that metadata as clean.
 
 ## Release zone
 

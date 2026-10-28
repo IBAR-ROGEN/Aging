@@ -94,7 +94,7 @@ uv run python scripts/audit_clock_artifacts.py
 
 Method defined. The ONT run itself is still pending. Nothing has been downloaded. Do not use `gm24385_mod_2021.09/extra_analysis/all.bam`.
 
-The CLI tools are installed in the micromamba environment `rogen-tools`, not on the default `PATH` ([TOOLCHAIN_SEPT2026.md](TOOLCHAIN_SEPT2026.md)): samtools 1.24, bcftools 1.24, minimap2 2.31-r1302, modkit 0.6.4, tabix and bgzip from htslib 1.24. `pysam` and `pod5` are not installed.
+The CLI tools are installed in the micromamba environment `rogen-tools`, not on the default `PATH` ([TOOLCHAIN_SEPT2026.md](TOOLCHAIN_SEPT2026.md)): samtools 1.24, bcftools 1.24, minimap2 2.31-r1302, modkit 0.6.4, tabix and bgzip from htslib 1.24. `pysam` and `pod5` are the optional project extra `seq` (`uv sync --extra seq`); they are not required for the ONT comparison script itself.
 
 `scripts/clock/ont_clock_site_coverage.py` is the comparison.
 
@@ -114,4 +114,4 @@ Confirmed input URLs, copied from that script:
 
 ---
 
-**Last updated:** September 27, 2026
+**Last updated:** October 28, 2026

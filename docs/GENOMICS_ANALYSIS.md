@@ -152,9 +152,10 @@ See also [ACTIVITIES.md](ACTIVITIES.md) (activity IDs **2.1.7.2**–**2.1.7.4**)
 uv run python scripts/build_eqtl_coverage.py
 # → results/eqtl_coverage_matrix.csv
 # → results/fig_eqtl_coverage.png
+# → analysis/eqtl/eqtl_datasets_used.tsv  (exact dataset_id list and count)
 ```
 
-Columns are `dataset_id`, not tissue. Cerebellum is two studies (QTD000161 and QTD000166); a 13-column tissue matrix is rejected. Each cell is one of: association at FDR<0.05, tested with no association at FDR<0.05, allele not represented in the resource, or variant absent from that dataset. Absence is never written as 0, NA, or an imputed value. FDR<0.05 is the Benjamini–Hochberg value already stored in `fdr_bh` (within the returned rows, not a genome-wide correction).
+Columns are `dataset_id`, not tissue. Cerebellum is two studies (QTD000161 and QTD000166); a 13-column tissue matrix is rejected. Each cell is one of: association at FDR<0.05, tested with no association at FDR<0.05, allele not represented in the resource, or variant absent from that dataset. Absence is never written as 0, NA, or an imputed value. FDR<0.05 is the Benjamini–Hochberg value already stored in `fdr_bh` (within the returned rows, not a genome-wide correction). The script also writes `analysis/eqtl/eqtl_datasets_used.tsv` with one `dataset_id` per row (14 rows for the catalogue set) and prints that count.
 
 rsID identity, including CETP I405V versus rs5882, stays in `validate_genomics_tables`. This script does not remap alleles.
 
