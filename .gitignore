@@ -87,6 +87,10 @@ data/processed/*
 !data/processed/manual_resolution_worksheet.csv
 !data/processed/allele_evidence_47.csv
 !data/processed/variants_47_input_v2.csv
+!data/curation/
+!data/curation/**
+data/curation/*
+!data/curation/longevity_allele_direction.csv
 results/*
 !results/.gitkeep
 outputs/*
@@ -130,6 +134,10 @@ docs/_build/
 !analysis/rogen_vs_gnomad_af.csv
 !analysis/panel/allele_audit_47.csv
 !analysis/longevity/longevity_gwas_lookup.csv
+!analysis/longevity/longevity_gwas_lookup_provenance.json
+!analysis/longevity/longevity_gwas_lookup_forest.png
+!analysis/longevity/release_checks/
+!analysis/longevity/release_checks/**
 !analysis/longevity/integrated_evidence.csv
 !analysis/clocks_benchmark/
 !analysis/clocks_benchmark/**
@@ -139,6 +147,7 @@ analysis/clocks_benchmark/run.log
 !data/processed/manual_resolution_worksheet.csv
 !data/processed/allele_evidence_47.csv
 !data/processed/variants_47_input_v2.csv
+!data/curation/longevity_allele_direction.csv
 !data/network/*.csv
 !manuscript/tables/*.csv
 *.tsv

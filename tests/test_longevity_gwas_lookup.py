@@ -1,4 +1,4 @@
-"""Unit tests for longevity GWAS allele harmonization and BH helper."""
+"""Unit tests for longevity GWAS allele harmonization and direction helper."""
 
 from __future__ import annotations
 
@@ -24,7 +24,7 @@ _SCRIPT = _REPO / "scripts" / "longevity" / "longevity_gwas_lookup.py"
 def _load_script() -> ModuleType:
     name = "longevity_gwas_lookup"
     if name in sys.modules:
-        return sys.modules[name]
+        del sys.modules[name]
     spec = importlib.util.spec_from_file_location(name, _SCRIPT)
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)
@@ -93,29 +93,70 @@ def test_ambiguous_palindrome_not_flipped() -> None:
     assert result.beta_panel_alt is None
 
 
-def test_benjamini_hochberg_and_longevitymap(tmp_path: Path) -> None:
+def test_benjamini_hochberg_and_direction(tmp_path: Path) -> None:
     lookup = _load_script()
     q = lookup.benjamini_hochberg([0.01, 0.04, None, 0.5])
     assert q[0] is not None and q[0] <= q[1]  # type: ignore[operator]
     assert q[2] is None
-    assert (
-        lookup.longevitymap_concordance(
-            panel_ref="G",
-            panel_alt="A",
-            longevitymap_allele="A",
-            beta_panel_alt=0.2,
-        )
-        == "concordant"
+    label, note = lookup.direction_vs_reported_longevity_allele(
+        panel_ref="G",
+        panel_alt="A",
+        longevity_associated_allele="A",
+        beta_panel_alt=0.2,
     )
-    assert (
-        lookup.longevitymap_concordance(
-            panel_ref="G",
-            panel_alt="A",
-            longevitymap_allele=None,
-            beta_panel_alt=0.2,
-        )
-        == "needs_curation"
+    assert label == "concordant"
+    assert note == ""
+    label, note = lookup.direction_vs_reported_longevity_allele(
+        panel_ref="G",
+        panel_alt="A",
+        longevity_associated_allele=None,
+        beta_panel_alt=0.2,
     )
+    assert label == "needs_curation"
+    assert note == ""
+
+
+def test_empty_curation_needs_curation_even_if_longevitymap_alt_equals_panel_alt() -> None:
+    """longevitymap_alt_allele matching panel alt must not imply concordance.
+
+    Direction uses only the curation file. An empty curated allele is
+    needs_curation regardless of what allele_evidence would have said.
+    """
+    lookup = _load_script()
+    # Simulate the September failure mode: LongevityMap alt equals panel alt,
+    # GWAS beta is positive, but curation is empty.
+    longevitymap_alt_allele = "A"
+    panel_alt = "A"
+    assert longevitymap_alt_allele == panel_alt
+    label, _note = lookup.direction_vs_reported_longevity_allele(
+        panel_ref="G",
+        panel_alt=panel_alt,
+        longevity_associated_allele="",  # empty curation row
+        beta_panel_alt=0.25,
+    )
+    assert label == "needs_curation"
+    assert label != "concordant"
+
+
+def test_direction_strand_check_and_mismatch() -> None:
+    lookup = _load_script()
+    label, note = lookup.direction_vs_reported_longevity_allele(
+        panel_ref="G",
+        panel_alt="A",
+        longevity_associated_allele="T",  # complement of A
+        beta_panel_alt=0.2,
+    )
+    assert label == "concordant"
+    assert note == ""
+    # Insertion allele cannot be mapped onto a G/A site even after complement.
+    label, note = lookup.direction_vs_reported_longevity_allele(
+        panel_ref="G",
+        panel_alt="A",
+        longevity_associated_allele="GA",
+        beta_panel_alt=0.2,
+    )
+    assert label == "needs_curation"
+    assert "after strand check" in note
 
 
 def test_lazy_rsid_filter_on_gzip_fixture(tmp_path: Path) -> None:

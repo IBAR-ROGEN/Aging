@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-10-28T15:52:17Z",
+  "generated_at_utc": "2026-10-28T18:25:10Z",
   "panel": {
     "path": "data/processed/variants_47_input_v2.csv",
     "n_resolved": 35,
@@ -19,8 +19,206 @@
       "rs882696"
     ]
   },
-  "allele_evidence": "data/processed/allele_evidence_47.csv",
+  "curation": "data/curation/longevity_allele_direction.csv",
   "allele_audit": "analysis/panel/allele_audit_47.csv",
+  "grch37": {
+    "timmers_path": "data/external/gwas/lifegen_phase2_bothpl_alldr_2017_09_18.tsv.gz",
+    "ensembl_host": "https://grch37.rest.ensembl.org",
+    "cache_path": "data/geo/ensembl_grch37_variation_cache",
+    "n_timmers": 47,
+    "n_ensembl_grch37": 0,
+    "n_not_found": 0,
+    "by_rsid": {
+      "rs1008438": {
+        "chrom_pos": "6:31783208",
+        "source": "timmers"
+      },
+      "rs10190125": {
+        "chrom_pos": "2:2294426",
+        "source": "timmers"
+      },
+      "rs10491334": {
+        "chrom_pos": "5:110772404",
+        "source": "timmers"
+      },
+      "rs1050450": {
+        "chrom_pos": "3:49394834",
+        "source": "timmers"
+      },
+      "rs11548670": {
+        "chrom_pos": "2:207012483",
+        "source": "timmers"
+      },
+      "rs11695633": {
+        "chrom_pos": "2:207008170",
+        "source": "timmers"
+      },
+      "rs139170": {
+        "chrom_pos": "22:44599452",
+        "source": "timmers"
+      },
+      "rs1468772": {
+        "chrom_pos": "1:156116488",
+        "source": "timmers"
+      },
+      "rs1517598": {
+        "chrom_pos": "4:16020664",
+        "source": "timmers"
+      },
+      "rs155979": {
+        "chrom_pos": "5:95769898",
+        "source": "timmers"
+      },
+      "rs17044026": {
+        "chrom_pos": "1:217001114",
+        "source": "timmers"
+      },
+      "rs1800774": {
+        "chrom_pos": "16:57015545",
+        "source": "timmers"
+      },
+      "rs1800777": {
+        "chrom_pos": "16:57017319",
+        "source": "timmers"
+      },
+      "rs1801318": {
+        "chrom_pos": "2:207006676",
+        "source": "timmers"
+      },
+      "rs1805329": {
+        "chrom_pos": "9:110084328",
+        "source": "timmers"
+      },
+      "rs1834497": {
+        "chrom_pos": "3:139727267",
+        "source": "timmers"
+      },
+      "rs1868778": {
+        "chrom_pos": "7:131889536",
+        "source": "timmers"
+      },
+      "rs1898422": {
+        "chrom_pos": "2:142495019",
+        "source": "timmers"
+      },
+      "rs1974676": {
+        "chrom_pos": "2:10563913",
+        "source": "timmers"
+      },
+      "rs1981429": {
+        "chrom_pos": "20:43975693",
+        "source": "timmers"
+      },
+      "rs2032563": {
+        "chrom_pos": "1:7801288",
+        "source": "timmers"
+      },
+      "rs2116538": {
+        "chrom_pos": "2:137769420",
+        "source": "timmers"
+      },
+      "rs2251252": {
+        "chrom_pos": "20:43971357",
+        "source": "timmers"
+      },
+      "rs2596230": {
+        "chrom_pos": "15:33720726",
+        "source": "timmers"
+      },
+      "rs28366003": {
+        "chrom_pos": "16:56642491",
+        "source": "timmers"
+      },
+      "rs289714": {
+        "chrom_pos": "16:57007451",
+        "source": "timmers"
+      },
+      "rs3762985": {
+        "chrom_pos": "5:95770727",
+        "source": "timmers"
+      },
+      "rs3804474": {
+        "chrom_pos": "6:6621508",
+        "source": "timmers"
+      },
+      "rs3811952": {
+        "chrom_pos": "5:95766382",
+        "source": "timmers"
+      },
+      "rs41383": {
+        "chrom_pos": "16:57111002",
+        "source": "timmers"
+      },
+      "rs4148544": {
+        "chrom_pos": "13:95680385",
+        "source": "timmers"
+      },
+      "rs4420638": {
+        "chrom_pos": "19:45422946",
+        "source": "timmers"
+      },
+      "rs4784744": {
+        "chrom_pos": "16:57011185",
+        "source": "timmers"
+      },
+      "rs4871976": {
+        "chrom_pos": "8:22086491",
+        "source": "timmers"
+      },
+      "rs4986790": {
+        "chrom_pos": "9:120475302",
+        "source": "timmers"
+      },
+      "rs524533": {
+        "chrom_pos": "6:44240559",
+        "source": "timmers"
+      },
+      "rs5882": {
+        "chrom_pos": "16:57016092",
+        "source": "timmers"
+      },
+      "rs5883": {
+        "chrom_pos": "16:57007353",
+        "source": "timmers"
+      },
+      "rs6435324": {
+        "chrom_pos": "2:206993849",
+        "source": "timmers"
+      },
+      "rs6435326": {
+        "chrom_pos": "2:207002559",
+        "source": "timmers"
+      },
+      "rs7207422": {
+        "chrom_pos": "17:31454388",
+        "source": "timmers"
+      },
+      "rs7853840": {
+        "chrom_pos": "9:28068081",
+        "source": "timmers"
+      },
+      "rs882696": {
+        "chrom_pos": "8:15403298",
+        "source": "timmers"
+      },
+      "rs9530108": {
+        "chrom_pos": "13:35630064",
+        "source": "timmers"
+      },
+      "rs9916344": {
+        "chrom_pos": "17:6398213",
+        "source": "timmers"
+      },
+      "rs9923854": {
+        "chrom_pos": "16:57017002",
+        "source": "timmers"
+      },
+      "rs9930761": {
+        "chrom_pos": "16:57007192",
+        "source": "timmers"
+      }
+    }
+  },
   "sources": {
     "timmers2019_parental_lifespan": {
       "path": "data/external/gwas/lifegen_phase2_bothpl_alldr_2017_09_18.tsv.gz",
@@ -31,18 +229,95 @@
       "n_rows_kept": 35,
       "readme": "docs/gwas/README_timmers2019_datashare.txt",
       "notes": "README: beta1 is the log hazard protection ratio (negation of the log hazard ratio) for one copy of a1. Positive beta1 means longer parental lifespan for a1."
+    },
+    "deelen2019_longevity_90th": {
+      "path": "data/external/gwas/Results_90th_percentile.txt.gz",
+      "sha256": "99353dfd78f9cb86b35f6cea4fb86ccebed781064d03a8495f24ee56da7c6ac7",
+      "citation": "Deelen et al. (2019) A meta-analysis of genome-wide association studies identifies multiple longevity genes. Nat Commun 10:3669. doi:10.1038/s41467-019-11558-2. GWAS Catalog GCST008598 (Results_90th_percentile.txt.gz).",
+      "effect_units": "log_odds_ratio",
+      "genome_build": "GRCh37",
+      "n_rows_kept": 47,
+      "readme": "docs/gwas/README_deelen2019_GCST008598.txt",
+      "notes": "README documents an rsID field from the IMPUTE legend, but the deposited table header has no rsID column. Rows are matched on Chr + Position (GRCh37). Beta is LN(odds ratio) for the effect allele."
+    },
+    "deelen2019_longevity_99th": {
+      "path": "data/external/gwas/Results_99th_percentile.txt.gz",
+      "sha256": "0a4d480745b9b41c8f0927314eadb2c945d888be87666b5c5ce85215953ba11b",
+      "citation": "Deelen et al. (2019) A meta-analysis of genome-wide association studies identifies multiple longevity genes. Nat Commun 10:3669. doi:10.1038/s41467-019-11558-2. GWAS Catalog GCST008599 (Results_99th_percentile.txt.gz).",
+      "effect_units": "log_odds_ratio",
+      "genome_build": "GRCh37",
+      "n_rows_kept": 47,
+      "readme": "docs/gwas/README_deelen2019_GCST008599.txt",
+      "notes": "Same layout as the 90th-percentile file. No rsID column in the deposit; match on Chr + Position (GRCh37). Beta is LN(odds ratio) for the effect allele."
     }
   },
   "multiple_testing": {
-    "n_tests": 34,
-    "alpha_bonferroni": 0.0014705882352941176,
-    "n_p_lt_0_05": 3,
-    "n_expected_p_lt_0_05_under_null": 1.7000000000000002,
-    "n_q_bh_lt_0_05": 1,
-    "n_bonferroni_sig": 1
+    "n_tests": 102,
+    "alpha_bonferroni": 0.0004901960784313725,
+    "n_p_lt_0_05": 10,
+    "n_expected_p_lt_0_05_under_null": 5.1000000000000005,
+    "n_q_bh_lt_0_05": 3,
+    "n_bonferroni_sig": 3,
+    "rsids_q_bh_lt_0_05": [
+      "rs4420638",
+      "rs4420638",
+      "rs4420638"
+    ],
+    "rsids_bonferroni_sig": [
+      "rs4420638",
+      "rs4420638",
+      "rs4420638"
+    ],
+    "by_trait": {
+      "longevity_90th_percentile": {
+        "n_present": 34,
+        "n_absent": 0,
+        "n_ambiguous": 1,
+        "n_not_tested": 12,
+        "n_tests": 34,
+        "n_p_lt_0_05": 4,
+        "n_expected_p_lt_0_05_under_null": 1.7000000000000002,
+        "rsids_q_bh_lt_0_05": [
+          "rs4420638"
+        ],
+        "rsids_bonferroni_sig": [
+          "rs4420638"
+        ]
+      },
+      "longevity_99th_percentile": {
+        "n_present": 34,
+        "n_absent": 0,
+        "n_ambiguous": 1,
+        "n_not_tested": 12,
+        "n_tests": 34,
+        "n_p_lt_0_05": 3,
+        "n_expected_p_lt_0_05_under_null": 1.7000000000000002,
+        "rsids_q_bh_lt_0_05": [
+          "rs4420638"
+        ],
+        "rsids_bonferroni_sig": [
+          "rs4420638"
+        ]
+      },
+      "parental_lifespan": {
+        "n_present": 34,
+        "n_absent": 0,
+        "n_ambiguous": 1,
+        "n_not_tested": 12,
+        "n_tests": 34,
+        "n_p_lt_0_05": 3,
+        "n_expected_p_lt_0_05_under_null": 1.7000000000000002,
+        "rsids_q_bh_lt_0_05": [
+          "rs4420638"
+        ],
+        "rsids_bonferroni_sig": [
+          "rs4420638"
+        ]
+      }
+    }
   },
   "forest": {
-    "n_plotted": 1,
+    "n_plotted": 3,
     "selection": "q_lt_0_05"
   },
   "outputs": {
@@ -70,5 +345,7 @@
     "stderr": "",
     "status": "passed"
   },
-  "disclaimer": "Candidate-gene replication lookup in public lifespan/longevity GWAS. Most variants are not expected to replicate; absence of association is a valid result. Effects are oriented to the panel alt allele."
+  "disclaimer": "Candidate-gene replication lookup in public lifespan/longevity GWAS. Most variants are not expected to replicate; absence of association is a valid result. Effects are oriented to the panel alt allele. Direction versus a reported longevity allele uses only data/curation/longevity_allele_direction.csv.",
+  "published_summary_stats_note": "The Timmers 2019 statistics include UK Biobank parental lifespan data. Only published summary statistics were used. No UK Biobank participant-level data were accessed.",
+  "cohort_overlap_note": "Some LongevityMap source studies may share cohorts with Deelen 2019 or Timmers 2019. A hit is then not an independent replication. possible_cohort_overlap is set to needs_curation for every row."
 }

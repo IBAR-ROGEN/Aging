@@ -3,6 +3,10 @@
 
 Replication check only. Most candidates are not expected to replicate.
 
+Direction versus a reported longevity-associated allele is taken only from
+``data/curation/longevity_allele_direction.csv``. The September
+``longevitymap_alt_allele`` column is not used for direction.
+
 Example:
     uv run python scripts/longevity/longevity_gwas_lookup.py
 """
@@ -28,7 +32,10 @@ import typer  # noqa: E402
 from omegaconf import OmegaConf  # noqa: E402
 
 from rogen_aging.config import find_repo_root  # noqa: E402
+from rogen_aging.ensembl.cache import cache_key_for, open_cache  # noqa: E402
+from rogen_aging.ensembl.client import EnsemblApiError, EnsemblClient  # noqa: E402
 from rogen_aging.longevity.allele_harmonize import (  # noqa: E402
+    allele_complement,
     harmonize_to_panel_alt,
     maf_from_af,
 )
@@ -36,11 +43,14 @@ from rogen_aging.ukb.gnomad import normalize_rsid  # noqa: E402
 
 REPO_ROOT = find_repo_root()
 DEFAULT_VARIANTS = REPO_ROOT / "data" / "processed" / "variants_47_input_v2.csv"
-DEFAULT_ALLELE_EVIDENCE = REPO_ROOT / "data" / "processed" / "allele_evidence_47.csv"
+DEFAULT_CURATION = REPO_ROOT / "data" / "curation" / "longevity_allele_direction.csv"
 DEFAULT_ALLELE_AUDIT = REPO_ROOT / "analysis" / "panel" / "allele_audit_47.csv"
 DEFAULT_SOURCES = REPO_ROOT / "config" / "gwas_sources.yaml"
 DEFAULT_OUT_DIR = REPO_ROOT / "analysis" / "longevity"
+DEFAULT_GRCH37_CACHE = REPO_ROOT / "data" / "geo" / "ensembl_grch37_variation_cache"
+ENSEMBL_GRCH37_HOST = "https://grch37.rest.ensembl.org"
 RELEASE_CHECK_KIND = "summary"
+Grch37Source = str  # "timmers" | "ensembl_grch37" | "not_found"
 
 
 def _stop(message: str) -> None:
@@ -91,19 +101,38 @@ def load_panel(path: Path) -> tuple[pl.DataFrame, pl.DataFrame]:
     return resolved, held
 
 
-def load_longevitymap_alleles(path: Path) -> dict[str, str]:
-    """rsID → LongevityMap allele from allele_evidence, if present."""
+def load_curated_longevity_alleles(path: Path) -> dict[str, dict[str, str]]:
+    """rsID → curation fields from ``longevity_allele_direction.csv``."""
     if not path.is_file():
-        return {}
-    frame = pl.read_csv(
-        path, schema_overrides={"rsid": pl.Utf8, "longevitymap_alt_allele": pl.Utf8}
-    )
-    out: dict[str, str] = {}
+        _stop(f"STOP: missing curation file {path}")
+    frame = pl.read_csv(path, schema_overrides={"rsid": pl.Utf8})
+    required = {
+        "rsid",
+        "gene",
+        "longevity_associated_allele",
+        "comparison",
+        "source_pmid",
+        "population",
+        "notes",
+    }
+    missing = sorted(required - set(frame.columns))
+    if missing:
+        _stop(f"STOP: curation file missing columns: {missing}")
+    out: dict[str, dict[str, str]] = {}
     for row in frame.iter_rows(named=True):
         rsid = normalize_rsid(str(row.get("rsid") or ""))
-        allele = str(row.get("longevitymap_alt_allele") or "").strip().upper()
-        if rsid and allele:
-            out[rsid] = allele
+        if not rsid:
+            continue
+        out[rsid] = {
+            "gene": str(row.get("gene") or "").strip(),
+            "longevity_associated_allele": str(row.get("longevity_associated_allele") or "")
+            .strip()
+            .upper(),
+            "comparison": str(row.get("comparison") or "").strip(),
+            "source_pmid": str(row.get("source_pmid") or "").strip(),
+            "population": str(row.get("population") or "").strip(),
+            "notes": str(row.get("notes") or "").strip(),
+        }
     return out
 
 
@@ -213,36 +242,137 @@ def grch37_keys_from_timmers(
     return out
 
 
+def _grch37_key_from_variation(payload: dict[str, Any]) -> str | None:
+    """Pick a primary GRCh37 chrom:pos from an Ensembl variation payload."""
+    mappings = payload.get("mappings")
+    if not isinstance(mappings, list):
+        return None
+    for item in mappings:
+        if not isinstance(item, dict):
+            continue
+        assembly = str(item.get("assembly_name") or "")
+        if assembly and "GRCh37" not in assembly and "hg19" not in assembly:
+            continue
+        chrom = str(item.get("seq_region_name") or "").removeprefix("chr")
+        start = item.get("start")
+        if not chrom or start is None:
+            continue
+        try:
+            pos = int(start)
+        except (TypeError, ValueError):
+            continue
+        return f"{chrom}:{pos}"
+    return None
+
+
+def resolve_grch37_coordinates(
+    rsids: set[str],
+    *,
+    timmers_path: Path | None,
+    cache_dir: Path,
+) -> tuple[dict[str, str], dict[str, Grch37Source]]:
+    """GRCh37 chrom:pos from Timmers first, then Ensembl GRCh37 REST, else not_found."""
+    keys: dict[str, str] = {}
+    sources: dict[str, Grch37Source] = {}
+    if timmers_path is not None and timmers_path.is_file():
+        keys.update(grch37_keys_from_timmers(timmers_path, rsids))
+        for rsid in keys:
+            sources[rsid] = "timmers"
+
+    missing = sorted(rsid for rsid in rsids if rsid not in keys)
+    if not missing:
+        for rsid in rsids:
+            sources.setdefault(rsid, "not_found")
+        return keys, sources
+
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    cache = open_cache(cache_dir, backend="json")
+    client = EnsemblClient(
+        base_url=ENSEMBL_GRCH37_HOST,
+        release=75,
+        assembly="GRCh37",
+        min_interval_sec=0.34,
+        timeout_sec=60.0,
+        max_retries=5,
+    )
+    try:
+        for rsid in missing:
+            key = cache_key_for("variation_grch37", rsid)
+            cached = cache.get(key)
+            payload: dict[str, Any] | None
+            if isinstance(cached, dict):
+                payload = cached
+            else:
+                try:
+                    payload = client.get_variation(rsid)
+                except EnsemblApiError as exc:
+                    typer.echo(f"Ensembl GRCh37 variation failed for {rsid}: {exc}", err=True)
+                    payload = None
+                if payload is not None:
+                    cache.set(key, payload)
+                else:
+                    cache.set(key, {"__ensembl_missing__": True, "id": rsid})
+            if isinstance(payload, dict) and payload.get("__ensembl_missing__") is True:
+                sources[rsid] = "not_found"
+                continue
+            chrom_pos = _grch37_key_from_variation(payload) if isinstance(payload, dict) else None
+            if chrom_pos is None:
+                sources[rsid] = "not_found"
+            else:
+                keys[rsid] = chrom_pos
+                sources[rsid] = "ensembl_grch37"
+    finally:
+        cache.close()
+        client.close()
+
+    for rsid in rsids:
+        sources.setdefault(rsid, "not_found")
+    return keys, sources
+
+
 def effect_direction(beta: float | None) -> str:
     if beta is None or not math.isfinite(beta) or beta == 0.0:
         return "zero_or_missing"
     return "longevity_increasing" if beta > 0.0 else "longevity_decreasing"
 
 
-def longevitymap_concordance(
+def direction_vs_reported_longevity_allele(
     *,
     panel_ref: str,
     panel_alt: str,
-    longevitymap_allele: str | None,
+    longevity_associated_allele: str | None,
     beta_panel_alt: float | None,
-) -> str:
-    """Compare LongevityMap allele with GWAS sign on the panel alt.
+) -> tuple[str, str]:
+    """Compare curated longevity-associated allele with GWAS sign on panel alt.
 
-    Does not infer the LongevityMap allele from frequency.
+    Returns ``(label, note)``. Empty curated allele → ``needs_curation``.
+    Allele not in {ref, alt} after strand complement → ``needs_curation`` with note.
+    Does not use LongevityMap strand-adjudication alleles.
     """
-    if not longevitymap_allele:
-        return "needs_curation"
+    if not longevity_associated_allele:
+        return "needs_curation", ""
     if beta_panel_alt is None or not math.isfinite(beta_panel_alt) or beta_panel_alt == 0.0:
-        return "needs_curation"
-    lm = longevitymap_allele.strip().upper()
+        return "needs_curation", ""
+    allele = longevity_associated_allele.strip().upper()
     ref = panel_ref.strip().upper()
     alt = panel_alt.strip().upper()
+    if allele not in {ref, alt}:
+        try:
+            allele_c = allele_complement(allele)
+        except ValueError:
+            return "needs_curation", f"allele {allele} is not ACGT"
+        if allele_c in {ref, alt}:
+            allele = allele_c
+        else:
+            return (
+                "needs_curation",
+                f"allele {longevity_associated_allele.strip().upper()} not in "
+                f"{{ref={ref}, alt={alt}}} after strand check",
+            )
     gwas_favors_alt = beta_panel_alt > 0.0
-    if lm == alt:
-        return "concordant" if gwas_favors_alt else "discordant"
-    if lm == ref:
-        return "concordant" if not gwas_favors_alt else "discordant"
-    return "needs_curation"
+    if allele == alt:
+        return ("concordant" if gwas_favors_alt else "discordant"), ""
+    return ("concordant" if not gwas_favors_alt else "discordant"), ""
 
 
 def benjamini_hochberg(p_values: list[float | None]) -> list[float | None]:
@@ -273,18 +403,13 @@ def build_rows(
     resolved: pl.DataFrame,
     held: pl.DataFrame,
     sources: list[dict[str, Any]],
-    longevitymap: dict[str, str],
+    curated: dict[str, dict[str, str]],
     panel_maf: dict[str, float],
+    grch37_by_rsid: dict[str, str],
+    grch37_source: dict[str, Grch37Source],
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     """Run all lookups and return result rows plus source digests."""
     rsids = {normalize_rsid(str(r)) for r in resolved["rsid"].to_list()}
-    timmers = next((s for s in sources if s.get("id") == "timmers2019_parental_lifespan"), None)
-    grch37_by_rsid: dict[str, str] = {}
-    if timmers is not None:
-        timmers_raw = Path(str(timmers["path"]))
-        timmers_path = timmers_raw if timmers_raw.is_absolute() else REPO_ROOT / timmers_raw
-        grch37_by_rsid = grch37_keys_from_timmers(timmers_path, rsids)
-
     source_meta: dict[str, Any] = {}
     rows: list[dict[str, Any]] = []
 
@@ -299,8 +424,7 @@ def build_rows(
         if source.get("match") == "chrom_pos" and not chrom_pos_keys:
             _stop(
                 f"STOP: source {source_id} matches on GRCh37 chrom:pos but no "
-                "coordinates are available. Place the Timmers file first so "
-                "rsID→GRCh37 keys can be built, or add coordinates another way."
+                "coordinates are available from Timmers or Ensembl GRCh37."
             )
         hits = scan_source_hits(source, rsids=rsids, chrom_pos_keys=chrom_pos_keys)
         source_meta[source_id] = {
@@ -321,7 +445,6 @@ def build_rows(
                 rsid = normalize_rsid(str(row[str(rsid_col)]))
                 by_rsid[rsid] = row
         else:
-            # Invert GRCh37 key → rsid for chrom_pos match.
             key_to_rsid = {key: rsid for rsid, key in grch37_by_rsid.items()}
             for row in hits.iter_rows(named=True):
                 chrom = str(row[str(source["chrom"])]).removeprefix("chr").removeprefix("CHR")
@@ -333,6 +456,8 @@ def build_rows(
         for panel_row in resolved.iter_rows(named=True):
             rsid = normalize_rsid(str(panel_row["rsid"]))
             hit = by_rsid.get(rsid)
+            curated_row = curated.get(rsid) or {}
+            curated_allele = curated_row.get("longevity_associated_allele") or ""
             base = {
                 "rsid": rsid,
                 "gene_symbol": panel_row["gene_symbol"],
@@ -344,9 +469,18 @@ def build_rows(
                 "trait": trait,
                 "source_id": source_id,
                 "effect_units": source.get("effect_units"),
-                "longevitymap_allele": longevitymap.get(rsid) or "",
+                "longevity_associated_allele": curated_allele,
+                "grch37_chrom_pos": grch37_by_rsid.get(rsid) or "",
+                "grch37_source": grch37_source.get(rsid, "not_found"),
+                "possible_cohort_overlap": "needs_curation",
             }
             if hit is None:
+                direction_label, direction_note = direction_vs_reported_longevity_allele(
+                    panel_ref=str(panel_row["ref"]),
+                    panel_alt=str(panel_row["alt"]),
+                    longevity_associated_allele=curated_allele or None,
+                    beta_panel_alt=None,
+                )
                 rows.append(
                     {
                         **base,
@@ -357,9 +491,8 @@ def build_rows(
                         "p": None,
                         "eaf_panel_alt": None,
                         "direction": "",
-                        "longevitymap_direction": (
-                            "needs_curation" if not longevitymap.get(rsid) else ""
-                        ),
+                        "direction_vs_reported_longevity_allele": direction_label,
+                        "direction_note": direction_note,
                         "q_bh": None,
                         "bonferroni_sig": False,
                         "nominal_p_lt_0_05": False,
@@ -375,6 +508,12 @@ def build_rows(
             eaf_col = source.get("effect_allele_frequency")
             eaf = _as_float(hit[str(eaf_col)]) if eaf_col else None
             if beta_raw is None:
+                direction_label, direction_note = direction_vs_reported_longevity_allele(
+                    panel_ref=str(panel_row["ref"]),
+                    panel_alt=str(panel_row["alt"]),
+                    longevity_associated_allele=curated_allele or None,
+                    beta_panel_alt=None,
+                )
                 rows.append(
                     {
                         **base,
@@ -385,7 +524,8 @@ def build_rows(
                         "p": p_value,
                         "eaf_panel_alt": eaf,
                         "direction": "",
-                        "longevitymap_direction": "needs_curation",
+                        "direction_vs_reported_longevity_allele": direction_label,
+                        "direction_note": direction_note,
                         "q_bh": None,
                         "bonferroni_sig": False,
                         "nominal_p_lt_0_05": False,
@@ -408,10 +548,10 @@ def build_rows(
                 status = "absent"
             else:
                 status = "present"
-            lm_dir = longevitymap_concordance(
+            direction_label, direction_note = direction_vs_reported_longevity_allele(
                 panel_ref=str(panel_row["ref"]),
                 panel_alt=str(panel_row["alt"]),
-                longevitymap_allele=longevitymap.get(rsid),
+                longevity_associated_allele=curated_allele or None,
                 beta_panel_alt=harm.beta_panel_alt,
             )
             rows.append(
@@ -424,7 +564,8 @@ def build_rows(
                     "p": p_value,
                     "eaf_panel_alt": harm.eaf_panel_alt,
                     "direction": effect_direction(harm.beta_panel_alt),
-                    "longevitymap_direction": lm_dir,
+                    "direction_vs_reported_longevity_allele": direction_label,
+                    "direction_note": direction_note,
                     "q_bh": None,
                     "bonferroni_sig": False,
                     "nominal_p_lt_0_05": bool(p_value is not None and p_value < 0.05),
@@ -433,7 +574,15 @@ def build_rows(
 
     for panel_row in held.iter_rows(named=True):
         rsid = normalize_rsid(str(panel_row["rsid"]))
+        curated_row = curated.get(rsid) or {}
+        curated_allele = curated_row.get("longevity_associated_allele") or ""
         for source in sources:
+            direction_label, direction_note = direction_vs_reported_longevity_allele(
+                panel_ref=str(panel_row["ref"]),
+                panel_alt=str(panel_row["alt"]),
+                longevity_associated_allele=curated_allele or None,
+                beta_panel_alt=None,
+            )
             rows.append(
                 {
                     "rsid": rsid,
@@ -446,7 +595,10 @@ def build_rows(
                     "trait": source["trait"],
                     "source_id": source["id"],
                     "effect_units": source.get("effect_units"),
-                    "longevitymap_allele": longevitymap.get(rsid) or "",
+                    "longevity_associated_allele": curated_allele,
+                    "grch37_chrom_pos": grch37_by_rsid.get(rsid) or "",
+                    "grch37_source": grch37_source.get(rsid, "not_found"),
+                    "possible_cohort_overlap": "needs_curation",
                     "status": "not_tested",
                     "harmonize_status": "",
                     "beta_panel_alt": None,
@@ -454,7 +606,8 @@ def build_rows(
                     "p": None,
                     "eaf_panel_alt": None,
                     "direction": "",
-                    "longevitymap_direction": "needs_curation",
+                    "direction_vs_reported_longevity_allele": direction_label,
+                    "direction_note": direction_note,
                     "q_bh": None,
                     "bonferroni_sig": False,
                     "nominal_p_lt_0_05": False,
@@ -464,7 +617,7 @@ def build_rows(
 
 
 def apply_multiple_testing(rows: list[dict[str, Any]]) -> dict[str, Any]:
-    """BH and Bonferroni over present+ambiguous tests with a p-value."""
+    """BH and Bonferroni over present tests with a p-value; also per-trait counts."""
     test_indices = [
         index
         for index, row in enumerate(rows)
@@ -479,6 +632,8 @@ def apply_multiple_testing(rows: list[dict[str, Any]]) -> dict[str, Any]:
     n_nominal = 0
     n_bh = 0
     n_bonf = 0
+    q_lt_rsids: list[str] = []
+    bonf_rsids: list[str] = []
     for index in test_indices:
         rows[index]["q_bh"] = q_list[index]
         p_value = float(rows[index]["p"])
@@ -487,10 +642,43 @@ def apply_multiple_testing(rows: list[dict[str, Any]]) -> dict[str, Any]:
             n_nominal += 1
         if q_list[index] is not None and float(q_list[index]) < 0.05:
             n_bh += 1
+            q_lt_rsids.append(str(rows[index]["rsid"]))
         if alpha_bonf is not None and p_value < alpha_bonf:
             rows[index]["bonferroni_sig"] = True
             n_bonf += 1
+            bonf_rsids.append(str(rows[index]["rsid"]))
     expected_null = 0.05 * n_tests
+
+    by_trait: dict[str, dict[str, Any]] = {}
+    traits = sorted({str(row["trait"]) for row in rows})
+    for trait in traits:
+        trait_rows = [row for row in rows if row["trait"] == trait]
+        n_present = sum(1 for row in trait_rows if row["status"] == "present")
+        n_absent = sum(1 for row in trait_rows if row["status"] == "absent")
+        n_ambiguous = sum(1 for row in trait_rows if row["status"] == "ambiguous")
+        n_not_tested = sum(1 for row in trait_rows if row["status"] == "not_tested")
+        trait_tests = [
+            row for row in trait_rows if row["status"] == "present" and row["p"] is not None
+        ]
+        n_trait_tests = len(trait_tests)
+        n_trait_nominal = sum(1 for row in trait_tests if float(row["p"]) < 0.05)
+        trait_q_rsids = [
+            str(row["rsid"])
+            for row in trait_tests
+            if row["q_bh"] is not None and float(row["q_bh"]) < 0.05
+        ]
+        trait_bonf_rsids = [str(row["rsid"]) for row in trait_tests if row["bonferroni_sig"]]
+        by_trait[trait] = {
+            "n_present": n_present,
+            "n_absent": n_absent,
+            "n_ambiguous": n_ambiguous,
+            "n_not_tested": n_not_tested,
+            "n_tests": n_trait_tests,
+            "n_p_lt_0_05": n_trait_nominal,
+            "n_expected_p_lt_0_05_under_null": 0.05 * n_trait_tests,
+            "rsids_q_bh_lt_0_05": trait_q_rsids,
+            "rsids_bonferroni_sig": trait_bonf_rsids,
+        }
     return {
         "n_tests": n_tests,
         "alpha_bonferroni": alpha_bonf,
@@ -498,6 +686,9 @@ def apply_multiple_testing(rows: list[dict[str, Any]]) -> dict[str, Any]:
         "n_expected_p_lt_0_05_under_null": expected_null,
         "n_q_bh_lt_0_05": n_bh,
         "n_bonferroni_sig": n_bonf,
+        "rsids_q_bh_lt_0_05": q_lt_rsids,
+        "rsids_bonferroni_sig": bonf_rsids,
+        "by_trait": by_trait,
     }
 
 
@@ -584,23 +775,41 @@ def release_check(path: Path, report: Path) -> dict[str, Any]:
 
 def main(
     variants: Path = typer.Option(DEFAULT_VARIANTS, "--variants"),
-    allele_evidence: Path = typer.Option(DEFAULT_ALLELE_EVIDENCE, "--allele-evidence"),
+    curation: Path = typer.Option(DEFAULT_CURATION, "--curation"),
     allele_audit: Path = typer.Option(DEFAULT_ALLELE_AUDIT, "--allele-audit"),
     sources_yaml: Path = typer.Option(DEFAULT_SOURCES, "--sources"),
+    grch37_cache: Path = typer.Option(DEFAULT_GRCH37_CACHE, "--grch37-cache"),
     out_dir: Path = typer.Option(DEFAULT_OUT_DIR, "--out-dir"),
 ) -> None:
     """Look up resolved panel variants in configured longevity GWAS files."""
     started = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
     sources = load_sources(sources_yaml)
     resolved, held = load_panel(variants)
-    longevitymap = load_longevitymap_alleles(allele_evidence)
+    curated = load_curated_longevity_alleles(curation)
     panel_maf = load_panel_maf(allele_audit)
+
+    all_rsids = {
+        normalize_rsid(str(r)) for r in resolved["rsid"].to_list() + held["rsid"].to_list()
+    }
+    timmers = next((s for s in sources if s.get("id") == "timmers2019_parental_lifespan"), None)
+    timmers_path: Path | None = None
+    if timmers is not None:
+        raw = Path(str(timmers["path"]))
+        timmers_path = raw if raw.is_absolute() else REPO_ROOT / raw
+    grch37_by_rsid, grch37_source = resolve_grch37_coordinates(
+        all_rsids,
+        timmers_path=timmers_path,
+        cache_dir=grch37_cache,
+    )
+
     rows, source_meta = build_rows(
         resolved=resolved,
         held=held,
         sources=sources,
-        longevitymap=longevitymap,
+        curated=curated,
         panel_maf=panel_maf,
+        grch37_by_rsid=grch37_by_rsid,
+        grch37_source=grch37_source,
     )
     mt = apply_multiple_testing(rows)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -621,8 +830,25 @@ def main(
             "n_not_tested": held.height,
             "not_tested_rsids": [normalize_rsid(str(r)) for r in held["rsid"].to_list()],
         },
-        "allele_evidence": _repo_relative(allele_evidence),
+        "curation": _repo_relative(curation),
         "allele_audit": _repo_relative(allele_audit),
+        "grch37": {
+            "timmers_path": None if timmers_path is None else _repo_relative(timmers_path),
+            "ensembl_host": ENSEMBL_GRCH37_HOST,
+            "cache_path": _repo_relative(grch37_cache),
+            "n_timmers": sum(1 for value in grch37_source.values() if value == "timmers"),
+            "n_ensembl_grch37": sum(
+                1 for value in grch37_source.values() if value == "ensembl_grch37"
+            ),
+            "n_not_found": sum(1 for value in grch37_source.values() if value == "not_found"),
+            "by_rsid": {
+                rsid: {
+                    "chrom_pos": grch37_by_rsid.get(rsid),
+                    "source": grch37_source.get(rsid, "not_found"),
+                }
+                for rsid in sorted(all_rsids)
+            },
+        },
         "sources": source_meta,
         "multiple_testing": mt,
         "forest": forest_meta,
@@ -635,15 +861,36 @@ def main(
         "disclaimer": (
             "Candidate-gene replication lookup in public lifespan/longevity GWAS. "
             "Most variants are not expected to replicate; absence of association is "
-            "a valid result. Effects are oriented to the panel alt allele."
+            "a valid result. Effects are oriented to the panel alt allele. "
+            "Direction versus a reported longevity allele uses only "
+            "data/curation/longevity_allele_direction.csv."
+        ),
+        "published_summary_stats_note": (
+            "The Timmers 2019 statistics include UK Biobank parental lifespan data. "
+            "Only published summary statistics were used. No UK Biobank participant-level "
+            "data were accessed."
+        ),
+        "cohort_overlap_note": (
+            "Some LongevityMap source studies may share cohorts with Deelen 2019 or "
+            "Timmers 2019. A hit is then not an independent replication. "
+            "possible_cohort_overlap is set to needs_curation for every row."
         ),
     }
     provenance_path.write_text(json.dumps(provenance, indent=2) + "\n", encoding="utf-8")
     typer.echo(f"Wrote {table_path}")
     typer.echo(f"Wrote {figure_path}")
     typer.echo(f"Wrote {provenance_path}")
+    for trait, stats in mt["by_trait"].items():
+        typer.echo(
+            f"{trait}: present={stats['n_present']} absent={stats['n_absent']} "
+            f"ambiguous={stats['n_ambiguous']} not_tested={stats['n_not_tested']}; "
+            f"p<0.05={stats['n_p_lt_0_05']} "
+            f"expected={stats['n_expected_p_lt_0_05_under_null']:.2f}; "
+            f"q<0.05 rsids={stats['rsids_q_bh_lt_0_05']}; "
+            f"bonferroni rsids={stats['rsids_bonferroni_sig']}"
+        )
     typer.echo(
-        f"tests={mt['n_tests']} p<0.05={mt['n_p_lt_0_05']} "
+        f"overall tests={mt['n_tests']} p<0.05={mt['n_p_lt_0_05']} "
         f"expected_under_null={mt['n_expected_p_lt_0_05_under_null']:.2f} "
         f"q<0.05={mt['n_q_bh_lt_0_05']}"
     )
