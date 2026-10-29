@@ -206,15 +206,13 @@ The age-correlation filter and the 8,000-probe cap use the training split only. 
 
 ## 6. Open items for tomorrow
 
-Historical open list from 2026-09-27. Items closed on `chore/sept-followup-to-main` are marked below; the rest remain open.
-
-1. Run `scripts/clock/ont_clock_site_coverage.py` on the listed public HG002 and bisulfite URLs, or leave a one-line note if the download is still blocked. Do not call those files Romanian, ROGEN, or cohort data. The CLI tools are already in micromamba `rogen-tools`. **Still open:** HG002 dry runs have not run.
-2. Fill the `INPUT_MANIFEST.md` section "September 2026: secure intake and dry runs", which still says "Filled in by later steps." **Done** on the follow-up branch (filled from panel provenance; states HG002 dry runs have not run).
-3. Decide whether to add `pysam` and `pod5`. Until `pod5` is installed, intake will not scan POD5 metadata. **Done:** optional extra `seq` in `pyproject.toml` (`uv sync --extra seq`).
-4. Send `docs/DATA_FLOW.md` for data-protection review. The file says it has not been reviewed. **Still open.**
-5. If a sanity log is required, run `scripts/panel/ro_longevity_panel_sanity.py` and keep the output. There is no saved flag count today. **Done:** writes `analysis/panel/ro_longevity_panel_sanity.tsv` and `sanity_check.flag_count` in provenance (0 on the recorded run).
-6. The eQTL coverage script is committed and unmentioned in the September manifest section. Say whether that matrix is in scope for the next write-up. **Partial:** script now also writes `analysis/eqtl/eqtl_datasets_used.tsv` (14 `dataset_id` values).
-7. rs9916344 and rs1801318 are q < 0.05 using gnomAD NFE counts for a different alt than the panel table. Decide whether those two tests should stay in the 5 of 47. Evidence for unresolved / corrected alleles is collected in [PENDING_ALLELES.md](../PENDING_ALLELES.md) without choosing an allele. **Still open** for the human allele decision.
+1. Run `scripts/clock/ont_clock_site_coverage.py` on the listed public HG002 and bisulfite URLs, or leave a one-line note if the download is still blocked. Do not call those files Romanian, ROGEN, or cohort data. The CLI tools are already in micromamba `rogen-tools`.
+2. Fill the `INPUT_MANIFEST.md` section "September 2026: secure intake and dry runs", which still says "Filled in by later steps."
+3. Decide whether to add `pysam` and `pod5`. Until `pod5` is installed, intake will not scan POD5 metadata.
+4. Send `docs/DATA_FLOW.md` for data-protection review. The file says it has not been reviewed.
+5. If a sanity log is required, run `scripts/panel/ro_longevity_panel_sanity.py` and keep the output. There is no saved flag count today.
+6. The eQTL coverage script is committed and unmentioned in the September manifest section. Say whether that matrix is in scope for the next write-up.
+7. rs9916344 and rs1801318 are q < 0.05 using gnomAD NFE counts for a different alt than the panel table. Decide whether those two tests should stay in the 5 of 47.
 
 ## 7. Provenance
 

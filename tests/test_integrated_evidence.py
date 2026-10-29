@@ -208,3 +208,38 @@ def test_palindromic_high_maf_is_ambiguous() -> None:
     assert status == "ambiguous_palindromic"
     assert beta is None
     assert flipped is False
+
+
+def test_significant_ambiguous_palindrome_counts_as_eqtl_support() -> None:
+    mod = _load_script()
+    panel = pl.DataFrame(
+        {
+            "rsid": ["rsPal"],
+            "panel_ref": ["A"],
+            "panel_alt": ["T"],
+            "gene_symbol": ["G"],
+            "tsi_differs_fdr05": [False],
+            "q_tsi_vs_nfe": [1.0],
+            "p_tsi_vs_nfe": [1.0],
+            "testability_rank": [1],
+            "af_alt_gnomad_nfe": [0.48],
+            "af_alt_1kg_tsi": [0.48],
+            "power_n1000_or1_5_alpha_bonferroni": [0.9],
+        }
+    )
+    assoc = pl.DataFrame(
+        {
+            "canonical_rsid": ["rsPal", "rsPal"],
+            "eqtl_alt_allele": ["T", "T"],
+            "dataset_id": ["Q1", "Q2"],
+            "beta": [-0.3, -0.2],
+            "fdr_bh": [0.01, 0.5],
+            "maf": [0.45, 0.45],
+        }
+    )
+    summary = mod.summarize_eqtl(assoc, panel)
+    row = summary.row(0, named=True)
+    assert row["eqtl_n_ambiguous"] == 2
+    assert row["eqtl_n_datasets_sig"] == 1
+    assert row["eqtl_alt_effect_direction"] == "ambiguous"
+    assert row["eqtl_datasets_sig"] == "Q1"

@@ -100,7 +100,7 @@ Metrics: [analysis/dryrun/hg002_ont_methylation_metrics.json](../analysis/dryrun
 |-------|---------------|------------------------|-----------|-------------------------|---------|
 | All CpGs in region | 80896 | 80333 | 0.976 | 0.014 | [all_cpgs](../analysis/dryrun/hg002_ont_vs_bisulfite_all_cpgs.png) |
 | HM450 probes in region | 653 | 634 | 0.988 | 0.014 | [hm450](../analysis/dryrun/hg002_ont_vs_bisulfite_hm450.png) |
-| Hannum nonzero coefficients in region | 4 | 4 | 0.998 | 0.031 | [hannum_nonzero](../analysis/dryrun/hg002_ont_vs_bisulfite_hannum_nonzero.png) |
+| Hannum nonzero coefficients in region | 4 | 4 | n = 4, too few for a correlation | 0.031 | [hannum_nonzero](../analysis/dryrun/hg002_ont_vs_bisulfite_hannum_nonzero.png) |
 
 The CLI tools are installed in the micromamba environment `rogen-tools`, not on the default `PATH` ([TOOLCHAIN_SEPT2026.md](TOOLCHAIN_SEPT2026.md)): samtools 1.24, bcftools 1.24, minimap2 2.31-r1302, modkit 0.6.4, tabix and bgzip from htslib 1.24. `pysam` and `pod5` are the optional project extra `seq` (`uv sync --extra seq --extra dev`).
 

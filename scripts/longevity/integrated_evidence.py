@@ -6,7 +6,8 @@ Join keys are ``rsid`` + panel alt. Evidence labels are defined in
 
 - ``GWAS support``: BH q < 0.05 in at least one longevity/lifespan trait
 - ``eQTL support``: FDR < 0.05 in at least one eQTL Catalogue dataset for the
-  panel alt (betas oriented to the panel alt; palindromic MAF > 0.42 ambiguous)
+  panel alt (betas oriented to the panel alt; palindromic MAF > 0.42 stay
+  ambiguous but still count when FDR < 0.05, with direction ``ambiguous``)
 - ``population difference``: TSI vs NFE BH q < 0.05
 
 When ``results/eqtl_associations_full.csv`` or ``results/annotation_layer.csv``
@@ -105,8 +106,9 @@ OUTPUT_COLUMN_SOURCES: dict[str, tuple[str, str]] = {
     ),
     "eqtl_alt_effect_direction": (
         "results/eqtl_associations_full.csv",
-        "sign consistency of mean oriented beta across significant datasets "
-        f"(or {NOT_AVAILABLE})",
+        "sign consistency of mean oriented beta across significant datasets; "
+        "ambiguous when only significant hits are palindromic MAF > "
+        f"{PALINDROME_MAF_MAX} (or {NOT_AVAILABLE})",
     ),
     "eqtl_datasets_sig": (
         "results/eqtl_associations_full.csv",
@@ -414,7 +416,12 @@ def summarize_eqtl_unavailable(panel: pl.DataFrame) -> pl.DataFrame:
 
 
 def summarize_eqtl(assoc: pl.DataFrame, panel: pl.DataFrame) -> pl.DataFrame:
-    """Count significant datasets after orienting betas onto the panel alt."""
+    """Count significant datasets after orienting betas onto the panel alt.
+
+    Palindromic sites with MAF above the guard are not oriented, but rows with
+    ``fdr_bh`` below the FDR threshold still count as eQTL support with
+    direction ``ambiguous``.
+    """
     rows: list[dict[str, Any]] = []
     has_maf = "maf" in assoc.columns
     for panel_row in panel.iter_rows(named=True):
@@ -428,6 +435,7 @@ def summarize_eqtl(assoc: pl.DataFrame, panel: pl.DataFrame) -> pl.DataFrame:
         )
         hits = assoc.filter(pl.col("canonical_rsid") == rsid)
         oriented_rows: list[dict[str, Any]] = []
+        ambiguous_sig_datasets: set[str] = set()
         n_flipped = 0
         n_ambiguous = 0
         for hit in hits.iter_rows(named=True):
@@ -445,19 +453,22 @@ def summarize_eqtl(assoc: pl.DataFrame, panel: pl.DataFrame) -> pl.DataFrame:
                 maf=maf,
                 panel_maf=panel_maf,
             )
+            fdr = hit.get("fdr_bh")
+            fdr_f = None if fdr is None else float(fdr)
             if status == "ambiguous_palindromic":
                 n_ambiguous += 1
+                if fdr_f is not None and fdr_f < FDR_THRESHOLD:
+                    ambiguous_sig_datasets.add(str(hit["dataset_id"]))
                 continue
             if beta_oriented is None:
                 continue
             if flipped:
                 n_flipped += 1
-            fdr = hit.get("fdr_bh")
             oriented_rows.append(
                 {
                     "dataset_id": hit["dataset_id"],
                     "beta": float(beta_oriented),
-                    "fdr_bh": None if fdr is None else float(fdr),
+                    "fdr_bh": fdr_f,
                 }
             )
         oriented = pl.DataFrame(oriented_rows) if oriented_rows else pl.DataFrame()
@@ -482,6 +493,10 @@ def summarize_eqtl(assoc: pl.DataFrame, panel: pl.DataFrame) -> pl.DataFrame:
             else:
                 direction = "mixed"
             datasets = ";".join(sorted(by_dataset.get_column("dataset_id").to_list()))
+        elif ambiguous_sig_datasets:
+            n_sig = len(ambiguous_sig_datasets)
+            direction = "ambiguous"
+            datasets = ";".join(sorted(ambiguous_sig_datasets))
         else:
             n_sig = 0
             direction = "none"

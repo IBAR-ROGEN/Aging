@@ -43,5 +43,14 @@
     "benchmark": 5.522
   },
   "generated_at_utc": "2026-10-28T10:02:01Z",
-  "notes": "bcftools mpileup/call/norm is an untuned baseline caller. F1 is reported as produced; not optimized."
+  "notes": "bcftools mpileup/call/norm is an untuned baseline caller. F1 is reported as produced; not optimized.",
+  "benchmark_vcf": "HG002_GRCh38_1_22_v4.2.1_benchmark.vcf.gz",
+  "benchmark_bed": "HG002_GRCh38_1_22_v4.2.1_benchmark_noinconsistent.bed",
+  "git_commit": "339c81435e352ad01423dc5387b24fe70bd4444e",
+  "sha256": {
+    "reference": "9cce8b926416dd96b152deea85188495b75f7ac8d634cc723a017067be8702b7",
+    "reference_file": "GCA_000001405.15_GRCh38_no_alt_analysis_set.fna",
+    "benchmark_vcf": "adb4d4a50048aa13353a06b84fcfcbca09a5d17525efaa4cea44f8822e81175c",
+    "benchmark_bed": "fba9a57c36ec88e5d14ea3e259c8866c7935f4998d3ec0fa2d6c3962da5b5575"
+  }
 }

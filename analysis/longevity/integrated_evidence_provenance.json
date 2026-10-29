@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-10-29T10:51:51Z",
+  "generated_at_utc": "2026-10-29T13:17:04Z",
   "disclaimer": "Integrated public-evidence labels for the prioritized longevity panel. Labels summarize GWAS, eQTL, and reference-population frequency tests. No label implies causality, Romanian enrichment, or a ROGEN association.",
   "join_keys": [
     "rsid",
@@ -64,7 +64,7 @@
     },
     "eqtl_alt_effect_direction": {
       "file": "results/eqtl_associations_full.csv",
-      "column": "sign consistency of mean oriented beta across significant datasets (or not_available)"
+      "column": "sign consistency of mean oriented beta across significant datasets; ambiguous when only significant hits are palindromic MAF > 0.42 (or not_available)"
     },
     "eqtl_datasets_sig": {
       "file": "results/eqtl_associations_full.csv",
@@ -186,10 +186,10 @@
   "n_variants": 47,
   "label_counts": {
     "GWAS support": 1,
-    "eQTL support": 15,
+    "eQTL support": 16,
     "population difference": 5
   },
-  "n_with_any_label": 19,
+  "n_with_any_label": 20,
   "release_check": {
     "path": "analysis/longevity/integrated_evidence.csv",
     "kind": "summary",

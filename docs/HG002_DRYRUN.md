@@ -12,9 +12,11 @@ bcftools is a baseline caller. Numbers below are **not** tuned for F1.
 | Region | `chr20:10000000-20000000` |
 | Downsample | samtools `-s 0.1` (seed 0, ~30x target) |
 | Aligner | `minimap2` |
-| Mean depth | 28.761419123858087 |
-| % mapped | 99.39 |
-| % duplicates | 0.25508340435894317 |
+| Mean depth | 28.761 |
+| % mapped | 99.390 |
+| % duplicates | 0.255 |
+
+Reads were taken from the chr20 window of a pre-aligned GIAB BAM and realigned to chr20 only. The mapping rate is therefore close to 100% by construction and is not a whole-genome mapping rate. Precision and recall apply to this window, not to the whole genome.
 
 ## Benchmark (GIAB v4.2.1, BED ∩ region)
 
@@ -22,13 +24,13 @@ bcftools is a baseline caller. Numbers below are **not** tuned for F1.
 
 | TP | FP | FN | Precision | Recall | F1 |
 |----|----|----|-----------|--------|----|
-| 13214 | 71 | 93 | 0.9947 | 0.993 | 0.9938 |
+| 13214 | 71 | 93 | 0.995 | 0.993 | 0.994 |
 
 ### Indels
 
 | TP | FP | FN | Precision | Recall | F1 |
 |----|----|----|-----------|--------|----|
-| 1898 | 182 | 172 | 0.9159 | 0.9169 | 0.9164 |
+| 1898 | 182 | 172 | 0.916 | 0.917 | 0.916 |
 
 ## Tool versions
 
