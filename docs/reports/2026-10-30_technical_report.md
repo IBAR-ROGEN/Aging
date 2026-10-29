@@ -1,14 +1,14 @@
-# Technical report, 2026-10-30
+# Technical report, 2026-10-30 (updated 2026-10-29)
 
-Branch: `chore/sept-followup-to-main`. Read from git history and the files named below. Numbers are taken from those files; analyses were not rerun for this note.
+Branch: `chore/sept-followup-to-main` tip `82f8f98`. Numbers below are taken from the cited files and `git log`; analyses for this note were not re-run beyond what Fix C already wrote on 2026-10-29.
 
-The dated report `docs/reports/2026-09-27_technical_report.md` is restored to its text at commit `664881d` and is not edited further. HG002 and ONT status updates for October belong here, not in that file.
+The dated report `docs/reports/2026-09-27_technical_report.md` stays at its text from commit `664881d`. October status belongs here.
 
-Repo-improvement Fixes 1–6 (August review) and September Prompts 5–6 appear only where they actually ran. Fix 4 (shim deletion), Fix 6 (optional-extras / lower-priority cleanup), and Prompt 6 (no discrete labeled run found in this period) are not claimed as done.
+Repo-improvement Fixes 1–6 (August review) and September Prompts 5–6 appear only where they actually ran. Fix 4 (shim deletion), Fix 6 (optional-extras cleanup), and Prompt 6 (no discrete labeled run found) are not claimed as done.
 
 ## 1. Summary
 
-September leftovers that were missing from `main` after the squash merge are on this branch: panel sanity TSV, pending-allele notes, eQTL dataset lock file, optional `pysam`/`pod5` seq extra, and INPUT_MANIFEST provenance. Public HG002 short-read and ONT-versus-bisulfite dry runs finished on the chr20 window. A pyaging published-clock benchmark sits next to the retrained Hannum model. The 47-variant panel was rebuilt after Ensembl HTTP 500/503 timeouts (cache prefilled; Prompt 5 rerun). A longevity GWAS lookup against public summary statistics, a TSI-versus-NFE allele audit, and an integrated public-evidence table (GWAS + eQTL Catalogue + panel frequencies) are committed. Direction uses curated longevity alleles only; empty curation yields `needs_curation`. No Romanian sequencing delivery is in the tree.
+September leftovers missing from `main` after the squash merge are on this branch. Public HG002 short-read and ONT-versus-bisulfite dry runs finished on the chr20 window. A pyaging published-clock benchmark sits next to the retrained Hannum model (`d1b45e8`, repaired in `98ebcf0`). Commit `8f13043` recorded that main’s tree already equals `e0a2233` on this branch. The 47-variant panel was rebuilt after Ensembl HTTP 500/503 (cache prefilled). Fix C (`82f8f98`) recorded DT allele decisions: all 47 `alt_status=resolved`; GWAS lookup now tests 47 variants (`n_not_tested=0`); integrated evidence and panel sanity provenance were refreshed. Longevity-allele curation is still empty → direction `needs_curation`. ChrX/chrY sensitivity produced a byte-identical clock; noXY joblib/CSVs were deleted, provenance kept (`docs/CLOCK_SEX_CHECK.md`). No Romanian sequencing delivery is in the tree. PR to `main` is not opened.
 
 ## 2. Sub-activities
 
@@ -32,23 +32,31 @@ Status: DONE-PUBLIC-DATA for the chr20 window. BUILT-NOT-RUN for the genome-wide
 
 ### Published-clock benchmark
 
-`scripts/clock/benchmark_published_clocks.py` scored pyaging 0.5.7 clocks (`horvath2013`, `hannum`, `dnamphenoage`, `dunedinpace`, `grimage2`) plus `rogen_hannum_retrain` on GSE87571 (n=729) and the GSE40279 held-out split (n=132). Commit `d1b45e8` added the benchmark and integrated evidence; `98ebcf0` repaired GrimAge2 features and the GEO matrix. Outputs under `analysis/clocks_benchmark/` (provenance start `2026-10-28T13:46:45Z`); doc `docs/CLOCK_BENCHMARK.md`. Aggregate tables passed `rogen-release-check`. A separate clock transfer / missing-CpG dropout script was tasked; `docs/CLOCK_TRANSFER_CHECK.md` and `analysis/clock/` transfer outputs are not present.
+`scripts/clock/benchmark_published_clocks.py` scored pyaging 0.5.7 clocks (`horvath2013`, `hannum`, `dnamphenoage`, `dunedinpace`, `grimage2`) plus `rogen_hannum_retrain` on GSE87571 (n=729) and the GSE40279 held-out split (n=132). Commit `d1b45e8` added the benchmark and integrated evidence; `98ebcf0` repaired GrimAge2 features and the GEO matrix. Current provenance: `generated_at_utc` 2026-10-28T21:43:52Z, `finished_at_utc` 2026-10-28T21:47:30Z. Outputs under `analysis/clocks_benchmark/`; doc `docs/CLOCK_BENCHMARK.md`. Four aggregate tables passed `rogen-release-check`. Clock transfer / missing-CpG dropout: no `docs/CLOCK_TRANSFER_CHECK.md` / transfer outputs in tree.
 
 Status: DONE for the published-clock benchmark. BUILT-NOT-RUN for the transfer/dropout check.
 
-### A.2.1.11.1 Panel rebuild (Prompt 5), TSI audit, GWAS lookup, integrated evidence
+### Clock sex check (chrX / chrY)
 
-Live Ensembl REST returned intermittent HTTP 500/503 and read timeouts during panel work. The Ensembl release-116 variation cache was prefilled so the panel script could finish offline. Prompt 5 (`uv run python scripts/panel/ro_longevity_panel_power.py`) was rerun; provenance `generated_at_utc` 2026-10-28T18:10:11Z records Ensembl `cache_hits` 47, `new_queries` 0, `request_failures` 0, release 116.
+Commit `441ba92` exported coefficients, retrained excluding chrX/chrY before the age filter, and wrote `docs/CLOCK_SEX_CHECK.md`. Main model has 0 non-zero chrX/chrY coefficients; neither main nor noXY shows a sex difference on GSE40279 held-out or GSE87571. Fix C (`82f8f98`) deleted the byte-identical noXY joblib and CSVs; provenance JSON kept. Sentence in the doc: removing chrX/chrY changed two candidate probes, neither in the top 8,000, so the retrained model was byte-identical and is not stored separately.
 
-TSI versus NFE allele audit (`analysis/panel/tsi_nfe_allele_audit.tsv`): all 47 rows `alt_match=true`, action `keep`. The five q < 0.05 rsIDs are unchanged before and after (`tsi_nfe_q_before_after.tsv`). Complement of the TSI ref is used only at biallelic TSI sites (commit `624a559`).
+Status: DONE.
 
-Longevity GWAS lookup (doc calls this Prompt 4): `scripts/longevity/longevity_gwas_lookup.py` against Timmers parental lifespan and Deelen longevity percentiles. After allele decisions (DT, 2026-10-28) all 47 panel alts are `resolved` and tested (`n_not_tested=0` in provenance). Direction versus reported longevity allele uses only `data/curation/longevity_allele_direction.csv` (commit `c419c9e`); empty longevity alleles still yield `needs_curation`.
+### Fix C — allele decisions, GWAS 47, integrated evidence
 
-Integrated evidence (`scripts/longevity/integrated_evidence.py`, commit `31b2886`): joins GWAS, panel TSI/NFE, power grid, and local eQTL Catalogue tables; orients eQTL effects to the panel alt; missing eQTL inputs would be `not_available` (inputs were present this run). Release check passed.
+Commit `82f8f98`. Rule (DT, 2026-10-28): alt = allele reported at consistent frequency by gnomAD v4 NFE and 1000 Genomes CEU/GBR; LongevityMap supporting only. Twelve alts confirmed without changing alleles; `alt_status` set to `resolved` for all 47 rows in `data/processed/variants_47_input_v2.csv`. Decision notes in `docs/PENDING_ALLELES.md` (strand flips for rs28366003 / rs882696; palindrome note for rs155979). GWAS lookup re-run: `n_resolved=47`, `n_not_tested=0`. Integrated evidence re-run. Panel sanity re-run; provenance `sanity_check.flag_count=0`. Curation CSV: notes only for the two LongevityMap strand flips; longevity alleles not filled from papers.
 
-Prompt 6: no discrete Prompt 6 execution was identified in the October transcripts; it is not marked done.
+Status: DONE for Fix C steps that edit tree / rerun lookup. Longevity-allele curation from papers still open.
 
-Status: panel Prompt 5 DONE on public reference data. TSI audit DONE. GWAS lookup DONE-PUBLIC-DATA. Integrated evidence DONE-PUBLIC-DATA (eQTL inputs are local gitignored artefacts).
+### A.2.1.11.1 Panel rebuild (Prompt 5), TSI audit
+
+Live Ensembl REST returned intermittent HTTP 500/503 during panel work. Release-116 variation cache was prefilled. Prompt 5 provenance `generated_at_utc` 2026-10-28T18:10:11Z: Ensembl `cache_hits` 47, `new_queries` 0, `request_failures` 0, release 116.
+
+TSI versus NFE allele audit (`analysis/panel/tsi_nfe_allele_audit.tsv`): all 47 rows `alt_match=true`, action `keep`. Five q < 0.05 rsIDs unchanged (`tsi_nfe_q_before_after.tsv`). TSI ref-complement only at biallelic TSI sites (`624a559`).
+
+Prompt 6: no discrete labeled execution found; not marked done.
+
+Status: panel Prompt 5 DONE. TSI audit DONE.
 
 ### Repo-improvement Fixes 1–6 (August; status only)
 
@@ -58,7 +66,7 @@ Status: panel Prompt 5 DONE on public reference data. TSI audit DONE. GWAS looku
 | 2 | Promote July annotate / GSE87571 eval to package CLIs | yes | `689d301` |
 | 3 | Route VEP and GSE87571 loading through shared package APIs | yes | `cbf355c` |
 | 4 | Delete root/scripts runpy shims | no | skipped (session went to Fix 5) |
-| 5 | Unify lint/format on Ruff; drop black/isort/flake8 | yes | `704df36` |
+| 5 | Docs lint/format on Ruff; drop black/isort/flake8 | yes | `704df36` |
 | 6 | Optional extras / lower-priority cleanup from the same review | no | no matching commit in that sequence |
 
 ## 3. Results
@@ -83,9 +91,9 @@ Every number below is taken from the cited file.
 | Benchmark VCF sha256 | adb4d4a50048aa13353a06b84fcfcbca09a5d17525efaa4cea44f8822e81175c | same file, `sha256.benchmark_vcf` |
 | Benchmark BED sha256 | fba9a57c36ec88e5d14ea3e259c8866c7935f4998d3ec0fa2d6c3962da5b5575 | same file, `sha256.benchmark_bed` |
 | Wall time fetch / intake / align / call / benchmark (s) | 3474.107 / 3.169 / 25.96 / 30.933 / 5.522 | same file, `wall_time_seconds` |
-| ONT all_cpgs n / depth≥10 / Pearson r / mean ONT−bisulfite | 80896 / 80333 / 0.9755608294915357 / 0.013932325591353035 | `analysis/dryrun/hg002_ont_methylation_metrics.json` `levels[all_cpgs]` |
-| ONT hm450 n / depth≥10 / r / mean diff | 653 / 634 / 0.9883002412213961 / 0.013610999427427344 | same file, `levels[hm450]` |
-| ONT hannum_nonzero n / depth≥10 / r / mean diff | 4 / 4 / 0.9979509346301134 / 0.03086132666268903 | same file, `levels[hannum_nonzero]` |
+| ONT all_cpgs n / depth≥10 / Pearson r / mean ONT−bisulfite | 80896 / 80333 / 0.9755608294915357 / 0.013932325591353035 | `analysis/dryrun/hg002_ont_methylation_metrics.json` |
+| ONT hm450 n / depth≥10 / r / mean diff | 653 / 634 / 0.9883002412213961 / 0.013610999427427344 | same file |
+| ONT hannum_nonzero n / depth≥10 / r / mean diff | 4 / 4 / 0.9979509346301134 / 0.03086132666268903 | same file |
 | modkit | 0.6.4 --cpg --combine-strands --modified-bases 5mC 5hmC | same file, `modkit` |
 | Panel variants | 47 | `analysis/panel/ro_longevity_panel_provenance.json` `input_variants.n_rows` |
 | Panel provenance time | 2026-10-28T18:10:11Z | same file, `generated_at_utc` |
@@ -95,8 +103,9 @@ Every number below is taken from the cited file.
 | TSI vs NFE tests | 47 (46 chi-square, 1 Fisher) | same file, `tsi_vs_nfe` |
 | Rows with `tsi_differs_fdr05` | 5 of 47 | same file, `tsi_vs_nfe.q_below_fdr05` |
 | Allele audit alt_match / keep | 47 / 47 | row tally of `analysis/panel/tsi_nfe_allele_audit.tsv` |
-| Sanity flagged rows | 0 of 47 | row tally of `analysis/panel/ro_longevity_panel_sanity.tsv` |
-| Sanity complement_skipped | 10 | same TSV, `complement_skipped==true` |
+| v2 `alt_status=resolved` | 47 of 47 | row tally of `data/processed/variants_47_input_v2.csv` |
+| Sanity flagged rows | 0 of 47 | `analysis/panel/ro_longevity_panel_sanity.tsv`; provenance `sanity_check.flag_count` |
+| Sanity complement_skipped | 10 | same TSV |
 | Panel / power-grid release check | passed, return code 0 | provenance `release_check` |
 | GWAS resolved / not tested | 47 / 0 | `analysis/longevity/longevity_gwas_lookup_provenance.json` `panel` |
 | GWAS n_tests / n_p&lt;0.05 / expected under null | 138 / 11 / 6.9 | same file, `multiple_testing` |
@@ -106,12 +115,12 @@ Every number below is taken from the cited file.
 | Integrated rows | 47 | row tally of `analysis/longevity/integrated_evidence.csv` |
 | Integrated label counts | GWAS support 1; eQTL support 15; population difference 5 | `analysis/longevity/integrated_evidence_provenance.json` `label_counts` |
 | Integrated eQTL input status | ok | same file, `inputs.eqtl_input_status` |
-| eQTL datasets locked | 14 | same file, `inputs.eqtl_datasets_used.n_datasets`; also `analysis/eqtl/eqtl_datasets_used.tsv` |
+| eQTL datasets locked | 14 | same file; also `analysis/eqtl/eqtl_datasets_used.tsv` |
 | Integrated eqtl_n_ambiguous (sum) | 14 | sum of column in `integrated_evidence.csv` |
 | Integrated eqtl_n_flipped (sum) | 0 | same CSV |
 | Integrated release check | passed | provenance `release_check` |
 | Integrated time | 2026-10-29T10:51:51Z | provenance `generated_at_utc` |
-| Clocks benchmark start / finish | 2026-10-28T13:46:45Z / 2026-10-28T13:51:09Z | `analysis/clocks_benchmark/provenance.json` |
+| Clocks benchmark generated / finished | 2026-10-28T21:43:52Z / 2026-10-28T21:47:30Z | `analysis/clocks_benchmark/provenance.json` |
 | pyaging version | 0.5.7 | same file |
 | CpG columns used | 28724 | same file, `cpg_restriction.n_probes` |
 | GSE87571 horvath2013 MAE / r / mean signed error | 3.8986034530126403 / 0.9712699385193299 / 0.33326145909157345 | `analysis/clocks_benchmark/metrics_by_clock_cohort.csv` |
@@ -125,62 +134,69 @@ Every number below is taken from the cited file.
 | GSE87571 horvath2013 sex coef / Bonf p | −0.9989383079492378 / 0.04429368968127986 | same CSV |
 | GSE87571 rogen_hannum_retrain sex Bonf p | 1.0 | same CSV |
 | Clock aggregate release checks | 4 passed | provenance `release_check` |
+| noXY joblib stored | no (deleted; byte-identical to main) | `82f8f98`; provenance JSON kept |
 
 ## 4. Status
 
 | Item | Status | Evidence | Next step |
 |------|--------|----------|-----------|
-| September leftovers (sanity TSV, pending alleles, eqtl lock, seq extra) | DONE | `974539b`, `analysis/panel/ro_longevity_panel_sanity.tsv`, `docs/PENDING_ALLELES.md` | Allele decisions recorded (DT 2026-10-28); all 47 resolved. |
-| HG002 short-read dry run | DONE-PUBLIC-DATA | `analysis/dryrun/hg002_shortread_metrics.json`, `docs/HG002_DRYRUN.md` | Do not label GIAB as Romanian/ROGEN. |
-| ONT vs bisulfite (chr20 window) | DONE-PUBLIC-DATA | `analysis/dryrun/hg002_ont_methylation_metrics.json` | Genome-wide Hannum-site extension still open. |
-| Genome-wide ONT clock extension | BUILT-NOT-RUN | Task opened; no metrics artefact in tree | Run or drop explicitly. |
-| Published-clock benchmark | DONE | `analysis/clocks_benchmark/provenance.json` 2026-10-28T13:46:45Z | Published Hannum on GSE40279 held-out is in-sample. |
-| Clock transfer / dropout check | BUILT-NOT-RUN | No `docs/CLOCK_TRANSFER_CHECK.md` / `analysis/clock/` transfer outputs | Run if sample-size planning is needed. |
-| Panel Prompt 5 rerun | DONE | provenance 2026-10-28T18:10:11Z; Ensembl cache hits 47 | Prefer cache when REST is unstable. |
-| Prompt 6 | not run (no labeled execution found) | — | Identify the intended Prompt 6 before claiming it. |
-| TSI vs NFE allele audit | DONE | `tsi_nfe_allele_audit.tsv` 47 keep; q list unchanged | Keep complement policy biallelic-only. |
-| Longevity GWAS lookup | DONE-PUBLIC-DATA | provenance 2026-10-29T10:51:09Z; 47 tested | Fill curated longevity alleles; today all `needs_curation`. |
-| Integrated evidence | DONE-PUBLIC-DATA | provenance 2026-10-28T19:17:02Z; eQTL `ok` | Rebuild eQTL tables after v2 allele changes if a writer exists outside the checkout. |
-| Intake on Romanian delivery | DONE-SYNTHETIC (unchanged) | `docs/DATA_FLOW.md` | Data-protection review still pending. |
-| Fix 1 CI / Fix 2 CLIs / Fix 3 shared APIs / Fix 5 Ruff | DONE (August) | `bb6249c`, `689d301`, `cbf355c`, `704df36` | — |
-| Fix 4 shim deletion / Fix 6 extras cleanup | not run | — | Only if still wanted. |
+| September leftovers | DONE | `974539b`, sanity TSV, `PENDING_ALLELES.md` | — |
+| Merge feature→main on follow-up branch | DONE (tree) | `8f13043` | Open PR to `main` when ready |
+| HG002 short-read dry run | DONE-PUBLIC-DATA | `hg002_shortread_metrics.json` | Do not label GIAB as Romanian/ROGEN |
+| ONT vs bisulfite (chr20) | DONE-PUBLIC-DATA | `hg002_ont_methylation_metrics.json` | Genome-wide extension still open |
+| Genome-wide ONT clock extension | BUILT-NOT-RUN | no metrics artefact | Run or defer in writing |
+| Published-clock benchmark | DONE | `d1b45e8`, `98ebcf0`, provenance 2026-10-28T21:43:52Z | Transfer/dropout still open |
+| Clock sex check / noXY cleanup | DONE | `441ba92`, `82f8f98`, `CLOCK_SEX_CHECK.md` | — |
+| Fix C allele decisions | DONE | `82f8f98`, v2 all resolved | — |
+| Panel Prompt 5 rerun | DONE | provenance 2026-10-28T18:10:11Z | Prefer cache when REST unstable |
+| Prompt 6 | not run | — | Identify intent before claiming |
+| TSI vs NFE allele audit | DONE | 47 keep; q list unchanged | Keep biallelic-only complement |
+| Longevity GWAS lookup | DONE-PUBLIC-DATA | provenance 2026-10-29T10:51:09Z; **47 tested** | Fill curated longevity alleles |
+| Integrated evidence | DONE-PUBLIC-DATA | provenance 2026-10-29T10:51:51Z; eQTL `ok` | Rebuild eQTL tables vs v2 if needed |
+| Intake on Romanian delivery | DONE-SYNTHETIC | `docs/DATA_FLOW.md` | Data-protection review pending |
+| Fix 1 / 2 / 3 / 5 (August) | DONE | `bb6249c`, `689d301`, `cbf355c`, `704df36` | — |
+| Fix 4 / Fix 6 (August) | not run | — | Only if still wanted |
+| PR to `main` | Not opened | — | Human opener |
 
 ## 5. Decisions and problems
 
-Dated September report text stays at `664881d`. Later HG002 completion must not rewrite that file’s open items or summary.
+Dated September report text stays at `664881d`.
 
 HG002 short-read reads came from a pre-aligned GIAB BAM window and were realigned to chr20 only. Percent mapped near 100% is by construction. Precision and recall are window-scoped.
 
-Ensembl live REST returned HTTP 500 and 503 with retries and read timeouts during the October panel rebuild. The release-116 variation cache was prefilled; Prompt 5 then completed with `cache_hits` 47 and `new_queries` 0. Release assert remains 116 via `GET /info/data`.
+Ensembl live REST returned HTTP 500/503 during the October panel rebuild. Release-116 cache prefilled; Prompt 5 completed with `cache_hits` 47, `new_queries` 0.
 
-TSI versus NFE open item 7 from September: audit on `variants_47_input_v2.csv` found panel alt matching the gnomAD counts used for all 47 rows. The “5 of 47” q < 0.05 set is unchanged. TSI ref-complement is applied only at biallelic TSI sites.
+TSI audit: panel alt matches gnomAD counts for all 47 rows. “5 of 47” q < 0.05 unchanged. After Fix C those five no longer rest on unconfirmed alts (TSI already used these alts).
 
-GWAS direction ignores LongevityMap alt when deciding concordance; empty curation CSV ⇒ `needs_curation` for all rows, including where LongevityMap alt equals panel alt. Only rs4420638 reaches q < 0.05 (three traits).
+GWAS direction uses only curated longevity alleles; empty curation ⇒ `needs_curation`. Only rs4420638 reaches q < 0.05 (three traits). LongevityMap must not fill curation for rs28366003 / rs882696 (opposite strand).
 
-Integrated eQTL inputs are local gitignored `results/` files; there is no in-repo writer. Orientation to panel alt recorded 14 ambiguous palindromic rows and 0 flips in the committed table. July Combined_Master / GTEx parquet siblings still use pre-v2 alleles for eleven rsIDs (`docs/INTEGRATIVE_PIPELINE.md`).
+Integrated eQTL inputs are local gitignored `results/` files. Orientation recorded 14 ambiguous palindromic rows and 0 flips.
 
-POD5: a scanned-path unit test was added in a side chat; with pod5 0.3.49, `Reader` has no `run_infos`, so intake still reports metadata not scanned. Intake behaviour was not changed in that task.
+POD5: with pod5 0.3.49, `Reader` has no `run_infos`; intake still reports metadata not scanned.
 
-Follow-up branch merge onto `main` as a PR remains for the human opener; `8f13043` already records that main’s tree equals `e0a2233` and is on this branch.
+Earlier chat reports that said the merge failed or the clock benchmark was not run were wrong: `8f13043` resolved the merge; `d1b45e8` and `98ebcf0` ran and repaired the benchmark. This file uses git and output files only.
 
 ## 6. Open items
 
-1. Genome-wide ONT versus bisulfite over Hannum non-zero CpGs and predicted-age platform shift, or an explicit deferral note.
-2. Clock transfer / missing-CpG dropout outputs (`docs/CLOCK_TRANSFER_CHECK.md`) if sample-size planning is in scope.
-3. Curate `data/curation/longevity_allele_direction.csv` so GWAS direction is not entirely `needs_curation`.
-4. Fill `data/curation/longevity_allele_direction.csv` longevity alleles from papers (not LongevityMap), especially rs28366003 and rs882696.
-5. Rebuild or document the local eQTL Catalogue tables against `variants_47_input_v2.csv`.
+1. Open PR for `chore/sept-followup-to-main` → `main`.
+2. Fill `data/curation/longevity_allele_direction.csv` from papers (not LongevityMap), especially rs28366003 and rs882696.
+3. Genome-wide ONT versus bisulfite over Hannum non-zero CpGs, or explicit deferral.
+4. Clock transfer / missing-CpG dropout outputs if sample-size planning is in scope.
+5. Rebuild or document local eQTL Catalogue tables against `variants_47_input_v2.csv`.
 6. Data-protection review of `docs/DATA_FLOW.md`; Romanian delivery intake still blocked.
-7. Decide whether Fix 4 (shim deletion) and Fix 6 (extras cleanup) are still wanted.
+7. Decide whether August Fix 4 / Fix 6 are still wanted.
 8. Identify Prompt 6 if it was meant to be a specific October run.
 9. POD5 metadata scan versus pod5 Reader API (`run_infos` missing on 0.3.49).
 
 ## 7. Provenance
 
-Commits on `chore/sept-followup-to-main` with author dates on 2026-10-28 (and the leftover close), from `git log --date=iso`:
+Selected commits on `chore/sept-followup-to-main` (`git log --date=iso`):
 
 | Hash | Time | Message |
 |------|------|---------|
+| 82f8f98 | 2026-10-29 12:53:28 +0200 | Apply Fix C: resolve 47 panel alleles and rerun GWAS. |
+| 441ba92 | 2026-10-29 00:24:53 +0200 | Make the Hannum clock reproducible and test chrX/chrY sex sensitivity. |
+| 98ebcf0 | 2026-10-28 23:49:45 +0200 | Repair published-clock benchmark: GrimAge2 features and GEO matrix. |
 | 31b2886 | 2026-10-28 21:17:34 +0200 | Orient integrated eQTL evidence to the panel alt. |
 | 624a559 | 2026-10-28 20:42:28 +0200 | Audit TSI vs NFE alleles and restrict TSI complement to biallelic sites. |
 | c419c9e | 2026-10-28 20:25:33 +0200 | Fix GWAS direction to use curated longevity alleles only. |
