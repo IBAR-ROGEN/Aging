@@ -170,5 +170,14 @@
       "stderr": "",
       "status": "passed"
     }
-  ]
+  ],
+  "sanity_check": {
+    "panel_path": "analysis/panel/ro_longevity_panel.csv",
+    "output_path": "analysis/panel/ro_longevity_panel_sanity.tsv",
+    "flag_count": 0,
+    "af_gap": 0.15,
+    "complement_skip_lo": 0.4,
+    "complement_skip_hi": 0.6,
+    "note": "Complement test skipped when NFE AF is between 0.4 and 0.6: the allele frequency and its complement are both near 0.5, so a smaller distance to 1 - CEU does not show that the alleles were swapped."
+  }
 }

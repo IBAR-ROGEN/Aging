@@ -12,7 +12,7 @@ Non-zero coefficients in `models/gse40279_hannum450k_elasticnet.joblib` mapped w
 | Sum \|coef\| all non-zero | 1352.22 |
 | chrX+chrY share of sum \|coef\| | 0 |
 
-The noXY model uses the same GSE40279 data, split (`test_size=0.2`, `random_state=42`), missingness and age-correlation filters, probe cap (8000), and ElasticNetCV settings as the main provenance, except chrX and chrY probes are removed after the missingness filter and before the age-correlation filter. Artifact: `models/gse40279_hannum450k_elasticnet_noXY.joblib`.
+The noXY sensitivity used the same GSE40279 data, split (`test_size=0.2`, `random_state=42`), missingness and age-correlation filters, probe cap (8000), and ElasticNetCV settings as the main provenance, except chrX and chrY probes are removed after the missingness filter and before the age-correlation filter. Removing chrX and chrY changed two candidate probes, neither in the top 8,000, so the retrained model was byte-identical and is not stored separately. Provenance only: `models/gse40279_hannum450k_elasticnet_noXY.provenance.json`.
 
 ## Accuracy and sex model
 

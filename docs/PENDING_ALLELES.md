@@ -1,7 +1,10 @@
 # Pending allele decisions
 
-Evidence already in the repo for variants that still need a human allele choice.
-No allele is chosen here.
+Allele decisions recorded (DT, 2026-10-28). Rule: alt = the allele that
+gnomAD v4 NFE and 1000 Genomes CEU and GBR all report at consistent frequency.
+LongevityMap is supporting evidence only (mixed strands). All 12 blocks below
+are `alt_status=resolved` in `data/processed/variants_47_input_v2.csv`; alleles
+were not changed.
 
 Sources:
 - `analysis/panel/allele_audit_47.csv` — GRCh38 ref, Ensembl alt list
@@ -10,12 +13,11 @@ Sources:
 - `data/processed/manual_resolution_alleles.csv` — header only (no rows)
 - Ensembl REST release-116 variation `populations` (CEU and GBR AFs), matching the panel cache
 
-`manual_resolution_alleles.csv` has no data rows. Blocks below cover every
-`variants_47_input_v2.csv` row with `alt_status != "resolved"`.
+`manual_resolution_alleles.csv` has no data rows.
 
 ---
 
-## rs28366003 (MT2A) — alt_status=corrected
+## rs28366003 (MT2A) — alt_status=resolved
 
 - GRCh38 ref base: A
 - Ensembl alleles: C|G
@@ -24,8 +26,9 @@ Sources:
 - GBR AF: G=0.0274725274725275|A=0.972527472527473
 - LongevityMap allele: C
 - v2 note: C=longevitymap|G=eqtl+gnomad_nfe
+- Decision: alt G (DT, 2026-10-28). LongevityMap allele is on the opposite strand.
 
-## rs1800774 (CETP) — alt_status=corrected
+## rs1800774 (CETP) — alt_status=resolved
 
 - GRCh38 ref base: C
 - Ensembl alleles: A|G|T
@@ -34,8 +37,9 @@ Sources:
 - GBR AF: C=0.620879120879121|T=0.379120879120879
 - LongevityMap allele: T
 - v2 note: T=longevitymap+gnomad_nfe
+- Decision: alt T (DT, 2026-10-28).
 
-## rs5882 (CETP) — alt_status=unresolved
+## rs5882 (CETP) — alt_status=resolved
 
 - GRCh38 ref base: G
 - Ensembl alleles: A|C
@@ -44,8 +48,9 @@ Sources:
 - GBR AF: G=0.296703296703297|A=0.703296703296703
 - LongevityMap allele: (empty in allele_evidence_47.csv)
 - v2 note: gnomAD v4 alternate alleles: A; Ensembl alternate alleles: A|C
+- Decision: alt A (DT, 2026-10-28). Ref G is the minor allele in Europeans; the Ensembl C allele is absent from gnomAD NFE.
 
-## rs41383 (NLRC5) — alt_status=corrected
+## rs41383 (NLRC5) — alt_status=resolved
 
 - GRCh38 ref base: T
 - Ensembl alleles: A|C
@@ -54,8 +59,9 @@ Sources:
 - GBR AF: C=0.472527472527473|T=0.527472527472527
 - LongevityMap allele: C
 - v2 note: C=longevitymap+gnomad_nfe
+- Decision: alt C (DT, 2026-10-28).
 
-## rs9916344 (PITPNM3) — alt_status=corrected
+## rs9916344 (PITPNM3) — alt_status=resolved
 
 - GRCh38 ref base: C
 - Ensembl alleles: A|G|T
@@ -64,8 +70,9 @@ Sources:
 - GBR AF: T=0.521978021978022|C=0.478021978021978
 - LongevityMap allele: T
 - v2 note: T=eqtl+longevitymap+gnomad_nfe
+- Decision: alt T (DT, 2026-10-28).
 
-## rs7207422 (ASIC2) — alt_status=corrected
+## rs7207422 (ASIC2) — alt_status=resolved
 
 - GRCh38 ref base: A
 - Ensembl alleles: C|G
@@ -74,8 +81,9 @@ Sources:
 - GBR AF: A=0.791208791208791|G=0.208791208791209
 - LongevityMap allele: G
 - v2 note: G=longevitymap+gnomad_nfe
+- Decision: alt G (DT, 2026-10-28).
 
-## rs1801318 (NDUFS1) — alt_status=corrected
+## rs1801318 (NDUFS1) — alt_status=resolved
 
 - GRCh38 ref base: T
 - Ensembl alleles: A|C
@@ -84,8 +92,9 @@ Sources:
 - GBR AF: T=0.642857142857143|C=0.357142857142857
 - LongevityMap allele: (empty in allele_evidence_47.csv)
 - v2 note: C=eqtl+gnomad_nfe
+- Decision: alt C (DT, 2026-10-28).
 
-## rs1981429 (SDC4) — alt_status=corrected
+## rs1981429 (SDC4) — alt_status=resolved
 
 - GRCh38 ref base: G
 - Ensembl alleles: C|T
@@ -94,8 +103,9 @@ Sources:
 - GBR AF: G=0.406593406593407|T=0.593406593406593
 - LongevityMap allele: T
 - v2 note: T=eqtl+longevitymap+gnomad_nfe
+- Decision: alt T (DT, 2026-10-28).
 
-## rs139170 (PARVG) — alt_status=corrected
+## rs139170 (PARVG) — alt_status=resolved
 
 - GRCh38 ref base: C
 - Ensembl alleles: G|T
@@ -104,8 +114,9 @@ Sources:
 - GBR AF: C=0.516483516483517|T=0.483516483516484
 - LongevityMap allele: T
 - v2 note: T=eqtl+longevitymap+gnomad_nfe
+- Decision: alt T (DT, 2026-10-28).
 
-## rs155979 (PCSK1) — alt_status=corrected
+## rs155979 (PCSK1) — alt_status=resolved
 
 - GRCh38 ref base: G
 - Ensembl alleles: A|C|T
@@ -114,8 +125,9 @@ Sources:
 - GBR AF: G=0.142857142857143|C=0.857142857142857
 - LongevityMap allele: C
 - v2 note: C=longevitymap+gnomad_nfe
+- Decision: alt C (DT, 2026-10-28). G/C palindrome resolved by frequency (MAF 0.14).
 
-## rs524533 (TMEM151B) — alt_status=corrected
+## rs524533 (TMEM151B) — alt_status=resolved
 
 - GRCh38 ref base: C
 - Ensembl alleles: A|G|T
@@ -124,8 +136,9 @@ Sources:
 - GBR AF: T=0.653846153846154|C=0.346153846153846
 - LongevityMap allele: T
 - v2 note: T=longevitymap+gnomad_nfe
+- Decision: alt T (DT, 2026-10-28).
 
-## rs882696 (TUSC3) — alt_status=corrected
+## rs882696 (TUSC3) — alt_status=resolved
 
 - GRCh38 ref base: T
 - Ensembl alleles: A|C|G
@@ -134,3 +147,4 @@ Sources:
 - GBR AF: T=0.142857142857143|C=0.857142857142857
 - LongevityMap allele: A
 - v2 note: A=longevitymap|C=eqtl+gnomad_nfe
+- Decision: alt C (DT, 2026-10-28). LongevityMap allele is on the opposite strand.

@@ -1,23 +1,10 @@
 {
-  "generated_at_utc": "2026-10-28T18:25:10Z",
+  "generated_at_utc": "2026-10-29T10:51:09Z",
   "panel": {
     "path": "data/processed/variants_47_input_v2.csv",
-    "n_resolved": 35,
-    "n_not_tested": 12,
-    "not_tested_rsids": [
-      "rs28366003",
-      "rs1800774",
-      "rs5882",
-      "rs41383",
-      "rs9916344",
-      "rs7207422",
-      "rs1801318",
-      "rs1981429",
-      "rs139170",
-      "rs155979",
-      "rs524533",
-      "rs882696"
-    ]
+    "n_resolved": 47,
+    "n_not_tested": 0,
+    "not_tested_rsids": []
   },
   "curation": "data/curation/longevity_allele_direction.csv",
   "allele_audit": "analysis/panel/allele_audit_47.csv",
@@ -226,7 +213,7 @@
       "citation": "Timmers et al. (2019) Genomics of 1 million parent lifespans. eLife 8:e39856. doi:10.7554/eLife.39856. Summary statistics: Edinburgh DataShare doi:10.7488/ds/2463 (lifegen_phase2_bothpl_alldr_2017_09_18.tsv.gz).",
       "effect_units": "log_hazard_protection_ratio",
       "genome_build": "GRCh37",
-      "n_rows_kept": 35,
+      "n_rows_kept": 47,
       "readme": "docs/gwas/README_timmers2019_datashare.txt",
       "notes": "README: beta1 is the log hazard protection ratio (negation of the log hazard ratio) for one copy of a1. Positive beta1 means longer parental lifespan for a1."
     },
@@ -252,10 +239,10 @@
     }
   },
   "multiple_testing": {
-    "n_tests": 102,
-    "alpha_bonferroni": 0.0004901960784313725,
-    "n_p_lt_0_05": 10,
-    "n_expected_p_lt_0_05_under_null": 5.1000000000000005,
+    "n_tests": 138,
+    "alpha_bonferroni": 0.00036231884057971015,
+    "n_p_lt_0_05": 11,
+    "n_expected_p_lt_0_05_under_null": 6.9,
     "n_q_bh_lt_0_05": 3,
     "n_bonferroni_sig": 3,
     "rsids_q_bh_lt_0_05": [
@@ -270,13 +257,13 @@
     ],
     "by_trait": {
       "longevity_90th_percentile": {
-        "n_present": 34,
+        "n_present": 46,
         "n_absent": 0,
         "n_ambiguous": 1,
-        "n_not_tested": 12,
-        "n_tests": 34,
+        "n_not_tested": 0,
+        "n_tests": 46,
         "n_p_lt_0_05": 4,
-        "n_expected_p_lt_0_05_under_null": 1.7000000000000002,
+        "n_expected_p_lt_0_05_under_null": 2.3000000000000003,
         "rsids_q_bh_lt_0_05": [
           "rs4420638"
         ],
@@ -285,13 +272,13 @@
         ]
       },
       "longevity_99th_percentile": {
-        "n_present": 34,
+        "n_present": 46,
         "n_absent": 0,
         "n_ambiguous": 1,
-        "n_not_tested": 12,
-        "n_tests": 34,
+        "n_not_tested": 0,
+        "n_tests": 46,
         "n_p_lt_0_05": 3,
-        "n_expected_p_lt_0_05_under_null": 1.7000000000000002,
+        "n_expected_p_lt_0_05_under_null": 2.3000000000000003,
         "rsids_q_bh_lt_0_05": [
           "rs4420638"
         ],
@@ -300,13 +287,13 @@
         ]
       },
       "parental_lifespan": {
-        "n_present": 34,
+        "n_present": 46,
         "n_absent": 0,
         "n_ambiguous": 1,
-        "n_not_tested": 12,
-        "n_tests": 34,
-        "n_p_lt_0_05": 3,
-        "n_expected_p_lt_0_05_under_null": 1.7000000000000002,
+        "n_not_tested": 0,
+        "n_tests": 46,
+        "n_p_lt_0_05": 4,
+        "n_expected_p_lt_0_05_under_null": 2.3000000000000003,
         "rsids_q_bh_lt_0_05": [
           "rs4420638"
         ],

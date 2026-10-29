@@ -40,8 +40,7 @@ Required inputs for [`scripts/clock/evaluate_methylation_clock.py`](scripts/cloc
 | `models/gse40279_hannum450k_elasticnet.provenance.json` | Training provenance (checksum, probe counts, CV hyperparameters, git commit) | yes |
 | `models/gse40279_hannum450k_elasticnet_coefficients.csv` | Intercept, all feature coefficients, and imputer means (rebuilds `predict`) | yes |
 | `models/gse40279_hannum450k_elasticnet_cpgs.csv` | Non-zero CpGs and weights | yes |
-| `models/gse40279_hannum450k_elasticnet_noXY.joblib` | Same training recipe with chrX/chrY removed before the age filter | no |
-| `models/gse40279_hannum450k_elasticnet_noXY.provenance.json` | Provenance for the noXY sensitivity model | no |
+| `models/gse40279_hannum450k_elasticnet_noXY.provenance.json` | Provenance for the chrX/chrY sensitivity retrain (model byte-identical to main; joblib/CSVs not stored) | no |
 | `models/fixtures/fixture_clock_cg_test.pkl` | Demo clock (`cg_test_*` only). Not a GSE40279 result | no |
 | `data/methylation/HM450_probe_annotation.csv` | Probe → nearest gene (`IlmnID`, `UCSC_RefGene_Name`) for panel C labels | no |
 

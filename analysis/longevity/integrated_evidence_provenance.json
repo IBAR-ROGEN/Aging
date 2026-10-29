@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-10-28T19:17:02Z",
+  "generated_at_utc": "2026-10-29T10:51:51Z",
   "disclaimer": "Integrated public-evidence labels for the prioritized longevity panel. Labels summarize GWAS, eQTL, and reference-population frequency tests. No label implies causality, Romanian enrichment, or a ROGEN association.",
   "join_keys": [
     "rsid",
@@ -135,7 +135,7 @@
   "inputs": {
     "gwas_lookup": {
       "path": "analysis/longevity/longevity_gwas_lookup.csv",
-      "sha256": "091fb9ccd03bb6689928b3781117a2f63ba548af94ae2bf23700a420f79a469c"
+      "sha256": "2dad8b60ae654d7ff9697aa9e335fd264ed7c18a504d9589756c4b55e7518a6c"
     },
     "eqtl_associations": {
       "path": "results/eqtl_associations_full.csv",
