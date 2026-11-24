@@ -158,7 +158,11 @@ analysis/clocks_benchmark/run.log
 !analysis/panel/ro_longevity_panel_sanity.tsv
 !analysis/panel/tsi_nfe_allele_audit.tsv
 !analysis/eqtl/eqtl_datasets_used.tsv
+!analysis/eqtl/eqtl_datasets_used_with_qts.tsv
+!analysis/eqtl/eqtl_catalogue_query_pair_status.tsv
 !tests/fixtures/hm450_hg38_five_chr20.tsv
+!tests/fixtures/eqtl_catalogue_synthetic/**
+data/cache/eqtl_catalogue/
 *.bed
 *.bed.gz
 *.fastq

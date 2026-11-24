@@ -270,8 +270,11 @@ def test_pod5_without_package_is_not_described_as_clean(
     assert _SAMPLE.lower() not in report.lower()
 
 
-def _write_two_read_pod5(path: Path, sample_id: str) -> None:
-    """Write a real two-read POD5 whose RunInfo.sample_id is ``sample_id``."""
+def _write_synthetic_two_read_pod5(path: Path, sample_id: str) -> None:
+    """Write a tiny synthetic two-read POD5 whose RunInfo.sample_id is ``sample_id``.
+
+    Labelled synthetic: generated in-process for tests only. Not real sequencing.
+    """
     import numpy as np
     from pod5 import (
         Calibration,
@@ -279,34 +282,40 @@ def _write_two_read_pod5(path: Path, sample_id: str) -> None:
         EndReasonEnum,
         Pore,
         Read,
+        Reader,
         RunInfo,
         Writer,
     )
 
+    if not hasattr(Reader, "run_info_table"):
+        raise AssertionError(
+            "installed pod5 Reader has no run_info_table " "(required for POD5 metadata scanning)"
+        )
+
     started = datetime(2024, 1, 1, tzinfo=UTC)
     run_info = RunInfo(
-        acquisition_id="acq-test-1",
+        acquisition_id="acq-synthetic-1",
         acquisition_start_time=started,
         adc_max=2047,
         adc_min=-2048,
         context_tags={},
-        experiment_name="intake-test",
-        flow_cell_id="FAKEFLOW",
-        flow_cell_product_code="FLO-TEST",
-        protocol_name="protocol",
-        protocol_run_id="protocol-run",
+        experiment_name="synthetic-intake-test",
+        flow_cell_id="SYNTHFLOW",
+        flow_cell_product_code="FLO-SYNTH",
+        protocol_name="synthetic-protocol",
+        protocol_run_id="synthetic-protocol-run",
         protocol_start_time=started,
         sample_id=sample_id,
         sample_rate=4000,
-        sequencing_kit="kit",
+        sequencing_kit="synthetic-kit",
         sequencer_position="1A",
         sequencer_position_type="MinION",
-        software="rogen-aging-test",
-        system_name="test-host",
-        system_type="test",
-        tracking_id={},
+        software="rogen-aging-synthetic-test",
+        system_name="synthetic-host",
+        system_type="synthetic",
+        tracking_id={"fixture": "synthetic"},
     )
-    pore = Pore(channel=1, well=1, pore_type="test")
+    pore = Pore(channel=1, well=1, pore_type="synthetic")
     calibration = Calibration(offset=0.0, scale=1.0)
     end_reason = EndReason(reason=EndReasonEnum.SIGNAL_POSITIVE, forced=False)
     signal = np.arange(64, dtype=np.int16)
@@ -332,23 +341,36 @@ def test_pod5_with_package_scans_run_metadata(
 ) -> None:
     """With ``pod5`` installed, run metadata is searched for the manifest sample id.
 
-    Intake either scrubbing the id out of run info (leak check passes) or
-    stopping with a clear POD5 leak error is acceptable. Remaining on the
-    unscanned path is not.
+    Uses a tiny synthetic POD5. Intake either scrubbing the id out of run info
+    (leak check passes) or stopping with a clear POD5 leak error is acceptable.
+    Remaining on the unscanned path is not.
     """
-    pytest.importorskip("pod5")
+    pod5 = pytest.importorskip("pod5")
     from pod5 import Reader
+
+    if not hasattr(Reader, "run_info_table"):
+        raise AssertionError(
+            f"installed pod5 Reader has no run_info_table "
+            f"(version={getattr(pod5, '__version__', 'unknown')})"
+        )
 
     delivery = tmp_path / "delivery"
     delivery.mkdir()
-    payload = delivery / "reads.pod5"
-    _write_two_read_pod5(payload, _POD5_SAMPLE)
+    payload = delivery / "synthetic_reads.pod5"
+    try:
+        _write_synthetic_two_read_pod5(payload, _POD5_SAMPLE)
+    except Exception as exc:  # noqa: BLE001 — skip only when Writer cannot build a real file
+        pytest.skip(f"pod5 cannot write a synthetic POD5 fixture: {exc}")
+
     with Reader(str(payload)) as reader:
+        table = reader.run_info_table.read_all()
+        assert "sample_id" in table.column_names
+        assert table.column("sample_id").to_pylist() == [_POD5_SAMPLE]
         samples = {record.run_info.sample_id for record in reader.reads()}
     assert samples == {_POD5_SAMPLE}
 
     manifest = tmp_path / "manifest.tsv"
-    row = _row("reads.pod5", "pod5", _sha256(payload))
+    row = _row("synthetic_reads.pod5", "pod5", _sha256(payload))
     row["original_sample_id"] = _POD5_SAMPLE
     _write_manifest(manifest, [row])
     out_dir = tmp_path / "out"
@@ -360,6 +382,7 @@ def test_pod5_with_package_scans_run_metadata(
     except IntakeError as exc:
         message = str(exc)
         assert "POD5 run metadata" in message
+        assert "pod5 metadata not scanned" not in message
         assert not out_dir.exists()
         assert not (custodian / "linkage.tsv").exists()
         return

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import gzip
 import importlib
+import importlib.metadata
 import importlib.util
 import shutil
 import subprocess
@@ -22,8 +23,9 @@ def leak_check(files: Sequence[ProducedFile], original_ids: Sequence[str]) -> No
     """Fail closed when any original id remains in the searched surfaces.
 
     Searches output file names, BAM/CRAM/VCF headers, and the first 10,000
-    FASTQ read headers. POD5 run metadata is searched only when the ``pod5``
-    package is installed.
+    FASTQ read headers. POD5 run metadata is searched via
+    ``Reader.run_info_table`` when the ``pod5`` package is installed; if
+    ``pod5`` is missing the report records ``pod5 metadata not scanned``.
 
     Args:
         files: Pseudonymized files still in the temporary directory.
@@ -129,18 +131,32 @@ def _scan_pod5(path: Path, original_ids: Sequence[str]) -> str:
     reader_cls = getattr(module, "Reader", None)
     if reader_cls is None:
         return POD5_NOT_SCANNED
+    # pod5 0.3.x exposes Reader.run_info_table (and per-read ReadRecord.run_info).
+    # Reader.run_infos does not exist; do not treat a missing alias as unscanned.
+    if not hasattr(reader_cls, "run_info_table"):
+        raise IntakeError(
+            "installed pod5 Reader has no run_info_table; "
+            "cannot scan POD5 run metadata "
+            f"(pod5={_pod5_version()})"
+        )
     texts: list[str] = []
     with reader_cls(str(path)) as reader:
-        run_infos = getattr(reader, "run_infos", None)
-        if run_infos is None:
-            return POD5_NOT_SCANNED
-        for info in run_infos:
-            texts.extend(_stringify(info))
+        table_reader = reader.run_info_table
+        assert table_reader is not None, "pod5 Reader.run_info_table returned None"
+        table = table_reader.read_all()
+        texts.extend(_stringify(table.to_pydict()))
     if _contains_any("\n".join(texts), original_ids):
         raise IntakeError(
             "leak check failed for " f"{path.name}: original sample id remains in POD5 run metadata"
         )
     return "scanned"
+
+
+def _pod5_version() -> str:
+    try:
+        return str(importlib.metadata.version("pod5"))
+    except importlib.metadata.PackageNotFoundError:
+        return "unknown"
 
 
 def _stringify(value: Any, depth: int = 0) -> list[str]:
