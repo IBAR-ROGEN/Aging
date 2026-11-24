@@ -1,0 +1,25 @@
+# Mitochondrial variant calling thresholds and paths.
+#
+# Thresholds are fixed defaults for validation against published haplogroups.
+# Do NOT retune min_depth or min_vaf to raise concordance.
+
+thresholds:
+  # Minimum total depth (DP) at a site for a call to enter the filtered TSV
+  # and the HaploGrep input. Sites below this stay in the raw Mutect2 VCF only.
+  min_depth: 10
+  # Minimum allele fraction (alt AD / DP) for an alternate allele to enter the
+  # filtered TSV and HaploGrep input.
+  min_vaf: 0.05
+
+# Expected mitochondrial contig name in GRCh38 alignments and the reference.
+# The script asserts BAM header and reference .fai use this exact name.
+contig_name: chrM
+
+# HaploGrep 3 phylogeny (must be installed: `haplogrep3 trees` / install-trees).
+haplogrep:
+  tree: phylotree-fu-rcrs@1.2
+
+# [UNVERIFIED] optional NUMT (nuclear mtDNA insert) mask BED.
+# If this file is absent, every output header records
+# "NUMT filtering not applied" and no variants are flagged.
+numt_mask: data/external/mtdna/numt_mask.bed
